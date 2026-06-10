@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Tycho reactor for the Eclipse RCP analysis UI
+         (feature 004-rcp-gui-migration, research R2).
+
+         Build standalone:        mvn -f iped-rcp/pom.xml clean verify
+         Or from the root POM:    mvn -P rcp ...
+
+         The version is kept in lockstep with the root iped-parent. This
+         reactor consumes the other IPED modules as binary dependencies from
+         the local repository, so run `mvn clean install` at the repository
+         root at least once before building it. -->
+
+    <groupId>iped.rcp</groupId>
+    <artifactId>iped-rcp-parent</artifactId>
+    <version>4.4.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <tycho.version>4.0.10</tycho.version>
+    </properties>
+
+    <modules>
+        <!-- Phase 1 (T001/T002): target platform only. Bundles, features,
+             products, samples and test modules are added by Phase 2+ tasks
+             (see specs/004-rcp-gui-migration/tasks.md). -->
+        <module>target-platform</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-maven-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>target-platform-configuration</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <target>
+                        <artifact>
+                            <groupId>iped.rcp</groupId>
+                            <artifactId>iped-rcp</artifactId>
+                            <version>${project.version}</version>
+                        </artifact>
+                    </target>
+                    <executionEnvironment>JavaSE-21</executionEnvironment>
+                    <!-- Product environments (research R1): Windows x64 and
+                         Linux x64/GTK. macOS is out of scope (spec). -->
+                    <environments>
+                        <environment>
+                            <os>win32</os>
+                            <ws>win32</ws>
+                            <arch>x86_64</arch>
+                        </environment>
+                        <environment>
+                            <os>linux</os>
+                            <ws>gtk</ws>
+                            <arch>x86_64</arch>
+                        </environment>
+                    </environments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

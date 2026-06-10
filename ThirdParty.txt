@@ -246,3 +246,30 @@ launch4j — Windows .exe launcher generator
   and bin/IPED-SearchApp.exe (GUI). The small BSD-licensed launcher stub is
   embedded in those distributed executables, which start IPED using the bundled
   jre/ (no Windows-registry Java lookup).
+
+Eclipse Platform — SWT, JFace, e4, Equinox/OSGi (4.32+/2024-06)
+- Site: https://www.eclipse.org/platform/
+- License: Eclipse Public License 2.0 (text in licenses/EPL 2.0.txt)
+- Usage: workbench platform of the new RCP analysis UI (feature
+  004-rcp-gui-migration): native SWT widgets, JFace viewers, e4 application
+  model/services and the Equinox OSGi runtime + native launchers, distributed
+  in the ui/ folder of the release and of self-contained cases.
+
+Eclipse Nebula — Gallery widget and NatTable (Gallery from Nebula 3.1.1;
+NatTable 2.4.0)
+- Site: https://eclipse.dev/nebula/ ; https://eclipse.dev/nattable/
+- License: Eclipse Public License 2.0 (text in licenses/EPL 2.0.txt)
+- Usage: virtual gallery widget for the RCP UI thumbnails view; NatTable is
+  the approved fallback for the virtual results table at very large scale.
+
+SWTBot (4.2.0)
+- Site: https://eclipse.dev/swtbot/
+- License: Eclipse Public License 2.0 (text in licenses/EPL 2.0.txt)
+- Usage: test-time only — UI integration tests of the RCP analysis UI
+  (iped-rcp/tests). Not distributed in the release.
+
+Eclipse Tycho (4.0.x)
+- Site: https://tycho.eclipseprojects.io/
+- License: Eclipse Public License 2.0 (text in licenses/EPL 2.0.txt)
+- Usage: build-time only — Maven build of the iped-rcp reactor (OSGi bundles,
+  features, p2 products). Not distributed in the release.

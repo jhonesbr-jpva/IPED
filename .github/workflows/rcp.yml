@@ -1,0 +1,36 @@
+name: RCP CI
+
+# Dedicated workflow for the Eclipse RCP UI reactor (feature
+# 004-rcp-gui-migration, task T004 / research R13). Kept separate from
+# maven.yml (with a paths filter) so the main build job stays untouched
+# while the RCP reactor evolves; the two converge at the cut-over release.
+on:
+  push:
+    paths:
+      - 'iped-rcp/**'
+      - '.github/workflows/rcp.yml'
+  pull_request:
+    paths:
+      - 'iped-rcp/**'
+      - '.github/workflows/rcp.yml'
+
+jobs:
+
+  build-rcp:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21 (Liberica Full, with JavaFX)
+      uses: actions/setup-java@v4
+      with:
+        distribution: liberica
+        java-version: 21
+        java-package: jdk+fx
+        cache: maven
+
+    # xvfb provides the X display that SWT/SWTBot tests require on GTK;
+    # it is harmless for packaging-only builds (Phase 1 skeleton).
+    - name: Build RCP reactor
+      run: xvfb-run -a mvn -B -f iped-rcp/pom.xml clean verify

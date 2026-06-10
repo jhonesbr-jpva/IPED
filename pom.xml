@@ -169,4 +169,17 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <profiles>
+        <!-- Eclipse RCP UI reactor (feature 004-rcp-gui-migration). Opt-in
+             profile so the default build stays untouched until the cut-over
+             release. The iped-rcp reactor is also buildable standalone:
+             mvn -f iped-rcp/pom.xml clean verify -->
+        <profile>
+            <id>rcp</id>
+            <modules>
+                <module>iped-rcp</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
