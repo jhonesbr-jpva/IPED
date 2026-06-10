@@ -25,10 +25,13 @@
     </properties>
 
     <modules>
-        <!-- Phase 1 (T001/T002): target platform only. Bundles, features,
-             products, samples and test modules are added by Phase 2+ tasks
-             (see specs/004-rcp-gui-migration/tasks.md). -->
         <module>target-platform</module>
+        <!-- Phase 2 (T006/T007): engine wrapper + provisional extension API.
+             Remaining bundles, features, products, samples and test modules
+             are added by the rest of Phase 2+ (see
+             specs/004-rcp-gui-migration/tasks.md). -->
+        <module>bundles/iped.rcp.libs</module>
+        <module>bundles/iped.rcp.api</module>
     </modules>
 
     <build>
@@ -52,6 +55,11 @@
                         </artifact>
                     </target>
                     <executionEnvironment>JavaSE-21</executionEnvironment>
+                    <!-- Treat plain Maven POM dependencies that are OSGi
+                         bundles (e.g. iped.rcp.libs) as target content, so
+                         Tycho bundles can Import-Package from the wrapper
+                         (research R3). -->
+                    <pomDependencies>consider</pomDependencies>
                     <!-- Product environments (research R1): Windows x64 and
                          Linux x64/GTK. macOS is out of scope (spec). -->
                     <environments>

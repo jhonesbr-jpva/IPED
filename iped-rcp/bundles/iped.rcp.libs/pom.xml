@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Wrapper bundle encapsulating iped-engine and its full (non-OSGi)
+         dependency tree as a single OSGi class space (T006, research R3).
+         The engine keeps running on a flat classpath inside this bundle —
+         no dependency is converted individually (FR-028). Built with the
+         Felix maven-bundle-plugin (not Tycho) and consumed by the Tycho
+         bundles through pomDependencies=consider.
+
+         Known follow-ups (revisit when the first consumer resolves against
+         this bundle, Phase 2 continuation):
+         - signed jars (e.g. BouncyCastle JCE) may not work embedded; if so,
+           pull them out as separate wrapped bundles or framework classpath;
+         - Export-Package starts with iped.* only and grows as the UI
+           bundles actually need engine-adjacent packages (e.g. Lucene). -->
+    <artifactId>iped.rcp.libs</artifactId>
+    <packaging>bundle</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>5.1.9</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>iped.rcp.libs</Bundle-SymbolicName>
+                        <Bundle-Name>IPED Engine Libraries (wrapped)</Bundle-Name>
+                        <Bundle-Vendor>IPED</Bundle-Vendor>
+                        <Automatic-Module-Name>iped.rcp.libs</Automatic-Module-Name>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-21</Bundle-RequiredExecutionEnvironment>
+                        <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                        <Embed-Directory>lib</Embed-Directory>
+                        <Export-Package>iped.*</Export-Package>
+                        <!-- Self-contained: never wire engine internals to other
+                             bundles; JDK packages come from the boot delegation. -->
+                        <Import-Package>!*</Import-Package>
+                        <!-- The engine uses reflection/SPI heavily (Tika, JNA,
+                             scripting); let unresolved loads fall through. -->
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                        <_nouses>true</_nouses>
+                        <_failok>false</_failok>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

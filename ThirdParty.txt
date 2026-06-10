@@ -273,3 +273,11 @@ Eclipse Tycho (4.0.x)
 - License: Eclipse Public License 2.0 (text in licenses/EPL 2.0.txt)
 - Usage: build-time only — Maven build of the iped-rcp reactor (OSGi bundles,
   features, p2 products). Not distributed in the release.
+
+Apache Felix maven-bundle-plugin (5.1.9, wrapping bnd)
+- Site: https://felix.apache.org/documentation/subprojects/apache-felix-maven-bundle-plugin-bnd.html
+- License: Apache License, Version 2.0 (text in licenses/Apache 2.0.txt)
+- Usage: build-time only — generates the OSGi manifest and assembles the
+  iped.rcp.libs wrapper bundle (iped-engine + dependencies). Only the produced
+  framework-agnostic bundle is distributed; the OSGi runtime of the RCP
+  product is Eclipse Equinox (org.eclipse.osgi, from the Eclipse Platform).

@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IPED RCP Extension API (Provisional)
+Bundle-SymbolicName: iped.rcp.api
+Bundle-Version: 4.4.0.qualifier
+Bundle-Vendor: IPED
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: iped.rcp.api
+Export-Package: iped.rcp.api;version="0.1.0"
