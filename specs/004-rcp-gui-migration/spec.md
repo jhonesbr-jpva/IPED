@@ -73,6 +73,16 @@ base.
   no escopo? → A: **Fora do escopo** — modelo de distribuição atual mantido
   (release = instalação nova; casos autocontidos imutáveis). Plugins de terceiros
   (US6) são instalados por drop-in manual. Auto-update pode virar feature futura.
+- Q: Como fica o modo interativo (UI de análise aberta durante o processamento),
+  dado que a nova arquitetura separa a UI de análise e o processamento em
+  processos distintos? → A: **Modo quase-ao-vivo (cross-process)** — a UI de
+  análise abre o caso em processamento em modo somente leitura sobre os dados já
+  consolidados e se atualiza automaticamente a cada consolidação do processamento.
+  **Divergência registrada** (re-baseline): itens ainda não consolidados deixam de
+  ser visíveis em tempo real (na UI atual eram, por compartilharem o mesmo
+  processo). A leitura concorrente não pode bloquear nem atrasar o processamento
+  (FR-030); uma investigação técnica (spike) valida a contenção de I/O antes da
+  implementação.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -266,8 +276,11 @@ bancada sem alteração no produto base.
   aplicação.
 - Idioma do sistema sem tradução disponível: fallback para inglês, sem chaves de
   mensagem cruas na tela.
-- Abertura da UI durante um processamento em andamento (modo interativo): o
-  comportamento atual de acompanhar o caso em processamento deve ser preservado.
+- Abertura da UI durante um processamento em andamento (modo interativo,
+  quase-ao-vivo): a UI de análise abre o caso em processamento e exibe os dados
+  consolidados até o momento, atualizando-se a cada nova consolidação; itens ainda
+  não consolidados aparecem na consolidação seguinte (divergência registrada — ver
+  Clarifications). A leitura nunca bloqueia ou atrasa o processamento.
 - Mesmo caso aberto simultaneamente por múltiplos peritos (compartilhamento de
   rede): manter as semânticas e limitações atuais — leitura concorrente funciona;
   escrita de bookmarks segue a mesma disciplina de lock de hoje, sem garantias
@@ -383,6 +396,19 @@ bancada sem alteração no produto base.
 - **FR-027**: A tela de abertura (splash) e os diálogos do inicializador MUST ser
   providos na nova plataforma, preservando o feedback de inicialização atual
   (estágios de carregamento e mensagens de erro de configuração).
+
+**Modo interativo (quase-ao-vivo)**
+
+- **FR-029**: Durante um processamento com interface gráfica, o usuário MUST poder
+  abrir a UI de análise sobre o caso em processamento; a UI exibe os dados
+  consolidados até o último ponto de consolidação e se atualiza automaticamente a
+  cada nova consolidação, sem ação manual. Divergência registrada (Clarifications
+  2026-06-10): itens ainda não consolidados não são visíveis até a consolidação
+  seguinte.
+- **FR-030**: A leitura concorrente da UI de análise MUST NOT bloquear nem atrasar
+  o processamento: o tempo total de processamento do caso de referência com a UI
+  de análise aberta em modo quase-ao-vivo não pode exceder em mais de 5% o tempo
+  sem ela, e nenhuma consolidação pode ficar bloqueada aguardando a UI.
 
 ### Key Entities
 
