@@ -270,6 +270,70 @@ registrada: itens não consolidados só aparecem na consolidação seguinte.
   classloaders OSGi × classpath plano do engine na mesma JVM e perda do
   isolamento de crash que motivou a separação.
 
+### Resultado do spike T062 (2026-06-11) — **GO**
+
+**Protótipo**: `iped-rcp/tests/iped.rcp.tests.parity/src/main/java/iped/rcp/`
+`tests/parity/spike/NearLiveReaderSpike.java`, rodando em JVM separada do
+processamento. Perna Lucene: poll de `SegmentInfos.getLastCommitGeneration`
+a cada 500 ms + `DirectoryReader.openIfChanged` + contagem MatchAllDocs.
+Perna SQLite: conexões read-only aos 16 `storage-*.db` (journal TRUNCATE no
+writer) com SELECTs curtos em autocommit sobre `thumbs` — incluindo leitura
+do BLOB — busy timeout 10 s, ciclo ~150 ms por db.
+
+**Método**: imagem de referência `RockPi4.E01` (7,98 GB, ~638 mil itens),
+perfil `triage-spike` = triage + `enableHash` + `enableImageThumbs` (sem
+eles o writer SQLite nunca roda no triage) + `enableExternalConv = false`
+(conversão de thumbs java-only — a conversão externa ImageMagick levou o run
+a >1 h com alta variância e foi removida do método) +
+`commitIntervalSeconds = 45` (com o default de 1800 s um caso de ~6 min só
+commita no final). Três runs alternados na mesma máquina (Windows 11, cache
+de SO quente): baseline → live (leitor concorrente do início ao fim) →
+baseline.
+
+**Números** (gate FR-030: ≤ 5% de acréscimo e nenhuma consolidação
+bloqueada):
+
+| Run | Tempo total |
+|---|---|
+| baseline2 | 365,2 s |
+| **live2 (com leitor)** | **340,4 s** |
+| baseline3 | 358,3 s |
+
+- Δ live vs média dos baselines (361,8 s): **−5,9%** — o run com leitor foi
+  o mais rápido; a variância entre os próprios baselines foi 1,9%. Nenhum
+  custo mensurável. **Gate atendido com folga.**
+- Consolidações: o leitor viu 7 gerações com cadência de 44–46 s contra os
+  45 s configurados — **zero atraso/stall** — e visibilidade progressiva
+  (100k → 205k → 372k → 460k → 638k docs). Recargas de 23–269 ms.
+- SQLite: 1302 leituras, **0× SQLITE_BUSY**, 0 erros, média < 1 ms, máximo
+  16 ms, ~1 MB de thumbs lidos durante a escrita.
+
+**Decisão: GO para T063, com zero mudanças no engine** — o ajuste WAL
+condicional previsto no plan.md não se mostrou necessário sob a disciplina
+abaixo.
+
+**Disciplinas/fatos de design para o CommitMonitor (T063):**
+1. As tabelas dos storages são **invisíveis cross-process até o primeiro
+   COMMIT de cada db** (DDL dentro de transação, journal TRUNCATE): tratar
+   `no such table` como estado normal pré-commit (244 ocorrências no spike),
+   nunca como erro.
+2. Leituras de storage sempre read-only + autocommit + curtas + busy
+   timeout; NUNCA manter transação/cursor aberto entre interações
+   (precedente do busy-wait `--yara-only` × `AppMain`).
+3. `gen=1` pode ser o commit vazio da criação do índice → 0 docs é estado
+   válido.
+4. A cadência do quase-ao-vivo = `commitIntervalSeconds` (default 30 min);
+   em casos curtos pode existir só o commit final. A UI deve comunicar isso
+   (divergência já registrada: itens aparecem por consolidação).
+5. Poll de geração a 500 ms tem custo desprezível; `openIfChanged` reusa os
+   segmentos não alterados.
+
+**Limitações**: caso pequeno (~6 min de processamento), perfil triage-spike
+(sem carving/expansão/parsing pesado), Windows apenas, hardware único, wall
+time com cache quente. Reavaliar nas medições formais (T056/T057, caso ≥ 1 M
+itens); o WAL permanece como plano B aprovado (Complexity Tracking) caso a
+UI real exiba contenção que o spike não capturou.
+
 ---
 
 ## Resumo dos NEEDS CLARIFICATION resolvidos
