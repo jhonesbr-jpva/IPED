@@ -50,7 +50,19 @@
                         <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
                         <Embed-Directory>lib</Embed-Directory>
-                        <Export-Package>iped.*</Export-Package>
+                        <!-- Exports grow on demand as UI bundles consume engine
+                             packages (T006 follow-up note above):
+                             - org.sleuthkit.datamodel: TskCoreException thrown by
+                               IPEDSource.checkImagePaths() (T008);
+                             - org.slf4j: UI bundles must log through the engine's
+                               backend (single Log4j2 pipeline, constitution IV);
+                             - org.apache.lucene.*: engine open/search API surface
+                               (IndexWriter in IPEDSource constructors, queries in
+                               ISearchService later). Lucene has split packages
+                               (e.g. org.apache.lucene.analysis between core and
+                               analysis-common); they share this single class
+                               space, so only a benign bnd warning is expected. -->
+                        <Export-Package>iped.*,org.sleuthkit.datamodel,org.slf4j,org.apache.lucene.*</Export-Package>
                         <!-- Self-contained: never wire engine internals to other
                              bundles; JDK packages come from the boot delegation. -->
                         <Import-Package>!*</Import-Package>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="iped.rcp.feature"
+      label="IPED Analysis UI"
+      version="4.4.0.qualifier"
+      provider-name="IPED">
+
+   <description>
+      Eclipse RCP analysis UI of IPED (feature 004-rcp-gui-migration).
+   </description>
+
+   <license url="https://www.gnu.org/licenses/gpl-3.0.html">
+      GNU General Public License version 3 (same license as IPED itself,
+      see LICENSE.txt in the repository root).
+   </license>
+
+   <plugin id="iped.rcp.libs" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="iped.rcp.api" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="iped.rcp.core" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="iped.rcp.viewers" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="iped.rcp.app" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+
+</feature>

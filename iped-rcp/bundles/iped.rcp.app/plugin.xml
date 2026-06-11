@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <!-- Pure e4 product (research R1): no org.eclipse.ui compatibility layer.
+        Native widgets by default — no applicationCSS property (research R8);
+        the dark-theme CSS toggle arrives with T044. -->
+   <extension id="product" point="org.eclipse.core.runtime.products">
+      <product name="IPED Analysis" application="org.eclipse.e4.ui.workbench.swt.E4Application">
+         <property name="appName" value="IPED"/>
+         <property name="applicationXMI" value="iped.rcp.app/Application.e4xmi"/>
+         <property name="lifeCycleURI" value="bundleclass://iped.rcp.app/iped.rcp.app.LifeCycle"/>
+      </product>
+   </extension>
+</plugin>

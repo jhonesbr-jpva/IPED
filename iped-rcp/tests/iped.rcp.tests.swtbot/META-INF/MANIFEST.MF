@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IPED RCP SWTBot Tests
+Bundle-SymbolicName: iped.rcp.tests.swtbot
+Bundle-Version: 4.4.0.qualifier
+Bundle-Vendor: IPED
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: iped.rcp.tests.swtbot
+Require-Bundle: org.eclipse.swtbot.swt.finder,
+ org.eclipse.swt,
+ org.junit,
+ iped.rcp.api

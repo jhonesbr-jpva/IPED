@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- SWTBot UI-flow tests (T013, research R11). Runs the real e4 product
+         inside the tycho-surefire UI harness (Xvfb/GTK on CI per T004).
+
+         UI tests are SKIPPED by default: launching the workbench needs a
+         reference case and a display. Opt in with:
+           mvn -f iped-rcp/pom.xml verify -DskipUiTests=false \
+               -Dcase.dir=<path-to-reference-case>
+         The first real flow (TriageFlowTest) lands with T014. -->
+    <artifactId>iped.rcp.tests.swtbot</artifactId>
+    <packaging>eclipse-test-plugin</packaging>
+
+    <properties>
+        <skipUiTests>true</skipUiTests>
+        <case.dir></case.dir>
+    </properties>
+
+    <dependencies>
+        <!-- per-module pomDependencies=consider rule: the wrapper must join
+             this module's target platform for the feature below to resolve -->
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.libs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <!-- the whole product must be in the test runtime, not only
+                     the transitive requirements of this test bundle -->
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>target-platform-configuration</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <dependency-resolution>
+                        <extraRequirements>
+                            <requirement>
+                                <type>eclipse-feature</type>
+                                <id>iped.rcp.feature</id>
+                                <versionRange>0.0.0</versionRange>
+                            </requirement>
+                        </extraRequirements>
+                    </dependency-resolution>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-surefire-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <skipTests>${skipUiTests}</skipTests>
+                    <failIfNoTests>false</failIfNoTests>
+                    <!-- SWTBot discipline: harness owns the UI, tests run off
+                         the UI thread -->
+                    <useUIHarness>true</useUIHarness>
+                    <useUIThread>false</useUIThread>
+                    <application>org.eclipse.e4.ui.workbench.swt.E4Application</application>
+                    <product>iped.rcp.app.product</product>
+                    <appArgLine>${case.dir}</appArgLine>
+                    <argLine>-Xmx4g
+                        -Djava.security.manager=allow
+                        -Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                        --add-opens=java.base/java.lang=ALL-UNNAMED
+                        --add-opens=java.base/java.math=ALL-UNNAMED
+                        --add-opens=java.base/java.net=ALL-UNNAMED
+                        --add-opens=java.base/java.io=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.text=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

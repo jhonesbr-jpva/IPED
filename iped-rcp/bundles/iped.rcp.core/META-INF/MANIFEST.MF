@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IPED RCP Core Services
+Bundle-SymbolicName: iped.rcp.core
+Bundle-Version: 4.4.0.qualifier
+Bundle-Vendor: IPED
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: iped.rcp.core
+Bundle-ActivationPolicy: lazy
+Require-Bundle: iped.rcp.api,
+ iped.rcp.libs,
+ org.eclipse.e4.core.contexts,
+ org.eclipse.e4.core.services,
+ org.eclipse.e4.ui.workbench
+Import-Package: jakarta.annotation,
+ org.osgi.service.event
+Export-Package: iped.rcp.core.events;x-internal:=true,
+ iped.rcp.core.i18n;x-internal:=true,
+ iped.rcp.core.session;x-internal:=true

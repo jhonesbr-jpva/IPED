@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+<!-- IPED analysis UI product (T011, research R9). Feature-based, pure e4.
+     - launcher "iped-ui": exec'd by the case-root shim (T054) with
+       -vm <case>/iped/jre/bin
+     - -data points at the user profile by default; T043 replaces it with the
+       per-case workspace resolver (research R5)
+     - vmArgs carry the engine's Java 21 module opens (same set Bootstrap
+       passes to the processing JVM) plus boot delegation for the JavaFX/AWT
+       bridge (research R4) -->
+<product name="IPED Analysis" uid="iped.rcp.product" id="iped.rcp.app.product" application="org.eclipse.e4.ui.workbench.swt.E4Application" version="4.4.0.qualifier" useFeatures="true" includeLaunchers="true">
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-data @user.home/.iped/ui-workspaces/default
+      </programArgs>
+      <vmArgs>--add-opens=java.base/java.util=ALL-UNNAMED
+--add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+--add-opens=java.base/java.lang=ALL-UNNAMED
+--add-opens=java.base/java.math=ALL-UNNAMED
+--add-opens=java.base/java.net=ALL-UNNAMED
+--add-opens=java.base/java.io=ALL-UNNAMED
+--add-opens=java.base/java.nio=ALL-UNNAMED
+--add-opens=java.base/java.text=ALL-UNNAMED
+--add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+-Djava.security.manager=allow
+-Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*
+-Dfile.encoding=UTF-8
+      </vmArgs>
+      <vmArgsLin>-Dsun.awt.xembedserver=true
+      </vmArgsLin>
+   </launcherArgs>
+
+   <launcher name="iped-ui">
+   </launcher>
+
+   <splash location="iped.rcp.app"/>
+
+   <vm>
+   </vm>
+
+   <features>
+      <feature id="iped.rcp.feature"/>
+      <feature id="org.eclipse.e4.rcp"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+   </configurations>
+
+</product>

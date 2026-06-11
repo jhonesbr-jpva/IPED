@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- e4 application model (T011). Layout skeleton only: the part stacks below
+     are the stable extension anchors published in iped.rcp.api/ModelAnchors
+     (ui-extension-api contract); parts are contributed by later tasks
+     (US1+). Window label is set by the lifecycle from the i18n adapter. -->
+<application:Application xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:advanced="http://www.eclipse.org/ui/2010/UIModel/application/ui/advanced"
+    xmlns:application="http://www.eclipse.org/ui/2010/UIModel/application"
+    xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic"
+    xmlns:commands="http://www.eclipse.org/ui/2010/UIModel/application/commands"
+    xmi:id="_app" elementId="iped.rcp.app.application" bindingContexts="_ctxDialogAndWindow" selectedElement="_window">
+  <children xsi:type="basic:TrimmedWindow" xmi:id="_window" elementId="iped.rcp.app.trimmedwindow.main" label="IPED" width="1400" height="900" selectedElement="_perspectiveStack">
+    <children xsi:type="advanced:PerspectiveStack" xmi:id="_perspectiveStack" elementId="iped.rcp.app.perspectivestack" selectedElement="_perspectiveMain">
+      <children xsi:type="advanced:Perspective" xmi:id="_perspectiveMain" elementId="iped.rcp.app.perspective.main">
+        <children xsi:type="basic:PartSashContainer" xmi:id="_sashRoot" elementId="iped.rcp.app.sash.root" horizontal="true">
+          <children xsi:type="basic:PartStack" xmi:id="_stackLeft" elementId="iped.rcp.app.partstack.left" containerData="2500"/>
+          <children xsi:type="basic:PartSashContainer" xmi:id="_sashCenter" elementId="iped.rcp.app.sash.center" horizontal="false" containerData="5000">
+            <children xsi:type="basic:PartStack" xmi:id="_stackCenter" elementId="iped.rcp.app.partstack.center" containerData="6500"/>
+            <children xsi:type="basic:PartStack" xmi:id="_stackBottom" elementId="iped.rcp.app.partstack.bottom" containerData="3500"/>
+          </children>
+          <children xsi:type="basic:PartStack" xmi:id="_stackRight" elementId="iped.rcp.app.partstack.right" containerData="2500"/>
+        </children>
+      </children>
+    </children>
+  </children>
+  <rootContext xsi:type="commands:BindingContext" xmi:id="_ctxDialogAndWindow" elementId="org.eclipse.ui.contexts.dialogAndWindow" name="In Dialogs and Windows">
+    <children xmi:id="_ctxWindow" elementId="org.eclipse.ui.contexts.window" name="In Windows"/>
+    <children xmi:id="_ctxDialog" elementId="org.eclipse.ui.contexts.dialog" name="In Dialogs"/>
+  </rootContext>
+  <addons xmi:id="_addonCommandService" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
+  <addons xmi:id="_addonContextService" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
+  <addons xmi:id="_addonBindingService" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>
+  <addons xmi:id="_addonCommandsModel" elementId="org.eclipse.e4.ui.workbench.commands.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.CommandProcessingAddon"/>
+  <addons xmi:id="_addonContextsModel" elementId="org.eclipse.e4.ui.workbench.contexts.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.ContextProcessingAddon"/>
+  <addons xmi:id="_addonBindingsModel" elementId="org.eclipse.e4.ui.workbench.bindings.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.swt/org.eclipse.e4.ui.workbench.swt.util.BindingProcessingAddon"/>
+  <addons xmi:id="_addonHandlerModel" elementId="org.eclipse.e4.ui.workbench.handler.model" contributionURI="bundleclass://org.eclipse.e4.ui.workbench/org.eclipse.e4.ui.internal.workbench.addons.HandlerProcessingAddon"/>
+  <addons xmi:id="_addonDnD" elementId="org.eclipse.e4.ui.workbench.addons.swt.dnd" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.addons.swt/org.eclipse.e4.ui.workbench.addons.dndaddon.DnDAddon"/>
+  <addons xmi:id="_addonMinMax" elementId="org.eclipse.e4.ui.workbench.addons.swt.minmax" contributionURI="bundleclass://org.eclipse.e4.ui.workbench.addons.swt/org.eclipse.e4.ui.workbench.addons.minmax.MinMaxAddon"/>
+  <addons xmi:id="_addonIpedUiEvents" elementId="iped.rcp.core.uievents" contributionURI="bundleclass://iped.rcp.core/iped.rcp.core.events.UiEventsAddon"/>
+</application:Application>

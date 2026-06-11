@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Core (internal) services of the RCP UI: case session lifecycle (T008),
+         i18n adapter (T009), selection/event publication (T012). Everything
+         exported here is x-internal — third parties consume iped.rcp.api only.
+
+         The POM dependency on the engine wrapper makes it part of the target
+         platform through pomDependencies=consider (parent), so the manifest
+         can Require-Bundle it (research R3). -->
+    <artifactId>iped.rcp.core</artifactId>
+    <packaging>eclipse-plugin</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.libs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

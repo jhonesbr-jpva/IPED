@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IPED RCP Viewer Bridge
+Bundle-SymbolicName: iped.rcp.viewers
+Bundle-Version: 4.4.0.qualifier
+Bundle-Vendor: IPED
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: iped.rcp.viewers
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.swt,
+ iped.rcp.libs
+Export-Package: iped.rcp.viewers.bridge;x-internal:=true

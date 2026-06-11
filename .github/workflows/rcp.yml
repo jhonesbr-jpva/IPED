@@ -30,7 +30,16 @@ jobs:
         java-package: jdk+fx
         cache: maven
 
-    # xvfb provides the X display that SWT/SWTBot tests require on GTK;
-    # it is harmless for packaging-only builds (Phase 1 skeleton).
+    # The RCP reactor consumes the other IPED modules as binary Maven
+    # dependencies (research R2/R3 — the iped.rcp.libs wrapper embeds
+    # iped-engine and its tree), so the local repository must be populated
+    # first. Tests are skipped here; the main maven.yml job covers them.
+    - name: Install IPED modules to the local repository
+      run: mvn -B clean install -DskipTests --file pom.xml
+
+    # xvfb provides the X display that SWT/SWTBot tests require on GTK.
+    # UI tests (iped.rcp.tests.swtbot) stay skipped until a reference case
+    # is available on CI (-DskipUiTests=false -Dcase.dir=...); the headless
+    # parity tests that need no case data run here (T013).
     - name: Build RCP reactor
       run: xvfb-run -a mvn -B -f iped-rcp/pom.xml clean verify

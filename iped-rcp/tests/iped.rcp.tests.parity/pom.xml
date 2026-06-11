@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Headless parity harness (T013, research R11): runs the RCP core
+         services and the engine API in a PLAIN JVM (no OSGi), comparing
+         behavior/counts against the frozen baseline of the current UI
+         (parity-inventory.md).
+
+         Usage:
+           mvn -f iped-rcp/pom.xml -pl tests/iped.rcp.tests.parity test \
+               -Dcase.dir=<path-to-reference-case>
+
+         Tests that need a real case are skipped (JUnit assumption) when
+         -Dcase.dir is absent, keeping CI green without case data.
+
+         Note: iped.rcp.libs is excluded — its nested jars are invisible on a
+         flat classpath; the engine comes directly from iped:iped-engine,
+         which is exactly the point (same code paths as the report
+         generator and other plain-classpath consumers). -->
+    <artifactId>iped.rcp.tests.parity</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.core</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>iped.rcp</groupId>
+                    <artifactId>iped.rcp.libs</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <!-- Same JVM contract as the legacy launchers (003
+                         migration) + product .ini: engine module opens and
+                         the SecurityManager opt-in used by
+                         Configuration.loadConfigurables. -->
+                    <argLine>-Xmx4g
+                        -Djava.security.manager=allow
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                        --add-opens=java.base/java.lang=ALL-UNNAMED
+                        --add-opens=java.base/java.math=ALL-UNNAMED
+                        --add-opens=java.base/java.net=ALL-UNNAMED
+                        --add-opens=java.base/java.io=ALL-UNNAMED
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/java.text=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                    <systemPropertyVariables>
+                        <case.dir>${case.dir}</case.dir>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <properties>
+        <!-- empty default so the property reference above never fails -->
+        <case.dir></case.dir>
+    </properties>
+</project>

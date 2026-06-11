@@ -32,6 +32,13 @@
              specs/004-rcp-gui-migration/tasks.md). -->
         <module>bundles/iped.rcp.libs</module>
         <module>bundles/iped.rcp.api</module>
+        <module>bundles/iped.rcp.core</module>
+        <module>bundles/iped.rcp.viewers</module>
+        <module>bundles/iped.rcp.app</module>
+        <module>features/iped.rcp.feature</module>
+        <module>products/iped.rcp.product</module>
+        <module>tests/iped.rcp.tests.parity</module>
+        <module>tests/iped.rcp.tests.swtbot</module>
     </modules>
 
     <build>
@@ -41,6 +48,19 @@
                 <artifactId>tycho-maven-plugin</artifactId>
                 <version>${tycho.version}</version>
                 <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <!-- Generates OSGI-INF component XML from OSGi DS annotations
+                     (research R6 — headless services as Declarative Services).
+                     Defaults: annotations are injected into the compile
+                     classpath (no Import-Package needed) and the
+                     Service-Component header is added automatically. -->
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-ds-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <enabled>true</enabled>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>

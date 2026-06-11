@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IPED RCP Application
+Bundle-SymbolicName: iped.rcp.app;singleton:=true
+Bundle-Version: 4.4.0.qualifier
+Bundle-Vendor: IPED
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: iped.rcp.app
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.swt,
+ org.eclipse.jface,
+ org.eclipse.e4.ui.model.workbench,
+ org.eclipse.e4.ui.workbench,
+ org.eclipse.e4.core.contexts,
+ org.eclipse.e4.core.di,
+ org.eclipse.e4.core.services,
+ iped.rcp.api,
+ iped.rcp.core,
+ iped.rcp.libs
+Export-Package: iped.rcp.app;x-internal:=true
