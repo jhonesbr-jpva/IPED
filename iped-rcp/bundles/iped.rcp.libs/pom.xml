@@ -62,7 +62,9 @@
                                (e.g. org.apache.lucene.analysis between core and
                                analysis-common); they share this single class
                                space, so only a benign bnd warning is expected. -->
-                        <Export-Package>iped.*,org.sleuthkit.datamodel,org.slf4j,org.apache.lucene.*</Export-Package>
+                        <!-- org.apache.tika.*: item metadata surface consumed by
+                             ItemAccessService/viewers parts (T020/US1). -->
+                        <Export-Package>iped.*,org.sleuthkit.datamodel,org.slf4j,org.apache.lucene.*,org.apache.tika.*</Export-Package>
                         <!-- Self-contained: never wire engine internals to other
                              bundles; JDK packages come from the boot delegation. -->
                         <Import-Package>!*</Import-Package>

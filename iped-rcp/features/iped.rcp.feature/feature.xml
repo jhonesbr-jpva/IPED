@@ -18,6 +18,7 @@
    <plugin id="iped.rcp.api" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
    <plugin id="iped.rcp.core" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
    <plugin id="iped.rcp.viewers" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
+   <plugin id="iped.rcp.views" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
    <plugin id="iped.rcp.app" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
 
 </feature>

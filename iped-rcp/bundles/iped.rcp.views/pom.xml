@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Native SWT/JFace workbench parts of the analysis UI (US1+):
+         search bar, virtual results table, aux tables, bookmark actions,
+         export and report (tasks T016-T023). -->
+    <artifactId>iped.rcp.views</artifactId>
+    <packaging>eclipse-plugin</packaging>
+
+    <dependencies>
+        <!-- per-module pomDependencies=consider rule: the engine wrapper must
+             join this module's target platform -->
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.libs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

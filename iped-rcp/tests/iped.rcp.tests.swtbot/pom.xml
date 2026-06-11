@@ -38,6 +38,18 @@
     <build>
         <plugins>
             <plugin>
+                <!-- the OSGi service lookup of TriageFlowTest trips ECJ
+                     access rules (org.osgi.framework resolved from the
+                     system bundle is flagged forbidden); demote to warning
+                     in this TEST harness module only -->
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-compiler-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <compilerArgument>-err:-forbidden</compilerArgument>
+                </configuration>
+            </plugin>
+            <plugin>
                 <!-- the whole product must be in the test runtime, not only
                      the transitive requirements of this test bundle -->
                 <groupId>org.eclipse.tycho</groupId>
@@ -63,7 +75,11 @@
                     <skipTests>${skipUiTests}</skipTests>
                     <failIfNoTests>false</failIfNoTests>
                     <!-- SWTBot discipline: harness owns the UI, tests run off
-                         the UI thread -->
+                         the UI thread. The UI harness insists on provisioning
+                         org.eclipse.ui.ide.application (3.x IDE app) even
+                         though the application/product launched are ours —
+                         that bundle is added to the .target for the test
+                         runtime only (see comment there) -->
                     <useUIHarness>true</useUIHarness>
                     <useUIThread>false</useUIThread>
                     <application>org.eclipse.e4.ui.workbench.swt.E4Application</application>

@@ -14,6 +14,9 @@ Require-Bundle: iped.rcp.api,
  org.eclipse.e4.ui.workbench
 Import-Package: jakarta.annotation,
  org.osgi.service.event
-Export-Package: iped.rcp.core.events;x-internal:=true,
+Export-Package: iped.rcp.core.bookmarks;x-internal:=true,
+ iped.rcp.core.events;x-internal:=true,
  iped.rcp.core.i18n;x-internal:=true,
+ iped.rcp.core.items;x-internal:=true,
+ iped.rcp.core.search;x-internal:=true,
  iped.rcp.core.session;x-internal:=true

@@ -111,7 +111,16 @@ public class LifeCycle {
             } else if (arg.startsWith("-")) {
                 LOGGER.debug("Ignoring launcher argument {}", arg);
             } else {
-                casePaths.add(new File(arg).getAbsoluteFile().toPath());
+                File candidate = new File(arg).getAbsoluteFile();
+                // same shapes AppMain accepts: a folder (case or tree of
+                // cases) or a .txt multicase list. Anything else is a
+                // launcher/test-harness artifact (e.g. tycho-surefire passes
+                // its surefire.properties as a program argument)
+                if (candidate.isDirectory() || arg.toLowerCase().endsWith(".txt")) {
+                    casePaths.add(candidate.toPath());
+                } else {
+                    LOGGER.debug("Ignoring non-case program argument {}", arg);
+                }
             }
         }
         return casePaths;

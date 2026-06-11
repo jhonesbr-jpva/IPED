@@ -17,8 +17,14 @@
         <children xsi:type="basic:PartSashContainer" xmi:id="_sashRoot" elementId="iped.rcp.app.sash.root" horizontal="true">
           <children xsi:type="basic:PartStack" xmi:id="_stackLeft" elementId="iped.rcp.app.partstack.left" containerData="2500"/>
           <children xsi:type="basic:PartSashContainer" xmi:id="_sashCenter" elementId="iped.rcp.app.sash.center" horizontal="false" containerData="5000">
-            <children xsi:type="basic:PartStack" xmi:id="_stackCenter" elementId="iped.rcp.app.partstack.center" containerData="6500"/>
-            <children xsi:type="basic:PartStack" xmi:id="_stackBottom" elementId="iped.rcp.app.partstack.bottom" containerData="3500"/>
+            <children xsi:type="basic:Part" xmi:id="_partSearchBar" elementId="iped.rcp.views.part.searchbar" containerData="600" label="Search" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.SearchBarPart"/>
+            <children xsi:type="basic:PartStack" xmi:id="_stackCenter" elementId="iped.rcp.app.partstack.center" containerData="6000" selectedElement="_partResults">
+              <children xsi:type="basic:Part" xmi:id="_partResults" elementId="iped.rcp.views.part.results" label="Results" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.ResultsTablePart"/>
+              <children xsi:type="basic:Part" xmi:id="_partViewer" elementId="iped.rcp.viewers.part.content" label="Viewer" closeable="false" contributionURI="bundleclass://iped.rcp.viewers/iped.rcp.viewers.part.ContentViewerPart"/>
+            </children>
+            <children xsi:type="basic:PartStack" xmi:id="_stackBottom" elementId="iped.rcp.app.partstack.bottom" containerData="3400" selectedElement="_partAuxTables">
+              <children xsi:type="basic:Part" xmi:id="_partAuxTables" elementId="iped.rcp.views.part.auxtables" label="Related Items" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.AuxTablesPart"/>
+            </children>
           </children>
           <children xsi:type="basic:PartStack" xmi:id="_stackRight" elementId="iped.rcp.app.partstack.right" containerData="2500"/>
         </children>

@@ -34,6 +34,7 @@
         <module>bundles/iped.rcp.api</module>
         <module>bundles/iped.rcp.core</module>
         <module>bundles/iped.rcp.viewers</module>
+        <module>bundles/iped.rcp.views</module>
         <module>bundles/iped.rcp.app</module>
         <module>features/iped.rcp.feature</module>
         <module>products/iped.rcp.product</module>

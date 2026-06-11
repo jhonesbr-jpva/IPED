@@ -1,0 +1,171 @@
+package iped.rcp.core.search;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import iped.data.IItemId;
+import iped.engine.data.IPEDMultiSource;
+import iped.engine.search.IPEDSearcher;
+import iped.engine.search.MultiSearchResult;
+import iped.exception.ParseException;
+import iped.exception.QueryNodeException;
+import iped.rcp.api.ISearchService;
+import iped.rcp.api.ItemId;
+import iped.rcp.api.UiEventTopics;
+import iped.rcp.core.events.IUiEventPublisher;
+import iped.rcp.core.session.CaseSession;
+import iped.rcp.core.session.ICaseSessionManager;
+
+/**
+ * Search service over the open case session (tasks T015/T016, FR-006): same
+ * query syntax and engine code path as the current UI
+ * ({@code CaseSearcherFilter} without UI filters — composed filters arrive
+ * with US2/T031).
+ *
+ * <p>
+ * Besides the provisional extension API ({@link ISearchService}), this
+ * service owns the ACTIVE result set of the workbench (data-model
+ * "ResultSetModel" backing): {@link #runSearch(String)} and
+ * {@link #sortBy(String, boolean)} swap an immutable {@link ResultSet}
+ * atomically and publish {@link UiEventTopics#RESULTS_CHANGED} with the new
+ * generation. Both are synchronous and potentially slow — UI callers run
+ * them off the UI thread (Jobs); the parity harness calls them directly.
+ */
+@Component(service = { ISearchService.class, SearchService.class })
+public class SearchService implements ISearchService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchService.class);
+
+    private final AtomicLong generation = new AtomicLong();
+    private volatile ResultSet current;
+
+    @Reference
+    private ICaseSessionManager sessionManager;
+
+    /** Optional so the service also runs headless (parity harness). */
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.STATIC)
+    private IUiEventPublisher eventPublisher;
+
+    /** DS constructor. */
+    public SearchService() {
+    }
+
+    /** Headless harness constructor (no OSGi injection). */
+    public SearchService(ICaseSessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
+
+    @Override
+    public long count(String query) {
+        return doSearch(query).getLength();
+    }
+
+    @Override
+    public List<ItemId> search(String query, int offset, int limit) {
+        MultiSearchResult result = doSearch(query);
+        return page(result, offset, limit);
+    }
+
+    /**
+     * Runs the query and makes the outcome the active result set, publishing
+     * {@code results/CHANGED}.
+     */
+    public ResultSet runSearch(String queryText) {
+        MultiSearchResult result = doSearch(queryText);
+        ResultSet next = new ResultSet(queryText == null ? "" : queryText, result, generation.incrementAndGet(), null,
+                true);
+        current = next;
+        publishResultsChanged(next);
+        return next;
+    }
+
+    /**
+     * Reorders the active result set by an indexed field (or a special
+     * {@link ResultSorter} key), engine-side. No-op returning the current set
+     * when no search ran yet.
+     */
+    public ResultSet sortBy(String field, boolean ascending) {
+        ResultSet base = current;
+        if (base == null) {
+            return null;
+        }
+        try {
+            MultiSearchResult sorted = ResultSorter.sort(activeSource(), base.result(), field, ascending);
+            sorted.setIPEDSource(activeSource());
+            ResultSet next = new ResultSet(base.queryText(), sorted, generation.incrementAndGet(), field, ascending);
+            current = next;
+            publishResultsChanged(next);
+            return next;
+        } catch (IOException e) {
+            throw new IllegalStateException("Error sorting results by " + field, e);
+        }
+    }
+
+    /** The active result set, or null before the first search. */
+    public ResultSet getCurrent() {
+        return current;
+    }
+
+    /** Clears the active result set (case closed). */
+    public void clear() {
+        current = null;
+    }
+
+    private MultiSearchResult doSearch(String queryText) {
+        IPEDMultiSource source = activeSource();
+        String text = queryText == null ? "" : queryText;
+        long start = System.currentTimeMillis();
+        try {
+            IPEDSearcher searcher = new IPEDSearcher(source, text);
+            MultiSearchResult result = searcher.multiSearch();
+            result.setIpedSearcher(searcher);
+            result.setIPEDSource(source);
+            LOGGER.info("Search took {}ms, {} hits", System.currentTimeMillis() - start, result.getLength());
+            return result;
+        } catch (RuntimeException e) {
+            // IPEDSearcher wraps query syntax errors in RuntimeException
+            Throwable cause = e.getCause();
+            if (cause instanceof ParseException || cause instanceof QueryNodeException) {
+                throw new IllegalArgumentException(cause.getMessage(), cause);
+            }
+            throw e;
+        } catch (IOException e) {
+            throw new IllegalStateException("Search failed: " + e.getMessage(), e);
+        }
+    }
+
+    private IPEDMultiSource activeSource() {
+        CaseSession session = sessionManager != null ? sessionManager.getSession() : null;
+        if (session == null) {
+            throw new IllegalStateException("No case session is open");
+        }
+        return session.getSource();
+    }
+
+    private static List<ItemId> page(MultiSearchResult result, int offset, int limit) {
+        int from = Math.max(0, offset);
+        long to = Math.min(result.getLength(), (long) from + Math.max(0, limit));
+        List<ItemId> page = new ArrayList<>((int) (to - from));
+        for (int i = from; i < to; i++) {
+            IItemId item = result.getItem(i);
+            page.add(new ItemId(item.getSourceId(), item.getId()));
+        }
+        return page;
+    }
+
+    private void publishResultsChanged(ResultSet resultSet) {
+        IUiEventPublisher publisher = eventPublisher;
+        if (publisher != null) {
+            publisher.post(UiEventTopics.RESULTS_CHANGED, resultSet.generation());
+        }
+    }
+}

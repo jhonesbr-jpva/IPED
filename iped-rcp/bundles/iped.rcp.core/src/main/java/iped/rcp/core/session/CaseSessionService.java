@@ -355,6 +355,10 @@ public class CaseSessionService implements ICaseSessionManager {
                 PreviewRepositoryManager.configureReadOnly(atomic.getModuleDir());
             } catch (IOException e) {
                 LOGGER.error("Error configuring preview repository for {}", atomic.getCaseDir(), e);
+            } catch (IllegalStateException e) {
+                // the manager is process-global: reopening the same case in
+                // this JVM (close/open cycles, test harness) is legitimate
+                LOGGER.debug("Preview repository already configured for {}", atomic.getCaseDir());
             }
         }
     }

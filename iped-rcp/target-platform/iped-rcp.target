@@ -19,6 +19,12 @@
             <repository location="https://download.eclipse.org/releases/2024-06/"/>
             <unit id="org.eclipse.e4.rcp.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
+            <!-- TEST RUNTIME ONLY (T014): tycho-surefire's UI harness
+                 unconditionally provisions the 3.x IDE application bundle,
+                 even though the launched application/product are ours (pure
+                 e4). Not referenced by iped.rcp.feature, so the shipped
+                 product stays e4-only. -->
+            <unit id="org.eclipse.ui.ide.application" version="0.0.0"/>
         </location>
         <!-- Nebula Gallery (R12 — virtual gallery widget). -->
         <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">

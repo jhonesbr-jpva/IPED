@@ -17,8 +17,8 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| BU-01 | Sintaxe de consulta atual aceita integralmente (mesmos resultados por consulta) | `QueryComboBox`, `UICaseSearcherFilter` | pendente | harness (T015) |
-| BU-02 | Histórico de consultas da sessão/persistido | `QueryComboBox` | pendente | SWTBot (T014) |
+| BU-01 | Sintaxe de consulta atual aceita integralmente (mesmos resultados por consulta) | `QueryComboBox`, `UICaseSearcherFilter` | **paridade** (2026-06-11) | harness (T015 verde — contagens idênticas p/ conjunto congelado de consultas) |
+| BU-02 | Histórico de consultas da sessão/persistido | `QueryComboBox` | **paridade** (2026-06-11) | SWTBot (T014 verde no produto — histórico contém a consulta executada; persistência em prefs do workspace) |
 | BU-03 | Busca disparada por Enter e por botão; indicador de execução; cancelável | `App` toolbar | pendente | SWTBot |
 | BU-04 | Contagem de itens retornados exibida (status bar) | `App` status | pendente | SWTBot |
 
@@ -26,7 +26,7 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| TB-01 | Ordenação por qualquer coluna, asc/desc, fora da UI thread | `ResultTableModel`, `parallelsorter` | pendente | SWTBot + harness |
+| TB-01 | Ordenação por qualquer coluna, asc/desc, fora da UI thread | `ResultTableModel`, `parallelsorter` | **paridade** (2026-06-11) | SWTBot (T014 — clique no header reordena, verificado ordenado) + harness (T015 — conjunto preservado, asc/desc determinístico; nota: descendente = inverso exato, ver log) |
 | TB-02 | Seleção múltipla (Ctrl/Shift) propagada a viewers/painéis | `ResultTableListener` | pendente | SWTBot |
 | TB-03 | Checkbox de marcação por item + marcar seleção (Espaço) | `App.java:1717` (VK_SPACE) | pendente | SWTBot |
 | TB-04 | Colunas visíveis/ordem/largura configuráveis e persistidas | `ColumnsManager` | pendente | SWTBot (T018) |
@@ -115,7 +115,7 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 | BM-02 | Cor e comentário por bookmark | `BookmarksManager` | pendente | SWTBot |
 | BM-03 | Adicionar/remover seleção e itens marcados (checked) a bookmark | `BookmarksController` | pendente | SWTBot |
 | BM-04 | União de bookmarks | `BookmarksManager` | pendente | SWTBot |
-| BM-05 | Persistência no caso, formato atual, gravação assíncrona segura | `Bookmarks.saveState`/`SaveStateThread` | pendente | harness (T064) |
+| BM-05 | Persistência no caso, formato atual, gravação assíncrona segura | `Bookmarks.saveState`/`SaveStateThread` | **paridade** (2026-06-11) | harness (T064 verde — incl. bookmark 100k itens/BitmapBookmarks e escrita concorrente) |
 
 ## 11. Exportação e relatório (FR-015)
 
@@ -170,8 +170,8 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Status | Evidência |
 |---|---|---|---|
-| IB-01 | Ida: gravado pela pilha RCP (contexto OSGi) → lido pelo engine plano | pendente | harness (T064) |
-| IB-02 | Volta: gravado pelo engine plano/UI atual → lido pela pilha RCP | pendente | harness (T064) |
+| IB-01 | Ida: gravado pela pilha RCP (contexto OSGi) → lido pelo engine plano | **paridade** (2026-06-11) | harness (T064 verde — JVM filha plana, dump canônico com CRC de pertencimento; perna OSGi-real coberta pelo passo de bookmark do T014) |
+| IB-02 | Volta: gravado pelo engine plano/UI atual → lido pela pilha RCP | **paridade** (2026-06-11) | harness (T064 verde — nomes/cor/comentário/membros/checked idênticos após `loadState`) |
 | IB-03 | Relatório HTML gerado a partir de bookmarks gravados pela nova UI | pendente | harness/manual |
 | IB-04 | Acentuação/caracteres especiais em nomes e comentários | pendente | harness |
 | IB-05 | Bookmark ≥ 100 mil itens (`BitmapBookmarks`) | pendente | harness |
@@ -208,3 +208,63 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 |---|---|---|---|
 | 2026-06-10 | Congelamento inicial | — (baseline `514485a9d`) | — |
 | 2026-06-10 | Remediação I1 (analyze) | PG-09 reescrito: modo interativo → quase-ao-vivo (FR-029); visibilidade NRT de itens não consolidados registrada como **divergência justificada** | usuário (opção A) |
+
+---
+
+## Log de atualizações
+
+### 2026-06-11 — Passada US1 (Phase 3, harness headless)
+
+Evidência: `mvn -f iped-rcp/pom.xml -pl tests/iped.rcp.tests.parity test`
+`-Dcase.dir=F:\test_yara_java21` — **11 testes, 0 falhas** (T015 + T064 +
+smoke de sessão; 2 skips = pernas multicase sem `-Dcase.dir2`).
+
+Status alterados: BU-01, BM-05, IB-01, IB-02 → `paridade`.
+
+Evidência parcial obtida (linhas continuam `pendente` até a perna SWTBot/
+manual): TB-01 (ordenação engine-side validada no harness — conjunto
+preservado, asc/desc determinístico), BU-02/BU-03 (implementados, T014
+escrito), BM-01..03 (escritas validadas via serviço no T064), EX-01/EX-03
+(implementados, sem comparação de saída ainda).
+
+Divergências justificadas REGISTRADAS nesta iteração (a aprovar no gate
+T058):
+
+- **TB-01**: ordem descendente na nova UI = inverso exato da ascendente
+  (determinístico); o sorter legado baseado em toggle podia divergir em
+  empates. Sem efeito em contagens/conjuntos.
+- **TB-04**: colunas visíveis/ordem persistem nas preferências do workspace
+  e4 (`~/.iped/ui-workspaces/...`, R5) em vez de `visibleCols.dat` — fronteira
+  estado-de-workspace × configuração do data-model.
+- **TA-01..04**: exibição das tabelas auxiliares cap em 1000 linhas neste
+  incremento (título mostra o total real); queries idênticas às legadas.
+- **VW-xx**: viewers registrados neste incremento: Metadata, Image, Tiff,
+  Html, Email (com attachment searcher), IcePDF. Texto-com-realce, hex,
+  LibreOffice, áudio/vídeo e CAD permanecem `pendente` (próxima iteração
+  US1).
+- **T064 nota de método**: a perna "contexto OSGi real" da ida é exercitada
+  pelo passo de bookmark do T014 dentro do produto lançado pelo harness
+  tycho-surefire; o round-trip cross-classpath usa JVM filha plana (mesmo
+  caminho do gerador de relatório).
+
+### 2026-06-11 (2) — T014 verde no produto real (Windows)
+
+Evidência: `mvn -f iped-rcp/pom.xml -pl tests/iped.rcp.tests.swtbot verify`
+`-DskipUiTests=false -Dcase.dir=F:\test_yara_java21` — TriageFlowTest 1/1
+em 26 s no workbench e4 lançado pelo tycho-surefire (Windows; perna Linux/
+Xvfb fica com o CI `rcp.yml`).
+
+Status alterados: BU-02, TB-01 → `paridade`.
+
+Notas de harness (relevantes para reprodução): o UI harness do
+tycho-surefire provisiona `org.eclipse.ui.ide.application` incondicionalmente
+(adicionado ao `.target` só para o runtime de teste; fora da feature do
+produto) e passa o caminho do `surefire.properties` como argumento de
+programa (o `LifeCycle` passou a aceitar apenas diretórios/listas `.txt`
+como caminhos de caso).
+
+Cobertura parcial adicional do T014 (linhas seguem `pendente` até evidência
+dedicada): BU-03 (busca por botão exercitada; Enter implementado),
+BM-01..03 (criação/remoção via serviço dentro do produto; diálogo
+gerenciador sem teste dedicado), EX-01 (exportação produz arquivos no
+destino; comparação byte-a-byte com a saída legada pendente).
