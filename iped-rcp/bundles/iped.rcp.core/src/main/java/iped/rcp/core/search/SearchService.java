@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.lucene.search.Query;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +18,14 @@ import iped.data.IItemId;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
+import iped.engine.search.QueryBuilder;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.rcp.api.ISearchService;
 import iped.rcp.api.ItemId;
 import iped.rcp.api.UiEventTopics;
 import iped.rcp.core.events.IUiEventPublisher;
+import iped.rcp.core.filters.FilterStateService;
 import iped.rcp.core.session.CaseSession;
 import iped.rcp.core.session.ICaseSessionManager;
 
@@ -47,6 +51,7 @@ public class SearchService implements ISearchService {
 
     private final AtomicLong generation = new AtomicLong();
     private volatile ResultSet current;
+    private volatile String lastQueryText;
 
     @Reference
     private ICaseSessionManager sessionManager;
@@ -55,6 +60,13 @@ public class SearchService implements ISearchService {
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.STATIC)
     private IUiEventPublisher eventPublisher;
 
+    /**
+     * Filter composition (US2/T031); optional so the plain search path of US1
+     * keeps working without it (greedy: binds whenever the service exists).
+     */
+    @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY)
+    private FilterStateService filterState;
+
     /** DS constructor. */
     public SearchService() {
     }
@@ -62,6 +74,12 @@ public class SearchService implements ISearchService {
     /** Headless harness constructor (no OSGi injection). */
     public SearchService(ICaseSessionManager sessionManager) {
         this.sessionManager = sessionManager;
+    }
+
+    /** Headless harness constructor with filter composition (T025). */
+    public SearchService(ICaseSessionManager sessionManager, FilterStateService filterState) {
+        this.sessionManager = sessionManager;
+        this.filterState = filterState;
     }
 
     @Override
@@ -81,11 +99,22 @@ public class SearchService implements ISearchService {
      */
     public ResultSet runSearch(String queryText) {
         MultiSearchResult result = doSearch(queryText);
-        ResultSet next = new ResultSet(queryText == null ? "" : queryText, result, generation.incrementAndGet(), null,
-                true);
+        lastQueryText = queryText == null ? "" : queryText;
+        ResultSet next = new ResultSet(lastQueryText, result, generation.incrementAndGet(), null, true);
         current = next;
         publishResultsChanged(next);
         return next;
+    }
+
+    /**
+     * Re-runs the last executed query with the current filter composition
+     * (legacy {@code updateFileListing()} discipline — parts call this after
+     * mutating {@link FilterStateService} slots). Match-all when no search
+     * ran yet.
+     */
+    public ResultSet refresh() {
+        String text = lastQueryText;
+        return runSearch(text == null ? "" : text);
     }
 
     /**
@@ -124,13 +153,31 @@ public class SearchService implements ISearchService {
         IPEDMultiSource source = activeSource();
         String text = queryText == null ? "" : queryText;
         long start = System.currentTimeMillis();
+        FilterStateService filters = filterState;
         try {
-            IPEDSearcher searcher = new IPEDSearcher(source, text);
+            IPEDSearcher searcher;
+            if (filters != null && filters.hasQueryFilters()) {
+                // legacy CaseSearcherFilter path: parse the text and AND the
+                // active UI query filters into it
+                Query base = new QueryBuilder(source).getQuery(text);
+                searcher = new IPEDSearcher(source, filters.composeQuery(base));
+            } else {
+                // verbatim text path (T015 learning: ""/"*" parse differently)
+                searcher = new IPEDSearcher(source, text);
+            }
             MultiSearchResult result = searcher.multiSearch();
             result.setIpedSearcher(searcher);
             result.setIPEDSource(source);
+            if (filters != null && filters.hasResultSetFilters()) {
+                result = filters.postProcess(source, result);
+                result.setIpedSearcher(searcher);
+                result.setIPEDSource(source);
+            }
             LOGGER.info("Search took {}ms, {} hits", System.currentTimeMillis() - start, result.getLength());
             return result;
+        } catch (ParseException | QueryNodeException e) {
+            // QueryBuilder throws checked exceptions for syntax errors
+            throw new IllegalArgumentException(e.getMessage(), e);
         } catch (RuntimeException e) {
             // IPEDSearcher wraps query syntax errors in RuntimeException
             Throwable cause = e.getCause();

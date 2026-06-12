@@ -46,41 +46,41 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| GA-01 | Miniaturas de imagens com carregamento incremental | `GalleryTable`, `GalleryModel` | pendente | SWTBot (T024) |
+| GA-01 | Miniaturas de imagens com carregamento incremental | `GalleryTable`, `GalleryModel` | **paridade** (2026-06-12) | SWTBot (T024 verde — galeria virtual espelha o resultado ativo; pipeline de decode 1:1 do `GalleryModel`) |
 | GA-02 | Miniaturas de vídeo (frames múltiplos no hover/tile) | `GalleryModel` | pendente | manual |
 | GA-03 | Tamanho de célula ajustável (zoom da galeria) | `GalleryTable` | pendente | SWTBot |
-| GA-04 | Seleção/marcação sincronizadas com a tabela; atalhos próprios | `GalleryTable` (getKeyStroke) | pendente | SWTBot |
-| GA-05 | Rolagem responsiva com ≥ 100 mil imagens (SC-004) | `GalleryModel` cache | pendente | smoke (T056) |
+| GA-04 | Seleção/marcação sincronizadas com a tabela; atalhos próprios | `GalleryTable` (getKeyStroke) | pendente | SWTBot (parcial: galeria→seleção implementado; tabela→galeria, checkbox e atalhos pendentes) |
+| GA-05 | Rolagem responsiva com ≥ 100 mil imagens (SC-004) | `GalleryModel` cache | pendente | smoke (T056) (parcial: T024 rola 502k itens virtuais sem bloquear a UI thread > 1 s) |
 
 ## 5. Árvores de navegação (FR-009)
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| AR-01 | Árvore de evidências/filesystem (lazy), filtro por subárvore | `TreeViewModel`, `TreeListener` | pendente | SWTBot (T027) |
-| AR-02 | Árvore de categorias com contagens, seleção múltipla combinável | `CategoryTreeModel` | pendente | SWTBot + harness |
-| AR-03 | Árvore de bookmarks (cores, contagens) | `BookmarksTreeModel` | pendente | SWTBot |
-| AR-04 | Árvore de filtros de IA | `AIFiltersTreeListener`, `AIFiltersConfig.json` | pendente | SWTBot |
+| AR-01 | Árvore de evidências/filesystem (lazy), filtro por subárvore | `TreeViewModel`, `TreeListener` | pendente | SWTBot (T027) (implementado — queries/filtros 1:1; sem teste SWTBot dedicado ainda) |
+| AR-02 | Árvore de categorias com contagens, seleção múltipla combinável | `CategoryTreeModel` | **paridade** (2026-06-12) | SWTBot (T024 — seleção no produto filtra à contagem do label) + harness (T025 — contagem == árvore == composição legada) |
+| AR-03 | Árvore de bookmarks (cores, contagens) | `BookmarksTreeModel` | pendente | SWTBot (parcial: filtro de seleção validado no harness T025; contagens no label; cores pendentes) |
+| AR-04 | Árvore de filtros de IA | `AIFiltersTreeListener`, `AIFiltersConfig.json` | pendente | SWTBot (implementado — porte do `AIFiltersLoader`; sem evidência dedicada) |
 
 ## 6. Metadados / facetas (FR-010)
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| MD-01 | Agregação de valores por campo (contagens ordenáveis) | `MetadataSearch`, `ValueCount` | pendente | harness |
-| MD-02 | Faixas numéricas e monetárias | `RangeCount`, `MoneyCount` | pendente | harness |
-| MD-03 | Filtrar por valores selecionados (combinável) | `ValueCountQueryFilter` | pendente | harness (T025) |
+| MD-01 | Agregação de valores por campo (contagens ordenáveis) | `MetadataSearch`, `ValueCount` | **paridade** (2026-06-12) | harness (T025 — contentType particiona o resultado; cada valor == query legada `field:"valor"`) |
+| MD-02 | Faixas numéricas e monetárias | `RangeCount`, `MoneyCount` | **paridade** (2026-06-12) | harness (T025 — ranges de `size` == queries `[min TO max]`; `MoneyCount` portado 1:1, sem leg específica — caso sem `regex:MONEY`) |
+| MD-03 | Filtrar por valores selecionados (combinável) | `ValueCountQueryFilter` | **paridade** (2026-06-12) | harness (T025 — `ValueCountFilter`/`getIdsWithOrd` com o mesmo aggregator dos counts; valores e ranges) |
 | MD-04 | Painel de metadados do item selecionado | `metadataPanel` | pendente | SWTBot |
 
 ## 7. Filtros e similaridade (FR-013/016)
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| FI-01 | Combinação E/OU/NÃO de filtros ativos | `FilterManager`, `filterdecisiontree` | pendente | harness (T025) |
-| FI-02 | Filtros salvos: criar, aplicar, persistir no formato atual | `FiltersPanel` | pendente | SWTBot + harness |
-| FI-03 | Filtros default pré-instalados | `conf/DefaultFilters.txt` | pendente | harness |
-| FI-04 | Filtro de duplicatas | `DuplicatesFilterer` | pendente | harness |
-| SI-01 | Busca por imagens similares (a partir de item/arquivo externo) | `SimilarImagesFilterer` | pendente | harness (T025) |
-| SI-02 | Busca por faces similares | `SimilarFacesSearchFilterer` | pendente | harness |
-| SI-03 | Busca por documentos similares | `SimilarDocumentFilterer` | pendente | harness |
+| FI-01 | Combinação E/OU/NÃO de filtros ativos | `FilterManager`, `filterdecisiontree` | **paridade** (2026-06-12) | harness (T025 — OR/AND/NOT/árvore mista (leaf de result-set) == álgebra de conjuntos; avaliação por bitsets como o `CombinedFilterer`) |
+| FI-02 | Filtros salvos: criar, aplicar, persistir no formato atual | `FiltersPanel` | pendente | SWTBot + harness (parcial: harness T025 carrega/compõe o formato atual; perna SWTBot do diálogo pendente) |
+| FI-03 | Filtros default pré-instalados | `conf/DefaultFilters.txt` | **paridade** (2026-06-12) | harness (T025 — DefaultFilters.txt do caso carregado, OBSOLETE removido, expressões compostas == baseline) |
+| FI-04 | Filtro de duplicatas | `DuplicatesFilterer` | **paridade** (2026-06-12) | harness (T025 — porte do `DynamicDuplicateFilter`) + SWTBot (T024 — toggle no produto combinado com categoria) |
+| SI-01 | Busca por imagens similares (a partir de item/arquivo externo) | `SimilarImagesFilterer` | pendente | harness (T025) (leg implementada e guardada por capacidade: skip no caso de referência sem `imageSimilarity`; rodar contra caso com a task habilitada; "arquivo externo" pendente) |
+| SI-02 | Busca por faces similares | `SimilarFacesSearchFilterer` | pendente | harness (leg implementada e guardada: skip sem `face_encodings` no caso) |
+| SI-03 | Busca por documentos similares | `SimilarDocumentFilterer` | **paridade** (2026-06-12) | harness (T025 — query do `SimilarDocumentSearch` (70%) composta == baseline) |
 
 ## 8. Viewers de conteúdo (FR-011)
 
@@ -268,3 +268,59 @@ dedicada): BU-03 (busca por botão exercitada; Enter implementado),
 BM-01..03 (criação/remoção via serviço dentro do produto; diálogo
 gerenciador sem teste dedicado), EX-01 (exportação produz arquivos no
 destino; comparação byte-a-byte com a saída legada pendente).
+
+### 2026-06-12 — Passada US2 (Phase 4: galeria, árvores, facetas, filtros, similaridade)
+
+Evidências: `mvn -f iped-rcp/pom.xml -pl tests/iped.rcp.tests.parity test`
+`-Dcase.dir=F:\test_yara_java21` — **22 testes, 0 falhas** (T025
+FilterParityTest 9 passes + 2 skips justificados; T015/T064/sessão
+revalidados após a integração `SearchService`×`FilterStateService`); e
+`mvn -f iped-rcp/pom.xml -pl tests/iped.rcp.tests.swtbot verify`
+`-DskipUiTests=false -Dcase.dir=F:\test_yara_java21` — **3 testes, 0
+falhas** (T024 FiltersGalleryTest 13 s + T014 TriageFlowTest 21 s no
+produto e4 real, Windows).
+
+Status alterados: GA-01, AR-02, MD-01, MD-02, MD-03, FI-01, FI-03, FI-04,
+SI-03 → `paridade`.
+
+Divergências justificadas REGISTRADAS nesta iteração (a aprovar no gate
+T058):
+
+- **FI-01/pipeline**: a ordem de aplicação dos result-set filters é FIXA e
+  determinística na nova UI (duplicatas → bookmarks → metadados → faces →
+  re-score de imagens → árvore combinada); no legado seguia a ordem de
+  registro dos filterers no `FilterManager`. Afeta apenas o CONJUNTO do
+  filtro de duplicatas quando combinado (primeira-ocorrência-por-hash sobre
+  resultado já filtrado vs não-filtrado) — contagens por filtro individual
+  idênticas.
+- **AR-03**: seleção simultânea de bookmarks + "[Sem Marcadores]" usa
+  `filterBookmarksOrNoBookmarks` (união — semântica do caminho bitmap
+  legado); o caminho não-bitmap legado descartava os bookmarks
+  selecionados nesse caso (comportamento considerado bug). Labels com
+  contagem (legado mostrava só nomes na árvore).
+- **BU/queries dos painéis**: histórico, colunas e demais preferências das
+  novas parts persistem em prefs e4 do workspace (R5) — já registrado na
+  passada US1.
+- **GA**: blur/gray (proteção do perito), miniaturas multi-frame de vídeo,
+  zoom de célula, checkbox de marcação e sync tabela→galeria ficam para
+  iteração complementar (linhas GA-02/03/04 continuam `pendente`).
+- **MetadataPanel**: grupos de propriedades/escala log/sem-ranges/ordenações
+  alternativas do painel legado ainda não expostos na part (agregador
+  portado já suporta; UI mínima Update/Filtrar/Limpar).
+- **SI-01/SI-02**: legs de paridade implementadas e guardadas por
+  capacidade do caso (skip explícito quando o caso não tem
+  `imageSimilarity`/`face_encodings`) — executar contra caso processado com
+  essas tasks antes do gate T058; busca por arquivo externo (imagem/face)
+  não portada nesta iteração.
+
+Notas de implementação relevantes ao gate (não-divergências):
+
+- Fix latente da Phase 2 descoberto no .log do workbench: `UiEventsAddon`
+  (T012) não instanciava no produto (CNFE de `MPart`) — faltava
+  `org.eclipse.e4.ui.model.workbench` no Require-Bundle de `iped.rcp.core`.
+  O T014 passava porque nada dependia do espelhamento de seleção no
+  contexto; corrigido nesta passada.
+- Lição JFace aplicada às 6 TreeViewers novas: o input do viewer não pode
+  ser o próprio elemento raiz (o `getRawChildren` do JFace resolve filhos
+  de elemento `equals` ao input via `getElements`, tornando a raiz filha de
+  si mesma em cadeia infinita). Input agora é `Object[]{root}`.

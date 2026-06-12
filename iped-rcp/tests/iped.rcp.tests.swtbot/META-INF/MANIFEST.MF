@@ -9,6 +9,7 @@ Automatic-Module-Name: iped.rcp.tests.swtbot
 Require-Bundle: org.eclipse.swtbot.swt.finder,
  org.eclipse.swt,
  org.junit,
+ org.eclipse.nebula.widgets.gallery,
  iped.rcp.api,
  iped.rcp.core
 Import-Package: org.osgi.framework

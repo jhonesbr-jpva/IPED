@@ -87,9 +87,22 @@ public class TriageFlowTest {
         int allItems = table.rowCount();
         assertTrue("reference case must list items", allItems > 0);
 
-        // query history keeps the executed query (QueryComboBox parity)
-        assertTrue("query history must remember the executed query",
-                Arrays.asList(query.items()).contains("*"));
+        // query history keeps the executed query (QueryComboBox parity).
+        // Waiting matters when another UI test ran before in the same
+        // workbench: the table may already have rows from a previous search,
+        // so the row-count wait above can pass before this search's job
+        // finishes updating the history.
+        bot.waitUntil(new DefaultCondition() {
+            @Override
+            public boolean test() {
+                return Arrays.asList(query.items()).contains("*");
+            }
+
+            @Override
+            public String getFailureMessage() {
+                return "query history must remember the executed query";
+            }
+        }, SEARCH_TIMEOUT_MS);
 
         // 2. sort by a column (US1 scenario 2): click the name column header
         // and check the first cell changes deterministically

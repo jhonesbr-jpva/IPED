@@ -15,18 +15,27 @@
     <children xsi:type="advanced:PerspectiveStack" xmi:id="_perspectiveStack" elementId="iped.rcp.app.perspectivestack" selectedElement="_perspectiveMain">
       <children xsi:type="advanced:Perspective" xmi:id="_perspectiveMain" elementId="iped.rcp.app.perspective.main">
         <children xsi:type="basic:PartSashContainer" xmi:id="_sashRoot" elementId="iped.rcp.app.sash.root" horizontal="true">
-          <children xsi:type="basic:PartStack" xmi:id="_stackLeft" elementId="iped.rcp.app.partstack.left" containerData="2500"/>
+          <children xsi:type="basic:PartStack" xmi:id="_stackLeft" elementId="iped.rcp.app.partstack.left" containerData="2500" selectedElement="_partEvidenceTree">
+            <children xsi:type="basic:Part" xmi:id="_partEvidenceTree" elementId="iped.rcp.views.part.evidencetree" label="Evidence" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.trees.EvidenceTreePart"/>
+            <children xsi:type="basic:Part" xmi:id="_partCategoryTree" elementId="iped.rcp.views.part.categorytree" label="Categories" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.trees.CategoryTreePart"/>
+            <children xsi:type="basic:Part" xmi:id="_partBookmarkTree" elementId="iped.rcp.views.part.bookmarktree" label="Bookmarks" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.trees.BookmarkTreePart"/>
+            <children xsi:type="basic:Part" xmi:id="_partAiFilters" elementId="iped.rcp.views.part.aifilters" label="AI Filters" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.trees.AiFiltersTreePart"/>
+          </children>
           <children xsi:type="basic:PartSashContainer" xmi:id="_sashCenter" elementId="iped.rcp.app.sash.center" horizontal="false" containerData="5000">
             <children xsi:type="basic:Part" xmi:id="_partSearchBar" elementId="iped.rcp.views.part.searchbar" containerData="600" label="Search" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.SearchBarPart"/>
             <children xsi:type="basic:PartStack" xmi:id="_stackCenter" elementId="iped.rcp.app.partstack.center" containerData="6000" selectedElement="_partResults">
               <children xsi:type="basic:Part" xmi:id="_partResults" elementId="iped.rcp.views.part.results" label="Results" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.ResultsTablePart"/>
+              <children xsi:type="basic:Part" xmi:id="_partGallery" elementId="iped.rcp.views.part.gallery" label="Gallery" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.gallery.GalleryPart"/>
               <children xsi:type="basic:Part" xmi:id="_partViewer" elementId="iped.rcp.viewers.part.content" label="Viewer" closeable="false" contributionURI="bundleclass://iped.rcp.viewers/iped.rcp.viewers.part.ContentViewerPart"/>
             </children>
             <children xsi:type="basic:PartStack" xmi:id="_stackBottom" elementId="iped.rcp.app.partstack.bottom" containerData="3400" selectedElement="_partAuxTables">
               <children xsi:type="basic:Part" xmi:id="_partAuxTables" elementId="iped.rcp.views.part.auxtables" label="Related Items" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.AuxTablesPart"/>
             </children>
           </children>
-          <children xsi:type="basic:PartStack" xmi:id="_stackRight" elementId="iped.rcp.app.partstack.right" containerData="2500"/>
+          <children xsi:type="basic:PartStack" xmi:id="_stackRight" elementId="iped.rcp.app.partstack.right" containerData="2500" selectedElement="_partMetadata">
+            <children xsi:type="basic:Part" xmi:id="_partMetadata" elementId="iped.rcp.views.part.metadata" label="Metadata" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.metadata.MetadataPanelPart"/>
+            <children xsi:type="basic:Part" xmi:id="_partFilters" elementId="iped.rcp.views.part.filterspanel" label="Filters" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.filters.FiltersPanelPart"/>
+          </children>
         </children>
       </children>
     </children>

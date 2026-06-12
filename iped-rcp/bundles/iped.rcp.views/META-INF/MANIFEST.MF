@@ -21,10 +21,16 @@ Require-Bundle: iped.rcp.api,
  org.eclipse.e4.ui.di,
  org.eclipse.e4.core.di,
  org.eclipse.e4.core.contexts,
- org.eclipse.e4.core.services
+ org.eclipse.e4.core.services,
+ org.eclipse.nebula.widgets.gallery
 Import-Package: jakarta.annotation,
  jakarta.inject
 Export-Package: iped.rcp.views;x-internal:=true,
  iped.rcp.views.bookmarks;x-internal:=true,
  iped.rcp.views.export;x-internal:=true,
- iped.rcp.views.report;x-internal:=true
+ iped.rcp.views.filters;x-internal:=true,
+ iped.rcp.views.gallery;x-internal:=true,
+ iped.rcp.views.metadata;x-internal:=true,
+ iped.rcp.views.report;x-internal:=true,
+ iped.rcp.views.similarity;x-internal:=true,
+ iped.rcp.views.trees;x-internal:=true

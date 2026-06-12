@@ -39,7 +39,8 @@ public class SearchBarPart {
     public static final String QUERY_WIDGET_ID = "iped.rcp.views.searchbar.query";
     public static final String RUN_WIDGET_ID = "iped.rcp.views.searchbar.run";
 
-    static final String SWTBOT_KEY = "org.eclipse.swtbot.widget.key";
+    /** SWT data key SWTBot uses to look widgets up (shared by all parts). */
+    public static final String SWTBOT_KEY = "org.eclipse.swtbot.widget.key";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchBarPart.class);
 

@@ -41,9 +41,11 @@ import iped.rcp.core.search.SearchService;
 import iped.rcp.core.session.ICaseSessionManager;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import iped.rcp.core.filters.FilterStateService;
 import iped.rcp.views.bookmarks.BookmarkManagerDialog;
 import iped.rcp.views.export.ExportActions;
 import iped.rcp.views.report.ReportWizard;
+import iped.rcp.views.similarity.SimilarityActions;
 import iped.utils.LocalizedFormat;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -68,6 +70,9 @@ public class ResultsTablePart {
 
     @Inject
     private BookmarkService bookmarkService;
+
+    @Inject
+    private FilterStateService filterState;
 
     @Inject
     private ICaseSessionManager sessionManager;
@@ -299,6 +304,24 @@ public class ResultsTablePart {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
+        // similarity searches over the highlighted item (T032, FR-013)
+        MenuItem similarImages = new MenuItem(menu, SWT.PUSH);
+        similarImages.setText(Messages.getString("MenuClass.FindSimilarImages"));
+        similarImages.addListener(SWT.Selection, event -> SimilarityActions.searchSimilarImages(table.getShell(),
+                firstSelectedApiId(), sessionManager, filterState, searchService, uiSync));
+
+        MenuItem similarFaces = new MenuItem(menu, SWT.PUSH);
+        similarFaces.setText(Messages.getString("MenuClass.FindSimilarFaces"));
+        similarFaces.addListener(SWT.Selection, event -> SimilarityActions.searchSimilarFaces(table.getShell(),
+                firstSelectedApiId(), sessionManager, filterState, searchService, uiSync));
+
+        MenuItem similarDocs = new MenuItem(menu, SWT.PUSH);
+        similarDocs.setText(Messages.getString("MenuClass.FindSimilarDocs"));
+        similarDocs.addListener(SWT.Selection, event -> SimilarityActions.searchSimilarDocuments(table.getShell(),
+                firstSelectedApiId(), sessionManager, filterState, searchService, uiSync));
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
         MenuItem report = new MenuItem(menu, SWT.PUSH);
         report.setText(Messages.getString("MenuClass.GenerateReport"));
         report.addListener(SWT.Selection, event -> {
@@ -307,6 +330,11 @@ public class ResultsTablePart {
         });
 
         table.setMenu(menu);
+    }
+
+    private ItemId firstSelectedApiId() {
+        List<ItemId> selected = selectedApiIds();
+        return selected.isEmpty() ? null : selected.get(0);
     }
 
     private List<ItemId> selectedApiIds() {
