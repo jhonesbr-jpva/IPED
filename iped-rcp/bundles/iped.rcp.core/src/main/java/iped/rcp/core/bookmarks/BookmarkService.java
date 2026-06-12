@@ -10,7 +10,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -26,6 +28,7 @@ import iped.rcp.api.UiEventTopics;
 import iped.rcp.core.events.IUiEventPublisher;
 import iped.rcp.core.session.CaseSession;
 import iped.rcp.core.session.ICaseSessionManager;
+import iped.rcp.core.session.SessionReloadListener;
 import iped.search.IMultiSearchResult;
 
 /**
@@ -51,6 +54,24 @@ public class BookmarkService implements IBookmarkService {
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.STATIC)
     private IUiEventPublisher eventPublisher;
 
+    private Runnable reloadUnsubscriber;
+
+    /**
+     * Near-live integration (T063): the reloaded source loads the bookmark
+     * state fresh from disk, so any pending asynchronous save must land
+     * BEFORE the new source opens, or recent edits would be silently lost.
+     */
+    private final SessionReloadListener reloadListener = new SessionReloadListener() {
+        @Override
+        public void beforeReload() {
+            try {
+                flush();
+            } catch (RuntimeException e) {
+                // read-only media or already-closing session: nothing to save
+            }
+        }
+    };
+
     /** DS constructor. */
     public BookmarkService() {
     }
@@ -58,6 +79,22 @@ public class BookmarkService implements IBookmarkService {
     /** Headless harness constructor (no OSGi injection). */
     public BookmarkService(ICaseSessionManager sessionManager) {
         this.sessionManager = sessionManager;
+        activate();
+    }
+
+    @Activate
+    void activate() {
+        if (sessionManager != null) {
+            reloadUnsubscriber = sessionManager.addReloadListener(reloadListener);
+        }
+    }
+
+    @Deactivate
+    void deactivate() {
+        if (reloadUnsubscriber != null) {
+            reloadUnsubscriber.run();
+            reloadUnsubscriber = null;
+        }
     }
 
     @Override

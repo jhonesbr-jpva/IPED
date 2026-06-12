@@ -33,6 +33,8 @@ import iped.app.bootstrap.Bootstrap;
 import iped.app.config.LogConfiguration;
 import iped.app.processing.ui.ProgressConsole;
 import iped.app.processing.ui.ProgressFrame;
+import iped.app.processing.ui.ProgressUiChooser;
+import iped.app.processing.ui.SwtProgressBridge;
 import iped.app.ui.App;
 import iped.app.ui.splash.StartUpControlClient;
 import iped.app.ui.utils.UiScale;
@@ -247,14 +249,34 @@ public class Main {
 
         Object frame = null;
 
+        // Progress UI selection (T039, FR-026): the standalone SWT window
+        // replaces ProgressFrame when deployed; --nogui keeps the console
+        // unchanged and a missing display falls back to the console instead
+        // of failing (progress-ui-events contract).
+        AutoCloseable swtWindow = null;
         if (!cmdLineParams.isNogui()) {
-            ProgressFrame progressFrame = new ProgressFrame(provider);
-            progressFrame.setVisible(true);
-            provider.addPropertyChangeListener(progressFrame, true);
-            frame = progressFrame;
-        } else {
-            ProgressConsole console = new ProgressConsole();
-            provider.addPropertyChangeListener(console, false);
+            swtWindow = SwtProgressBridge.tryOpen(provider, rootPath);
+        }
+        switch (ProgressUiChooser.choose(cmdLineParams.isNogui(), swtWindow != null,
+                GraphicsEnvironment.isHeadless())) {
+            case SWT_WINDOW:
+                frame = swtWindow;
+                break;
+            case LEGACY_FRAME:
+                ProgressFrame progressFrame = new ProgressFrame(provider);
+                progressFrame.setVisible(true);
+                provider.addPropertyChangeListener(progressFrame, true);
+                frame = progressFrame;
+                break;
+            case CONSOLE:
+            default:
+                if (!cmdLineParams.isNogui()) {
+                    LoggerFactory.getLogger(Main.class)
+                            .warn("No display available, falling back to console progress output");
+                }
+                ProgressConsole console = new ProgressConsole();
+                provider.addPropertyChangeListener(console, false);
+                break;
         }
 
         if (startUpControlClient != null) {
@@ -274,8 +296,14 @@ public class Main {
             startManager();
 
         } finally {
-            if (frame != null) {
+            if (frame instanceof ProgressFrame) {
                 closeFrameinEDT(frame);
+            } else if (frame instanceof AutoCloseable) {
+                try {
+                    ((AutoCloseable) frame).close();
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(Main.class).warn("Error closing the progress window", e);
+                }
             }
         }
 
@@ -343,6 +371,11 @@ public class Main {
 
         } catch (Exception e) {
             e.printStackTrace();
+            // initializer error dialog (T041, FR-027): best effort, only when
+            // a display exists and the SWT progress module is deployed
+            if (!iped.cmdLineParams.isNogui()) {
+                SwtProgressBridge.showStartupError(Version.APP_NAME, e.toString(), iped.rootPath);
+            }
         }
 
         if (!success) {

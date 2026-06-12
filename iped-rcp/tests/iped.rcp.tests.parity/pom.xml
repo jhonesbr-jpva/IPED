@@ -50,6 +50,37 @@
             <artifactId>iped-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- T037 (US4): standalone SWT progress window + the iped-app
+             progress UI selection classes (ProgressUiChooser/ProgressConsole).
+             The iped-app classes jar comes WITHOUT transitives — everything
+             these classes need at runtime already comes from iped-engine
+             above. -->
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.progress</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.platform</groupId>
+            <!-- resolved by the swt-windows/swt-linux profiles of the parent -->
+            <artifactId>${swt.bundle}</artifactId>
+            <version>${swt.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-app</artifactId>
+            <version>${project.version}</version>
+            <classifier>classes</classifier>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

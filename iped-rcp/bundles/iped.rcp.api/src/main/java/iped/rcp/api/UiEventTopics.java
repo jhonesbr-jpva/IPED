@@ -28,6 +28,16 @@ public final class UiEventTopics {
     /** Bookmarks were created/changed/removed. Payload: bookmark name (String) or null for bulk. */
     public static final String BOOKMARKS_CHANGED = "iped/rcp/bookmarks/CHANGED";
 
+    /**
+     * The engine source of the open session was reloaded in place after a new
+     * index consolidation was detected (near-live mode, FR-029/FR-030).
+     * Consumers holding source-derived state (trees, facet aggregations)
+     * should recompute it; the active result set is refreshed separately and
+     * announced via {@link #RESULTS_CHANGED}. Payload: list of case paths
+     * (String).
+     */
+    public static final String CASE_RELOADED = "iped/rcp/case/RELOADED";
+
     private UiEventTopics() {
     }
 }

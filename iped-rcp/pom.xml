@@ -22,7 +22,38 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <tycho.version>4.0.10</tycho.version>
+        <!-- SWT for PLAIN-JAR modules (iped.rcp.progress and its tests —
+             research R10): same level as the Eclipse 4.32 target platform.
+             The artifact id is platform-specific and resolved per builder OS
+             by the swt-windows/swt-linux profiles below; OSGi bundles keep
+             getting SWT from the target platform instead. -->
+        <swt.version>3.126.0</swt.version>
     </properties>
+
+    <profiles>
+        <!-- Maven profiles in a DEPENDENCY's pom are not activated when the
+             dependency is consumed, so every plain-jar module that needs SWT
+             references org.eclipse.platform:${swt.bundle} and the property is
+             resolved here, in the consumer's own reactor parent. -->
+        <profile>
+            <id>swt-windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <swt.bundle>org.eclipse.swt.win32.win32.x86_64</swt.bundle>
+            </properties>
+        </profile>
+        <profile>
+            <id>swt-linux</id>
+            <activation>
+                <os><family>unix</family></os>
+            </activation>
+            <properties>
+                <swt.bundle>org.eclipse.swt.gtk.linux.x86_64</swt.bundle>
+            </properties>
+        </profile>
+    </profiles>
 
     <modules>
         <module>target-platform</module>
@@ -36,6 +67,7 @@
         <module>bundles/iped.rcp.viewers</module>
         <module>bundles/iped.rcp.views</module>
         <module>bundles/iped.rcp.specialized</module>
+        <module>bundles/iped.rcp.progress</module>
         <module>bundles/iped.rcp.app</module>
         <module>features/iped.rcp.feature</module>
         <module>products/iped.rcp.product</module>

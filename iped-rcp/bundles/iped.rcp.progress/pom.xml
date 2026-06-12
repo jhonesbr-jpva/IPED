@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Standalone SWT progress window of the PROCESSING JVM (tasks
+         T038/T040/T041, research R10, contract progress-ui-events): a plain
+         jar, NOT an OSGi bundle. It runs on the flat classpath of
+         iped.app.processing.Main, next to the engine, replacing the Swing
+         ProgressFrame (FR-026) while nogui/ProgressConsole stay untouched.
+
+         Dependencies are all `provided`: at runtime the engine comes from
+         the processing classpath itself, and SWT is deployed side-by-side
+         (release `ui/progress/` dir, packaging task T052; dev runs point
+         iped.progress.ui.dir / IPED_PROGRESS_UI_DIR at a folder containing
+         this jar + the platform SWT jar). -->
+    <artifactId>iped.rcp.progress</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.platform</groupId>
+            <!-- platform-specific; resolved by the swt-windows/swt-linux
+                 profiles of the reactor parent -->
+            <artifactId>${swt.bundle}</artifactId>
+            <version>${swt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-engine</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

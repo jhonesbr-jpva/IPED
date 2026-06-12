@@ -67,6 +67,14 @@ public class CaseSessionService implements ICaseSessionManager {
     private volatile CaseSession session;
     private final List<Consumer<Boolean>> listeners = new CopyOnWriteArrayList<>();
 
+    // near-live mode (T063): reload cycles are serialized by reloadLock; the
+    // previous source is retired (kept open) until the NEXT reload, as a
+    // grace period for in-flight readers of the old result set
+    private final Object reloadLock = new Object();
+    private final List<SessionReloadListener> reloadListeners = new CopyOnWriteArrayList<>();
+    private volatile CommitMonitor commitMonitor;
+    private IPEDMultiSource retiredSource;
+
     /**
      * Optional so the service also runs outside OSGi (parity harness):
      * events degrade to no-ops there (T012).
@@ -133,6 +141,11 @@ public class CaseSessionService implements ICaseSessionManager {
             LOGGER.info("Case session READY: {}", resolvedPaths);
             notifyListeners(true);
             publish(UiEventTopics.CASE_OPENED, toStrings(resolvedPaths));
+            if (interactive) {
+                // near-live mode (T063, FR-029): follow index consolidations
+                commitMonitor = new CommitMonitor(this, resolvedPaths);
+                commitMonitor.start();
+            }
             return newSession;
 
         } catch (RuntimeException e) {
@@ -163,8 +176,13 @@ public class CaseSessionService implements ICaseSessionManager {
             closedPaths = session.getCasePaths();
         }
         LOGGER.info("Closing case session");
+        stopCommitMonitor();
         try {
             closeQuietly(source);
+            synchronized (reloadLock) {
+                closeQuietly(retiredSource);
+                retiredSource = null;
+            }
         } finally {
             synchronized (lock) {
                 session = null;
@@ -206,6 +224,95 @@ public class CaseSessionService implements ICaseSessionManager {
     public Runnable addSessionListener(Consumer<Boolean> openStateListener) {
         listeners.add(openStateListener);
         return () -> listeners.remove(openStateListener);
+    }
+
+    @Override
+    public Runnable addReloadListener(SessionReloadListener listener) {
+        reloadListeners.add(listener);
+        return () -> reloadListeners.remove(listener);
+    }
+
+    /**
+     * Near-live reload cycle (task T063, FR-029/FR-030): reopens the engine
+     * source over the same case folders and swaps it atomically into the open
+     * session. The OLD source is not closed immediately — it is retired until
+     * the next cycle, so in-flight readers of the previous result set finish
+     * undisturbed (reload cadence is the processing commit interval, which is
+     * orders of magnitude longer than any UI read).
+     *
+     * <p>
+     * Called by the {@link CommitMonitor}; failures keep the previous source
+     * active and are retried on the next consolidation. Public only for the
+     * monitor and the headless parity harness — not part of the extension
+     * API ({@code x-internal} package).
+     *
+     * @return true when the swap happened
+     */
+    public boolean reloadSources() {
+        synchronized (reloadLock) {
+            CaseSession current;
+            synchronized (lock) {
+                if (state != SessionState.READY) {
+                    return false;
+                }
+                current = session;
+            }
+            List<File> caseDirs = current.getCasePaths().stream().map(Path::toFile).toList();
+
+            for (SessionReloadListener listener : reloadListeners) {
+                try {
+                    listener.beforeReload();
+                } catch (RuntimeException e) {
+                    LOGGER.error("Reload listener failed (beforeReload)", e);
+                }
+            }
+
+            IPEDMultiSource newSource;
+            try {
+                long start = System.currentTimeMillis();
+                newSource = openMultiSource(caseDirs);
+                configurePreviewRepositories(newSource);
+                LOGGER.info("Near-live reload: source reopened in {}ms", System.currentTimeMillis() - start);
+            } catch (CaseOpenException | RuntimeException e) {
+                // index/storages mid-move or mid-commit: normal transient
+                // state during processing, retry on the next consolidation
+                LOGGER.warn("Near-live reload failed, keeping the previous source: {}", e.toString());
+                return false;
+            }
+
+            IPEDMultiSource oldSource;
+            synchronized (lock) {
+                if (state != SessionState.READY || session != current) {
+                    closeQuietly(newSource);
+                    return false;
+                }
+                oldSource = current.getSource();
+                current.swapSource(newSource);
+            }
+
+            for (SessionReloadListener listener : reloadListeners) {
+                try {
+                    listener.afterReload();
+                } catch (RuntimeException e) {
+                    LOGGER.error("Reload listener failed (afterReload)", e);
+                }
+            }
+            publish(UiEventTopics.CASE_RELOADED, toStrings(current.getCasePaths()));
+
+            // grace-period retirement: close the source retired by the
+            // PREVIOUS cycle, keep the one just replaced until the next one
+            closeQuietly(retiredSource);
+            retiredSource = oldSource;
+            return true;
+        }
+    }
+
+    private void stopCommitMonitor() {
+        CommitMonitor monitor = commitMonitor;
+        if (monitor != null) {
+            commitMonitor = null;
+            monitor.stop();
+        }
     }
 
     private void notifyListeners(boolean open) {

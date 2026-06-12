@@ -115,10 +115,11 @@ Roda na JVM filha. Orquestra o **processamento de caso**:
 2. `Configuration.getInstance().loadConfigurables(...)` — todos `Configurable<?>` do engine + parsers.
 3. `LogConfiguration` redireciona logs para `IPED-Processing.log` no caso.
 4. `Manager` (engine) é instanciado e executado.
-5. UI de progresso:
-   - `ProgressFrame` (Swing) — barras, gráfico de throughput, lista de evidências.
-   - `ProgressConsole` (texto) quando `--nogui`.
-6. Eventos atualizam UI via `UIPropertyListenerProvider` (event bus).
+5. UI de progresso — seleção em `ProgressUiChooser` (feature 004, US4/T039):
+   - Janela **SWT standalone** (`iped.rcp.progress.ProgressWindow`, módulo do reactor RCP) quando os jars estão implantados (descoberta via `SwtProgressBridge`: classpath → `-Diped.progress.ui.dir`/env `IPED_PROGRESS_UI_DIR` → `<root>/ui/progress`). O build padrão NÃO depende de SWT (carga reflexiva via URLClassLoader).
+   - `ProgressFrame` (Swing) — fallback quando a janela SWT não está implantada (até o cut-over T059).
+   - `ProgressConsole` (texto) quando `--nogui` (inalterado) ou sem display (fallback automático, contrato progress-ui-events).
+6. Eventos atualizam UI via `UIPropertyListenerProvider` (event bus, publicador inalterado — consumidor SWT registra-se como listener não-UI e marshala com `Display.asyncExec`).
 
 Construtores adicionais para integração com **ASAP** (sistema de gerenciamento de casos da PF): recebem `List<File> reports`, `output`, `configPath`, `logFile`, `keywordList` direto.
 

@@ -150,21 +150,24 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| PG-01 | Progresso global (%, itens processados/total) | `ProgressFrame` | pendente | manual (T037+) |
-| PG-02 | Progresso e status por evidência | `ProgressFrame` | pendente | manual |
-| PG-03 | Taxa (GB/h, itens/s) + gráfico de throughput | `ProgressFrame` | pendente | manual |
-| PG-04 | Tasks ativas por worker / fase corrente | `ProgressFrame` | pendente | manual |
-| PG-05 | Contadores (encontrados, processados, carved, subitens, erros) | `ProgressFrame` | pendente | manual |
-| PG-06 | Erros/alertas não-fatais consultáveis sem interromper | `ProgressFrame` | pendente | manual |
-| PG-07 | ETA | `ProgressFrame` | pendente | manual |
-| PG-08 | Pausar/continuar; abortar com confirmação | `ProgressFrame` | pendente | manual |
-| PG-09 | Abrir análise (durante = quase-ao-vivo FR-029; ou ao final) | `ProgressFrame`/`AppMain` | pendente | manual (T040/T063) |
-| PG-10 | `--nogui` → saída de console idêntica | `ProgressConsole` | pendente | harness (T037) |
-| PG-11 | Fallback automático sem display | novo (contrato) | pendente | harness (T037) |
+| PG-01 | Progresso global (%, itens processados/total) | `ProgressFrame` | **paridade (porte 1:1)** (2026-06-12) | smoke real T038 + inspeção visual no T058 (AN-04) |
+| PG-02 | Progresso e status por evidência | `ProgressFrame` | **paridade (porte 1:1)** (2026-06-12) | smoke real T038 (mensagem/decodingDir + tabela de workers) + manual T058 |
+| PG-03 | Taxa (GB/h, itens/s) + gráfico de throughput | `ProgressFrame` | **paridade (porte 1:1 + adições)** (2026-06-12) | GB/h média/atual = fórmulas verbatim; items/s e sparkline são ADIÇÕES do contrato (legado não tinha) |
+| PG-04 | Tasks ativas por worker / fase corrente | `ProgressFrame` | **paridade (porte 1:1)** (2026-06-12) | tabelas de tasks/parsers/workers com shading pct idêntico; manual T058 |
+| PG-05 | Contadores (encontrados, processados, carved, subitens, erros) | `ProgressFrame` | **paridade (porte 1:1)** (2026-06-12) | 18 linhas de stats + ambiente, mesmas fontes (`Statistics`/`BaseCarveTask`/`ExportFileTask`/`StandardParser`) |
+| PG-06 | Erros/alertas não-fatais consultáveis sem interromper | `ProgressFrame` | **paridade (porte 1:1)** (2026-06-12) | contadores ParsingErrors/ReadErrors/Timeouts + log (como hoje — o legado também não tem lista própria) |
+| PG-07 | ETA | `ProgressFrame` | **paridade (porte 1:1)** (2026-06-12) | mesma fórmula max(volume,itens); smoke real exibiu "Finish in" |
+| PG-08 | Pausar/continuar; abortar com confirmação | `ProgressFrame` | **divergência justificada** (2026-06-12) | pause/continue = toggle legado verbatim; ABORTAR virou botão explícito com confirmação e FECHAR a janela deixou de abortar (exigência do contrato progress-ui-events; legado abortava no fechar) |
+| PG-09 | Abrir análise (durante = quase-ao-vivo FR-029; ou ao final) | `ProgressFrame`/`AppMain` | **paridade (plumbing)** (2026-06-12) | T040: botão lança o produto e4 como processo separado; T063: `CommitMonitor`+`reloadSources` com `NearLiveReloadTest` verde; validação ponta-a-ponta (produto aberto DURANTE processamento real) fica com T056/T057 |
+| PG-10 | `--nogui` → saída de console idêntica | `ProgressConsole` | **paridade** (2026-06-12) | código intacto + smoke real no release (console legado, exit 0) + harness T037 |
+| PG-11 | Fallback automático sem display | novo (contrato) | **paridade** (2026-06-12) | harness T037 (matriz do chooser + janela recusa headless); perna real sem display = CI Linux/Xvfb |
 
-> Campos exatos (nomes das propriedades publicadas via
-> `UIPropertyListenerProvider`) a detalhar na implementação de T038 — esta
-> seção congela o conjunto observável pelo usuário.
+> Conjunto de propriedades CONGELADO (publicadas via
+> `UIPropertyListenerProvider`, consumidas por `ProgressWindow`,
+> `ProgressFrame` e `ProgressConsole`): `discoverEnded`, `update`,
+> `decodingDir`, `mensagem`, `workers` (payload `Worker[]`). O publicador
+> não muda (FR-028); a janela SWT registra-se como listener NÃO-UI e faz o
+> próprio marshaling via `Display.asyncExec`.
 
 ## 15. Interoperabilidade de bookmarks (SC-009 — T064)
 
@@ -394,3 +397,66 @@ Notas de implementação relevantes ao gate (não-divergências):
 - A tabela de resultados segue seleções de origem `iped.rcp.specialized.*`
   (allowlist por prefixo) — continua FONTE de seleção para o resto do
   workbench (sync tabela↔galeria inalterado, sem loops de eco).
+
+### 2026-06-12 (3) — Passada US4 (Phase 6: janela de progresso SWT + quase-ao-vivo)
+
+Evidências: harness de paridade **28 testes, 0 falhas, 4 skips justificados**
+(`mvn -f iped-rcp/pom.xml -pl bundles/iped.rcp.core,tests/iped.rcp.tests.parity
+install -Dcase.dir=F:\test_yara_java21`), incluindo os novos
+`HeadlessProgressTest` (T037, 4/4 — matriz do chooser, recusa headless,
+storm de eventos no console, janela real com probe) e `NearLiveReloadTest`
+(T063 — swap atômico + listeners + contagens idênticas + graça do source
+aposentado + 2º ciclo). **Smokes reais no release** (`target/release`,
+pasta de 4 arquivos): `--nogui` → console legado intacto, exit 0; com
+`IPED_PROGRESS_UI_DIR` → "SWT progress window loaded from …", janela SWT
+dirigiu o processamento inteiro, 0 ERROR no log, exit 0, caso íntegro.
+
+Status alterados: PG-01..07, PG-09..11 → `paridade` (variantes anotadas);
+PG-08 → `divergência justificada`.
+
+Divergências justificadas REGISTRADAS nesta iteração (a aprovar no gate
+T058):
+
+- **PG-08 — fechar ≠ abortar**: o contrato progress-ui-events exige que
+  fechar a janela NÃO aborte o processamento (legado: `windowClosing` →
+  `cancel(true)` sem confirmação). Novo: fechar pede confirmação e apenas
+  fecha; abortar é botão dedicado com confirmação.
+- **Mensagem de progresso em `Label` acima da barra**: `ProgressBar` SWT
+  não pinta texto sobreposto como o `JProgressBar`; mesmo conteúdo, posição
+  diferente (cosmético).
+- **`EmojiUtil.clean` não aplicado ao caminho do item**: era workaround de
+  bug de quebra de linha do JLabel Swing (#2102); SWT Table renderiza
+  unicode/emoji corretamente.
+- **Taskbar**: SWT `TaskItem` usa INDETERMINATE durante a descoberta e
+  NORMAL+pct depois (o legado mapeava INDETERMINATE após a descoberta — 
+  peculiaridade do enum AWT); intenção visual preservada.
+- **Adições permitidas pelo contrato** (não-regressões): linha "items/s",
+  sparkline de throughput, botão Abort.
+- **Quase-ao-vivo (já registrada na spec, reiterada)**: itens aparecem POR
+  CONSOLIDAÇÃO (`commitIntervalSeconds`); sem visibilidade NRT de itens não
+  commitados. Bookmarks são `flush`ados antes de cada reload para o estado
+  recarregado incluí-los.
+
+Notas de implementação relevantes ao gate (não-divergências):
+
+- **Resiliência do loop SWT**: diferente da EDT Swing, exceção dentro de
+  `Display.readAndDispatch` MATA o loop de eventos (descoberto pelo probe
+  do T037 com `Worker[0]` vazio); o loop da janela agora captura por
+  dispatch (equivalente funcional da EDT) e os acessos `workers[0]`
+  ganharam guarda de array vazio.
+- **Empacotamento provisório do progresso**: até o T052, a janela é
+  carregada por descoberta (`Class.forName` → `-Diped.progress.ui.dir`
+  / env `IPED_PROGRESS_UI_DIR` → `<root>/ui/progress`) via URLClassLoader
+  — o build padrão do iped-app NÃO depende de SWT em compilação nem em
+  runtime; sem os jars, o fallback é o `ProgressFrame` legado (até T059).
+- **SWT em jar plano**: perfis `swt-windows`/`swt-linux` no parent do
+  reactor resolvem `org.eclipse.platform:${swt.bundle}:3.126.0` (nível da
+  target platform 4.32); perfis de pom de DEPENDÊNCIA não ativam
+  transitivamente — cada módulo consumidor declara a dep com a property.
+- **Reload do quase-ao-vivo reabre a fonte inteira** (`IPEDMultiSource`
+  novo + swap atômico na `CaseSession`), e NÃO `openIfChanged` interno:
+  os mapas id↔doc, categorias e bookmarks do `IPEDSource` precisam ser
+  reconstruídos por consolidação e são privados do engine (FR-028 = zero
+  toque). Custo medido no caso de referência: ~1,4 s por ciclo (cadência
+  mínima = `commitIntervalSeconds`). A fonte antiga fica "aposentada" um
+  ciclo inteiro antes de fechar (leitores em voo).

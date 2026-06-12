@@ -20,7 +20,7 @@ public final class CaseSession {
 
     private final List<Path> casePaths;
     private final List<Path> readOnlyCasePaths;
-    private final IPEDMultiSource source;
+    private volatile IPEDMultiSource source;
     private final boolean interactive;
 
     CaseSession(List<Path> casePaths, List<Path> readOnlyCasePaths, IPEDMultiSource source, boolean interactive) {
@@ -57,9 +57,23 @@ public final class CaseSession {
      * The engine source backing this session. Single cases are wrapped in an
      * {@link IPEDMultiSource} of one atomic source, so consumers handle both
      * shapes uniformly.
+     *
+     * <p>
+     * In near-live mode (FR-029) the source is atomically REPLACED by the
+     * commit monitor on each detected index consolidation: consumers must
+     * re-read it through the session instead of caching it across event
+     * boundaries ({@code results/CHANGED}, {@code case/RELOADED}).
      */
     public IPEDMultiSource getSource() {
         return source;
+    }
+
+    /**
+     * Atomic source swap of a near-live reload cycle (task T063). Only
+     * {@link CaseSessionService} calls this, under its reload lock.
+     */
+    void swapSource(IPEDMultiSource newSource) {
+        this.source = newSource;
     }
 
     /**

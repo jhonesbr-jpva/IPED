@@ -48,4 +48,12 @@ public interface ICaseSessionManager extends ICaseSessionService {
 
     /** @return the current lifecycle state */
     SessionState getState();
+
+    /**
+     * Registers a near-live reload callback (task T063, FR-029). No-op for
+     * sessions that are not interactive — the listener simply never fires.
+     *
+     * @return an unsubscriber
+     */
+    Runnable addReloadListener(SessionReloadListener listener);
 }

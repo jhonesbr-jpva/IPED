@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.search.Query;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -28,6 +30,7 @@ import iped.rcp.core.events.IUiEventPublisher;
 import iped.rcp.core.filters.FilterStateService;
 import iped.rcp.core.session.CaseSession;
 import iped.rcp.core.session.ICaseSessionManager;
+import iped.rcp.core.session.SessionReloadListener;
 
 /**
  * Search service over the open case session (tasks T015/T016, FR-006): same
@@ -67,6 +70,29 @@ public class SearchService implements ISearchService {
     @Reference(cardinality = ReferenceCardinality.OPTIONAL, policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY)
     private FilterStateService filterState;
 
+    private Runnable reloadUnsubscriber;
+
+    /**
+     * Near-live integration (T063, FR-029): when the commit monitor swaps the
+     * session source, re-run the last query so the active result set reflects
+     * the new consolidation and {@code results/CHANGED} reaches the parts.
+     * Runs on the monitor thread (never the UI thread). Before the first
+     * search there is nothing to refresh — parts resolve the source
+     * dynamically on the first run anyway.
+     */
+    private final SessionReloadListener reloadListener = new SessionReloadListener() {
+        @Override
+        public void afterReload() {
+            if (lastQueryText != null) {
+                try {
+                    refresh();
+                } catch (RuntimeException e) {
+                    LOGGER.error("Near-live result refresh failed", e);
+                }
+            }
+        }
+    };
+
     /** DS constructor. */
     public SearchService() {
     }
@@ -74,12 +100,29 @@ public class SearchService implements ISearchService {
     /** Headless harness constructor (no OSGi injection). */
     public SearchService(ICaseSessionManager sessionManager) {
         this.sessionManager = sessionManager;
+        activate();
     }
 
     /** Headless harness constructor with filter composition (T025). */
     public SearchService(ICaseSessionManager sessionManager, FilterStateService filterState) {
         this.sessionManager = sessionManager;
         this.filterState = filterState;
+        activate();
+    }
+
+    @Activate
+    void activate() {
+        if (sessionManager != null) {
+            reloadUnsubscriber = sessionManager.addReloadListener(reloadListener);
+        }
+    }
+
+    @Deactivate
+    void deactivate() {
+        if (reloadUnsubscriber != null) {
+            reloadUnsubscriber.run();
+            reloadUnsubscriber = null;
+        }
     }
 
     @Override
