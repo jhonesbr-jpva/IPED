@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- US3 specialized views (tasks T034-T036, FR-012, research R4): the
+         legacy map (iped-geo), communications graph (AppGraphAnalytics /
+         Kharon) and timeline (IpedChartsPanel / JFreeChart) hosted inside e4
+         parts through SWT_AWT - the legacy views are NOT rewritten (FR-028).
+         Selection stays bidirectionally in sync with the workbench through a
+         hidden mirror JTable that reproduces the shared-results-table
+         discipline of the legacy Swing App. -->
+    <artifactId>iped.rcp.specialized</artifactId>
+    <packaging>eclipse-plugin</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.libs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

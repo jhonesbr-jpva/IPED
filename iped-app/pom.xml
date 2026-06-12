@@ -758,6 +758,29 @@
                             </includes>
                         </configuration>
                     </execution>
+                    <!-- Full classes jar ATTACHED with a classifier (does not
+                         touch the main artifact nor the release layout). The
+                         RCP UI bridge (feature 004, US3) embeds it to host
+                         the legacy graph/timeline views via SWT_AWT: the
+                         classifierless executions above each overwrite the
+                         main artifact file, so the installed iped-app jar is
+                         whichever ran last (the hashdb subset). -->
+                    <execution>
+                        <id>attach-classes-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>classes</classifier>
+                            <excludes>
+                                <exclude>*.netbeans_automatic_build*</exclude>
+                            </excludes>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                            </archive>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             

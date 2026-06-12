@@ -8,7 +8,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import iped.app.timelinegraph.IpedChartPanel;
-import iped.app.ui.App;
 import iped.app.ui.Messages;
 
 public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements ActionListener {
@@ -53,8 +52,7 @@ public class TimelineFilterSelectionPopupMenu extends JPopupMenu implements Acti
             ipedChartPanel.removeFilter(dates);
             if (ipedChartPanel.hasNoFilter()) {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(false);
-                App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
-                app.setDockablesColors();
+                ipedChartPanel.getIpedChartsPanel().getGuiHost().updateFilterColors();
             }
             ipedChartPanel.filterSelection();
             ipedChartPanel.setRefreshBuffer(true);

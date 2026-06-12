@@ -11,5 +11,6 @@ Require-Bundle: org.eclipse.swtbot.swt.finder,
  org.junit,
  org.eclipse.nebula.widgets.gallery,
  iped.rcp.api,
- iped.rcp.core
+ iped.rcp.core,
+ iped.rcp.specialized
 Import-Package: org.osgi.framework

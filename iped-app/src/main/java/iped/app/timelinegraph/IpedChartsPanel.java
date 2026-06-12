@@ -709,8 +709,7 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         // populates list with timeevent column names with uppercase letters
         @Override
         public void run() {
-            ColumnsManager cm = (ColumnsManager) ((App) resultsProvider).getColumnsManager();
-            String[] columnsArray = cm.fieldGroups[cm.fieldGroups.length - 1];
+            String[] columnsArray = getGuiHost().getIndexedFieldNames();
             synchronized (timeEventColumnNamesList) {
                 LeafReader reader = resultsProvider.getIPEDSource().getLeafReader();
                 try {
@@ -929,6 +928,65 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
 
     public IMultiSearchResultProvider getResultsProvider() {
         return this.resultsProvider;
+    }
+
+    /**
+     * Host UI integration seam. The timeline historically reached the Swing
+     * {@code App} singleton by casting its providers; this interface makes
+     * that wiring pluggable so the panel can also run hosted by the RCP UI
+     * bridge (feature 004, task T036) without behavior change on the legacy
+     * Swing path (the default implementation below reproduces the old casts
+     * verbatim).
+     */
+    public static interface GUIHost {
+        /**
+         * Re-runs the file listing applying the active query filterers
+         * (legacy wiring: {@code AppListener.updateFileListing()}).
+         */
+        void updateFileListing();
+
+        /**
+         * Visual feedback that filter state changed (legacy wiring:
+         * {@code App.setDockablesColors()}).
+         */
+        void updateFilterColors();
+
+        /**
+         * Indexed field names used to pretty-case time event names (legacy
+         * wiring: last {@code ColumnsManager} field group, which equals the
+         * indexed fields of the case).
+         */
+        String[] getIndexedFieldNames();
+    }
+
+    private GUIHost guiHost;
+
+    /** Lets an alternative host (RCP bridge) replace the App wiring. */
+    public void setGUIHost(GUIHost host) {
+        this.guiHost = host;
+    }
+
+    public GUIHost getGuiHost() {
+        if (guiHost == null) {
+            guiHost = new GUIHost() {
+                @Override
+                public void updateFileListing() {
+                    ((App) resultsProvider).getAppListener().updateFileListing();
+                }
+
+                @Override
+                public void updateFilterColors() {
+                    ((App) resultsProvider).setDockablesColors();
+                }
+
+                @Override
+                public String[] getIndexedFieldNames() {
+                    ColumnsManager cm = (ColumnsManager) ((App) resultsProvider).getColumnsManager();
+                    return cm.fieldGroups[cm.fieldGroups.length - 1];
+                }
+            };
+        }
+        return guiHost;
     }
 
     public void setTimePeriodString(String timePeriodString) {

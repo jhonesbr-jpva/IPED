@@ -101,11 +101,11 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| MP-01 | Mapa com itens georreferenciados; seleção bidirecional | `MapViewer` (iped-geo) | pendente | SWTBot (T033) |
-| GR-01 | Grafo: expansão de nós, busca de caminhos, layouts | `AppGraphAnalytics` + GraphViz | pendente | manual |
-| GR-02 | Grafo: exportar imagem e links | `ExportImageAction`, `ExportLinksAction` | pendente | manual |
+| MP-01 | Mapa com itens georreferenciados; seleção bidirecional | `MapViewer` (iped-geo) | paridade (plumbing) | SWTBot (T033); clique de marker = manual |
+| GR-01 | Grafo: expansão de nós, busca de caminhos, layouts | `AppGraphAnalytics` + GraphViz | pendente (bloqueado: produto sem `lib/neo4j/` — T052) | manual |
+| GR-02 | Grafo: exportar imagem e links | `ExportImageAction`, `ExportLinksAction` | pendente (idem GR-01) | manual |
 | TL-01 | Timeline: zoom, pan, granularidade temporal | `IpedChartsPanel` | pendente | manual |
-| TL-02 | Timeline: seleção de intervalo filtra a tabela | `IpedTimelineMouseWheelHandler` etc. | pendente | SWTBot (T033) |
+| TL-02 | Timeline: seleção de intervalo filtra a tabela | `IpedTimelineMouseWheelHandler` etc. | paridade (plumbing) | SWTBot (T033); gesto de drag = manual |
 
 ## 10. Bookmarks (FR-005/014)
 
@@ -324,3 +324,73 @@ Notas de implementação relevantes ao gate (não-divergências):
   ser o próprio elemento raiz (o `getRawChildren` do JFace resolve filhos
   de elemento `equals` ao input via `getElements`, tornando a raiz filha de
   si mesma em cadeia infinita). Input agora é `Object[]{root}`.
+
+### 2026-06-12 (2) — Passada US3 (Phase 5: mapa, grafo e timeline bridgeados)
+
+Evidências: `mvn -f iped-rcp/pom.xml -pl tests/iped.rcp.tests.swtbot verify`
+`-DskipUiTests=false -Dcase.dir=F:\test_yara_java21` — **4 testes, 0
+falhas** no produto e4 real (Windows): T033 SpecializedViewsTest 37 s
+(liveness das 3 parts + seleção tabela↔espelho nos 2 sentidos) com
+T014/T024 revalidados na mesma janela; harness de paridade 23/23
+revalidado após o wrapper passar a embutir o iped-app.
+
+Status alterados: MP-01, TL-02 → `paridade (plumbing)` — a tubulação de
+seleção bidirecional (espelho compartilhado ↔ tabela SWT) é a automatizável;
+os gestos intra-canvas (clique de marker no WebView, drag de intervalo no
+chart) são Swing/JS invisíveis ao SWTBot e ficam como evidência `manual`
+para o T058.
+
+Arquitetura do bridge (contexto p/ o gate): as views legadas NÃO foram
+reescritas (FR-028) — `iped.rcp.specialized` as hospeda via `SwtAwtBridgeHost`
+e reproduz a disciplina legada da tabela-compartilhada com um `JTable`
+espelho oculto (col 1 = checked via `BookmarkService`); `MapViewer` e
+`IpedChartsPanel` são inicializados pelo MESMO `init(table, provider,
+guiProvider)` de sempre.
+
+Divergências justificadas REGISTRADAS nesta iteração (a aprovar no gate
+T058):
+
+- **GR-01/GR-02 (bloqueio de empacotamento)**: neste fork o grafo é
+  out-of-process via Bolt (`iped-graph-server` materializado em
+  `lib/neo4j/`); o produto RCP ainda não embarca essa árvore → o load do
+  grafo degrada graciosamente ("no Bolt port reported", painel
+  desabilitado). Resolver na integração de release (T052) e só então
+  validar GR-01/GR-02.
+- **Grafo "mostrar evidência" do nó**: usa o pipeline `FileProcessor` do
+  App Swing completo — degrada com erro logado no bridge; navegação ao
+  item entra em iteração complementar.
+- **Diálogos legados (grafo/timeline/mapa)**: abrem com owner no frame
+  invisível do `App` (centrados na tela, não sobre a janela) — cosmético.
+- **Timeline split por bookmark/categoria**: `getSelectedBookmarks()/
+  getSelectedCategories()` do provider RCP retornam vazio nesta iteração
+  (série única "Items"); integração com a seleção das árvores em iteração
+  complementar.
+- **Multicase `casesPathFile`**: aproximado como `<pai do 1º caso>/multicase`
+  (grafo multicase/timecache); o legado usava a localização do txt
+  `-multicases`. Sem efeito em caso único.
+- **Costura `IpedChartsPanel.GUIHost` (toque no legado, aditivo)**: os 7
+  call-sites que castavam o provider para `(App)` agora passam por uma
+  interface com default que reproduz o wiring antigo verbatim — Swing
+  legado inalterado; pré-requisito para o código bridgeado sobreviver ao
+  cut-over (T059 mantém timeline/grafo bridgeados).
+- **Filtro de intervalo da timeline**: materializado como slot de query
+  filter (`iped.rcp.specialized.timeline`) no `FilterStateService` +
+  refresh — composição AND idêntica ao `CaseSearcherFilter` legado.
+
+Notas de implementação relevantes ao gate (não-divergências):
+
+- **Seleção determinística no contexto**: o espelhamento do `UiEventsAddon`
+  (T012) passa pelo agregador de seleção da part ativa do e4, que depende
+  de foco REAL do SO — inerte sob o harness SWTBot (descoberto pelo T033:
+  `received=0`). Os publicadores (`ResultsTablePart`, `LegacyUiBridge`)
+  agora gravam `iped.rcp.selection` diretamente no contexto da aplicação;
+  o addon permanece como espelho genérico para parts de terceiros.
+- **Wrapper × iped-app**: o jar `iped-app` instalado era o subset hashdb
+  (execuções classifierless do maven-jar-plugin sobrescrevem o artefato
+  principal — a última vence); novo `attach-classes-jar` anexa o jar
+  completo com classifier `classes`, consumido pelo wrapper. bnd exigiu
+  `_fixupmessages` para referência legada a classe em default package
+  (irrelevante: o wrapper não importa nada).
+- A tabela de resultados segue seleções de origem `iped.rcp.specialized.*`
+  (allowlist por prefixo) — continua FONTE de seleção para o resto do
+  workbench (sync tabela↔galeria inalterado, sem loops de eco).

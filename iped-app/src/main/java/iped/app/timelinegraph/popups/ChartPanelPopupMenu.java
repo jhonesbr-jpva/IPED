@@ -10,7 +10,6 @@ import javax.swing.JPopupMenu;
 
 import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.dialog.IntervalDefinitionDialog;
-import iped.app.ui.App;
 import iped.app.ui.Messages;
 
 public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
@@ -64,9 +63,8 @@ public class ChartPanelPopupMenu extends JPopupMenu implements ActionListener {
         if (e.getSource() == applyFiltersMenu) {
             if (!ipedChartPanel.hasNoFilter()) {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(applyFiltersMenu.isSelected());
-                App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
                 ipedChartPanel.filterSelection();
-                app.setDockablesColors();
+                ipedChartPanel.getIpedChartsPanel().getGuiHost().updateFilterColors();
             }
         }
         if (e.getSource() == clearAllFiltersMenu) {

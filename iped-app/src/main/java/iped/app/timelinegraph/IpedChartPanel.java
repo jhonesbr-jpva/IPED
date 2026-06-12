@@ -854,8 +854,7 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
             }
         }
 
-        App app = (App) ipedChartsPanel.getGUIProvider();
-        app.setDockablesColors();
+        ipedChartsPanel.getGuiHost().updateFilterColors();
         this.repaint();
     }
 
@@ -914,11 +913,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
 
     public void filterSelection() {
         this.getIpedChartsPanel().setInternalUpdate(true);
-        App app = (App) this.getIpedChartsPanel().getResultsProvider();
+        IpedChartsPanel.GUIHost host = this.getIpedChartsPanel().getGuiHost();
         if (!isClearing) {
-            app.getAppListener().updateFileListing();
+            host.updateFileListing();
         }
-        app.setDockablesColors();
+        host.updateFilterColors();
     }
 
     public HashSet<String> getExcludedEvents() {

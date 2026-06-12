@@ -18,7 +18,6 @@ import iped.app.timelinegraph.IpedChartPanel;
 import iped.app.timelinegraph.IpedCombinedDomainXYPlot;
 import iped.app.timelinegraph.datasets.IpedTimelineDataset;
 import iped.app.timelinegraph.swingworkers.EventPeriodCheckWorker;
-import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.engine.data.IPEDSource;
 import iped.viewers.api.IMultiSearchResultProvider;
@@ -183,8 +182,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
 
             if (ipedChartPanel.hasNoFilter()) {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(false);
-                App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
-                app.setDockablesColors();
+                ipedChartPanel.getIpedChartsPanel().getGuiHost().updateFilterColors();
             } else {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
             }
@@ -208,8 +206,7 @@ public class LegendItemPopupMenu extends JPopupMenu implements ActionListener {
 
             if (ipedChartPanel.hasNoFilter()) {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(false);
-                App app = (App) ipedChartPanel.getIpedChartsPanel().getGUIProvider();
-                app.setDockablesColors();
+                ipedChartPanel.getIpedChartsPanel().getGuiHost().updateFilterColors();
             } else {
                 ipedChartPanel.getIpedChartsPanel().setApplyFilters(true);
             }

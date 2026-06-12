@@ -81,6 +81,9 @@ public class ResultsTablePart {
     private ESelectionService selectionService;
 
     @Inject
+    private org.eclipse.e4.ui.model.application.MApplication application;
+
+    @Inject
     private UISynchronize uiSync;
 
     @Inject
@@ -223,7 +226,13 @@ public class ResultsTablePart {
             }
         }
         ItemId active = selected.isEmpty() ? null : selected.get(0);
-        selectionService.setSelection(new SelectionContext(active, selected, part.getElementId()));
+        SelectionContext context = new SelectionContext(active, selected, part.getElementId());
+        selectionService.setSelection(context);
+        // deterministic mirror into the application context: the
+        // UiEventsAddon path goes through the active-part selection
+        // aggregator, which depends on real window focus (absent under the
+        // SWTBot harness) - publishing parts set the shared key themselves
+        application.getContext().set(UiEventTopics.SELECTION_KEY, context);
     }
 
     /** Engine-side sort off the UI thread (FR-007). */
@@ -248,6 +257,58 @@ public class ResultsTablePart {
             }
         });
         job.setUser(true);
+        job.schedule();
+    }
+
+    /**
+     * Follows selections made on the bridged specialized views (map marker
+     * click, timeline highlight - US3/T033, FR-012). Only selections with the
+     * specialized-bridge origin are consumed: the table stays the selection
+     * SOURCE for every other part (no echo loops, gallery sync unchanged).
+     */
+    @Inject
+    @Optional
+    public void onExternalSelection(
+            @jakarta.inject.Named(UiEventTopics.SELECTION_KEY) @Optional SelectionContext selection) {
+        if (table == null || table.isDisposed() || selection == null || selection.originPartId() == null
+                || !selection.originPartId().startsWith("iped.rcp.specialized.")) {
+            return;
+        }
+        ResultSet current = searchService.getCurrent();
+        if (current == null) {
+            return;
+        }
+        long generation = current.generation();
+        List<ItemId> items = selection.selectedItems();
+        Job job = Job.create("sync-specialized-selection", monitor -> {
+            Set<Long> wanted = new HashSet<>(items.size() * 2);
+            for (ItemId item : items) {
+                wanted.add((((long) item.sourceId()) << 32) | (item.id() & 0xFFFFFFFFL));
+            }
+            int[] rows = new int[items.size()];
+            int found = 0;
+            for (int i = 0; i < current.size() && found < rows.length; i++) {
+                IItemId itemId = current.result().getItem(i);
+                if (wanted.contains((((long) itemId.getSourceId()) << 32) | (itemId.getId() & 0xFFFFFFFFL))) {
+                    rows[found++] = i;
+                }
+            }
+            int[] resolved = found == rows.length ? rows : java.util.Arrays.copyOf(rows, found);
+            uiSync.asyncExec(() -> {
+                ResultSet active = searchService.getCurrent();
+                if (table.isDisposed() || active == null || active.generation() != generation) {
+                    return; // result swapped while resolving
+                }
+                // programmatic selection: no SWT.Selection event, no republish
+                table.deselectAll();
+                if (resolved.length > 0) {
+                    table.select(resolved);
+                    table.showSelection();
+                }
+            });
+            return Status.OK_STATUS;
+        });
+        job.setSystem(true);
         job.schedule();
     }
 

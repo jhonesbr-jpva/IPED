@@ -31,6 +31,23 @@
             <artifactId>iped-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- US3 (T034-T036): the bridged specialized views live in iped-app
+             (graph/, timelinegraph/) and iped-geo (map). They are embedded
+             into the SAME single class space (research R3) so the legacy
+             code keeps its flat-classpath assumptions; the RCP parts only
+             host them through SWT_AWT (FR-028 - no rewrite). Brings the
+             UI-only transitive deps (kharon, jfreechart(extensions),
+             jcalendar, iped-geo). Removed at cut-over together with the
+             retirement plan of T059 (bridged packages relocate then). -->
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-app</artifactId>
+            <version>${project.version}</version>
+            <!-- the classifierless iped-app jar is the hashdb subset (its
+                 jar executions overwrite the main artifact); the full
+                 classes live in the attached "classes" jar -->
+            <classifier>classes</classifier>
+        </dependency>
     </dependencies>
 
     <build>
@@ -64,7 +81,12 @@
                                space, so only a benign bnd warning is expected. -->
                         <!-- org.apache.tika.*: item metadata surface consumed by
                              ItemAccessService/viewers parts (T020/US1). -->
-                        <Export-Package>iped.*,org.sleuthkit.datamodel,org.slf4j,org.apache.lucene.*,org.apache.tika.*</Export-Package>
+                        <!-- bibliothek.*: DockingFrames is part of the legacy
+                             ResultSetViewer contract (setDockableContainer);
+                             the US3 bridge parts subclass
+                             DefaultSingleCDockable to adapt part visibility
+                             (T034/T036). -->
+                        <Export-Package>iped.*,org.sleuthkit.datamodel,org.slf4j,org.apache.lucene.*,org.apache.tika.*,bibliothek.*</Export-Package>
                         <!-- Self-contained: never wire engine internals to other
                              bundles; JDK packages come from the boot delegation. -->
                         <Import-Package>!*</Import-Package>
@@ -72,6 +94,12 @@
                              scripting); let unresolved loads fall through. -->
                         <DynamicImport-Package>*</DynamicImport-Package>
                         <_nouses>true</_nouses>
+                        <!-- Some legacy UI jars embedded via iped-app (US3)
+                             reference classes living in the default package;
+                             bnd flags that as an Import-Package error, but
+                             this bundle imports nothing (!*) so the finding
+                             is irrelevant - downgrade ONLY that message. -->
+                        <_fixupmessages>"The default package*";is:=warning</_fixupmessages>
                         <_failok>false</_failok>
                     </instructions>
                 </configuration>
