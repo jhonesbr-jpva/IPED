@@ -16,6 +16,9 @@ import org.eclipse.e4.ui.di.UISynchronize;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.e4.ui.workbench.modeling.ESelectionService;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -111,6 +114,7 @@ public class ResultsTablePart {
 
         table.addListener(SWT.SetData, this::fillRow);
         table.addListener(SWT.Selection, this::onSelection);
+        table.addListener(SWT.KeyDown, this::onKeyDown);
         createContextMenu();
 
         ResultSet current = searchService.getCurrent();
@@ -201,6 +205,73 @@ public class ResultsTablePart {
         } catch (RuntimeException e) {
             LOGGER.warn("Error rendering field {}", field, e);
             return Messages.getString("ResultTableModel.Error");
+        }
+    }
+
+    /**
+     * Triage keyboard shortcuts of the table (task T046, FR-021 — legacy
+     * {@code ResultTableListener} semantics; see keybindings-map.md):
+     * space toggles the highlighted checks, Ctrl/Alt+R/P/F/D check/uncheck
+     * the highlighted rows plus their related sets, Ctrl+C copies the
+     * highlighted rows. Ctrl+B is a window-level e4 binding.
+     */
+    private void onKeyDown(Event event) {
+        ResultSet current = searchService.getCurrent();
+        boolean ctrl = (event.stateMask & SWT.MOD1) != 0;
+        boolean alt = (event.stateMask & SWT.ALT) != 0;
+        if (event.character == ' ' && !ctrl && !alt) {
+            // suppress the native single-row space-check: legacy semantics
+            // toggle ALL highlighted rows from the first row's state
+            event.doit = false;
+            CheckActions.toggleChecked(table, current, bookmarkService, uiSync);
+            return;
+        }
+        CheckActions.Related related = switch (event.keyCode) {
+            case 'r' -> CheckActions.Related.SUBITEMS;
+            case 'p' -> CheckActions.Related.PARENT;
+            case 'f' -> CheckActions.Related.REFERENCING;
+            case 'd' -> CheckActions.Related.REFERENCED_BY;
+            default -> null;
+        };
+        if (related != null && (ctrl ^ alt)) {
+            event.doit = false;
+            CheckActions.checkWithRelated(table, current, related, ctrl, sessionManager, bookmarkService, uiSync);
+            return;
+        }
+        if (ctrl && !alt && event.keyCode == 'c') {
+            event.doit = false;
+            copySelectionToClipboard();
+        }
+    }
+
+    /**
+     * Ctrl+C: copies the highlighted rows (visible fields, tab-separated).
+     * Divergence from the legacy single-CELL copy recorded in the inventory:
+     * SWT full-row selection has no cell focus.
+     */
+    private void copySelectionToClipboard() {
+        TableItem[] selection = table.getSelection();
+        if (selection.length == 0) {
+            return;
+        }
+        StringBuilder text = new StringBuilder();
+        for (TableItem item : selection) {
+            if (text.length() > 0) {
+                text.append(System.lineSeparator());
+            }
+            for (int col = 1; col <= visibleFields.size(); col++) {
+                if (col > 1) {
+                    text.append('\t');
+                }
+                text.append(item.getText(col));
+            }
+        }
+        Clipboard clipboard = new Clipboard(table.getDisplay());
+        try {
+            clipboard.setContents(new Object[] { text.toString() },
+                    new Transfer[] { TextTransfer.getInstance() });
+        } finally {
+            clipboard.dispose();
         }
     }
 

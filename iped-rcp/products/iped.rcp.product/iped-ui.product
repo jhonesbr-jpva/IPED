@@ -3,8 +3,10 @@
 <!-- IPED analysis UI product (T011, research R9). Feature-based, pure e4.
      - launcher "iped-ui": exec'd by the case-root shim (T054) with
        -vm <case>/iped/jre/bin
-     - -data points at the user profile by default; T043 replaces it with the
-       per-case workspace resolver (research R5)
+     - workspace: NO -data here (T043) — the lifecycle resolves the per-case
+       area ~/.iped/ui-workspaces/<case-id> before the model loads (research
+       R5); osgi.instance.area.default below is only the safety net if the
+       resolver cannot run. An explicit -data still wins.
      - vmArgs carry the engine's Java 21 module opens (same set Bootstrap
        passes to the processing JVM) plus boot delegation for the JavaFX/AWT
        bridge (research R4) -->
@@ -14,8 +16,6 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>-data @user.home/.iped/ui-workspaces/default
-      </programArgs>
       <vmArgs>--add-opens=java.base/java.util=ALL-UNNAMED
 --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
 --add-opens=java.base/java.lang=ALL-UNNAMED
@@ -28,6 +28,7 @@
 -Djava.security.manager=allow
 -Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*
 -Dfile.encoding=UTF-8
+-Dosgi.instance.area.default=@user.home/.iped/ui-workspaces/default
       </vmArgs>
       <vmArgsLin>-Dsun.awt.xembedserver=true
       </vmArgsLin>
@@ -52,6 +53,9 @@
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
+      <!-- T045: EarlyStartup must set swt.autoScale BEFORE the application
+           (and so before any SWT class) — eager start below the app level -->
+      <plugin id="iped.rcp.app" autoStart="true" startLevel="4" />
    </configurations>
 
 </product>

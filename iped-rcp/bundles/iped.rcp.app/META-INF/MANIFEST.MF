@@ -7,6 +7,7 @@ Bundle-Vendor: IPED
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: iped.rcp.app
 Bundle-ActivationPolicy: lazy
+Bundle-Activator: iped.rcp.app.startup.EarlyStartup
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.swt,
  org.eclipse.jface,
@@ -15,7 +16,15 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.e4.core.contexts,
  org.eclipse.e4.core.di,
  org.eclipse.e4.core.services,
+ org.eclipse.e4.ui.css.swt.theme,
+ org.eclipse.equinox.preferences,
  iped.rcp.api,
  iped.rcp.core,
  iped.rcp.libs
-Export-Package: iped.rcp.app;x-internal:=true
+Import-Package: javax.xml,
+ javax.xml.parsers,
+ org.eclipse.osgi.service.datalocation,
+ org.osgi.framework,
+ org.osgi.service.prefs
+Export-Package: iped.rcp.app;x-internal:=true,
+ iped.rcp.app.theme;x-internal:=true

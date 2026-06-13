@@ -10,8 +10,23 @@
     xmlns:application="http://www.eclipse.org/ui/2010/UIModel/application"
     xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic"
     xmlns:commands="http://www.eclipse.org/ui/2010/UIModel/application/commands"
+    xmlns:menu="http://www.eclipse.org/ui/2010/UIModel/application/ui/menu"
     xmi:id="_app" elementId="iped.rcp.app.application" bindingContexts="_ctxDialogAndWindow" selectedElement="_window">
   <children xsi:type="basic:TrimmedWindow" xmi:id="_window" elementId="iped.rcp.app.trimmedwindow.main" label="IPED" width="1400" height="900" selectedElement="_perspectiveStack">
+    <!-- Main menu (T044/T045, US5): labels are localized at runtime by the
+         lifecycle (central catalogs, research R7); theme radio selection is
+         synchronized from the persisted preference on every boot. -->
+    <mainMenu xmi:id="_menuMain" elementId="iped.rcp.app.menu.main">
+      <children xsi:type="menu:Menu" xmi:id="_menuView" elementId="iped.rcp.app.menu.view" label="View">
+        <children xsi:type="menu:Menu" xmi:id="_menuTheme" elementId="iped.rcp.app.menu.theme" label="Theme">
+          <children xsi:type="menu:DirectMenuItem" xmi:id="_miThemeSystem" elementId="iped.rcp.app.menuitem.theme.system" label="System" type="Radio" contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.theme.SetThemeHandler$System"/>
+          <children xsi:type="menu:DirectMenuItem" xmi:id="_miThemeLight" elementId="iped.rcp.app.menuitem.theme.light" label="Light" type="Radio" contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.theme.SetThemeHandler$Light"/>
+          <children xsi:type="menu:DirectMenuItem" xmi:id="_miThemeDark" elementId="iped.rcp.app.menuitem.theme.dark" label="Dark" type="Radio" contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.theme.SetThemeHandler$Dark"/>
+        </children>
+        <children xsi:type="menu:MenuSeparator" xmi:id="_miViewSep1" elementId="iped.rcp.app.menu.view.sep1"/>
+        <children xsi:type="menu:DirectMenuItem" xmi:id="_miUiScale" elementId="iped.rcp.app.menuitem.uiscale" label="UI Scale..." contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.settings.UiScaleHandler"/>
+      </children>
+    </mainMenu>
     <children xsi:type="advanced:PerspectiveStack" xmi:id="_perspectiveStack" elementId="iped.rcp.app.perspectivestack" selectedElement="_perspectiveMain">
       <children xsi:type="advanced:Perspective" xmi:id="_perspectiveMain" elementId="iped.rcp.app.perspective.main">
         <children xsi:type="basic:PartSashContainer" xmi:id="_sashRoot" elementId="iped.rcp.app.sash.root" horizontal="true">
@@ -43,10 +58,18 @@
       </children>
     </children>
   </children>
+  <!-- Triage keybindings (T046, FR-021): window-scoped e4 bindings; the
+       table-local shortcuts (space/check variants) live in the parts — see
+       specs/004-rcp-gui-migration/keybindings-map.md -->
+  <bindingTables xmi:id="_bindingTableWindow" elementId="iped.rcp.app.bindingtable.window" bindingContext="_ctxWindow">
+    <bindings xmi:id="_kbManageBookmarks" elementId="iped.rcp.app.kb.managebookmarks" keySequence="M1+B" command="_cmdManageBookmarks"/>
+  </bindingTables>
   <rootContext xsi:type="commands:BindingContext" xmi:id="_ctxDialogAndWindow" elementId="org.eclipse.ui.contexts.dialogAndWindow" name="In Dialogs and Windows">
     <children xmi:id="_ctxWindow" elementId="org.eclipse.ui.contexts.window" name="In Windows"/>
     <children xmi:id="_ctxDialog" elementId="org.eclipse.ui.contexts.dialog" name="In Dialogs"/>
   </rootContext>
+  <handlers xmi:id="_handlerManageBookmarks" elementId="iped.rcp.app.handler.managebookmarks" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.handlers.ManageBookmarksHandler" command="_cmdManageBookmarks"/>
+  <commands xmi:id="_cmdManageBookmarks" elementId="iped.rcp.command.managebookmarks" commandName="Manage Bookmarks"/>
   <addons xmi:id="_addonCommandService" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_addonContextService" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_addonBindingService" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>

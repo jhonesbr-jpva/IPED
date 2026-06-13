@@ -1,0 +1,4 @@
+/* Native (light) theme — deliberately empty (task T044, research R8,
+ * FR-025): the default rendering is the OS-native widget set with no CSS
+ * overrides. This theme exists only as the live-switch target when a session
+ * booted with the dark CSS engine active. */

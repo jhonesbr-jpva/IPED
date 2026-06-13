@@ -48,13 +48,16 @@ public class FiltersGalleryTest {
     public static final String DUPLICATES_TOGGLE_ID = "iped.rcp.views.filters.duplicates";
 
     /**
-     * Tab labels of the parts involved (Application.e4xmi). e4 renders stack
-     * parts lazily: each tab must be activated before its widgets exist.
+     * Tab labels of the parts involved. Since T047 the lifecycle localizes
+     * the model labels from the central catalogs, so the lookups resolve the
+     * same keys (locale-aware: the harness runs under the system locale).
+     * e4 renders stack parts lazily: each tab must be activated before its
+     * widgets exist.
      */
-    private static final String GALLERY_TAB = "Gallery";
-    private static final String CATEGORIES_TAB = "Categories";
-    private static final String FILTERS_TAB = "Filters";
-    private static final String RESULTS_TAB = "Results";
+    private static final String GALLERY_TAB = iped.rcp.core.i18n.Messages.getString("App.Gallery");
+    private static final String CATEGORIES_TAB = iped.rcp.core.i18n.Messages.getString("CategoryTreeModel.RootName");
+    private static final String FILTERS_TAB = iped.rcp.core.i18n.Messages.getString("App.appliedFilters");
+    private static final String RESULTS_TAB = iped.rcp.core.i18n.Messages.getString("App.Table");
 
     private static final long SEARCH_TIMEOUT_MS = 120_000;
 

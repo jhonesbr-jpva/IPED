@@ -130,21 +130,21 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| KB-01 | Q/W: ocorrência anterior/próxima no texto | `App.java:891/898` | pendente | SWTBot |
-| KB-02 | B: gerenciador de bookmarks | `App.java:905` | pendente | SWTBot |
-| KB-03 | Espaço: marcar/desmarcar (tabela e galeria) | `App.java:1717`, `GalleryTable` | pendente | SWTBot |
-| KB-04 | Atalhos do gerenciador de bookmarks (atribuição rápida) | `BookmarksManager` | pendente | manual |
-| KB-05 | Demais bindings extraídos em T046 (varredura `getKeyStroke`) | `ui/*` | pendente | T046 |
+| KB-01 | Ctrl+Q/Ctrl+W: toggle de blur/grayscale da galeria (correção factual 2026-06-12: a descrição original "ocorrência anterior/próxima" não corresponde ao código em `App.java:891/898` — `toggleGlobalBlurFilter`/`toggleGlobalGrayScale`) | `App.java:891/898` | pendente | manual (depende do blur/gray da galeria — pendência T026) |
+| KB-02 | Ctrl+B: gerenciador de bookmarks | `App.java:905` | paridade | comando+binding e4 `M1+B` (T046); mesmo diálogo do menu de contexto, seleção da chave compartilhada; verificação manual por SO no T058 |
+| KB-03 | Espaço: marcar/desmarcar (tabela e galeria) | `App.java:1717`, `GalleryTable` | paridade (tabela) / pendente (galeria) | `ResultsTablePart.onKeyDown`+`CheckActions.toggleChecked` (semântica primeira-linha verbatim; space nativo de linha única suprimido); galeria depende do checkbox de célula (pendência T026) |
+| KB-04 | Atalhos do gerenciador de bookmarks (atribuição rápida) | `BookmarksManager` | pendente | manual — entra com a iteração de paridade do gerenciador (BM-*) |
+| KB-05 | Demais bindings extraídos em T046: Ctrl/Alt+R/P/F/D (check+relacionados, queries 1:1 via `RelatedItemsQueries`), Ctrl+C (cópia — divergência célula→linha justificada: `FULL_SELECTION` SWT não tem foco de célula), type-to-find nativo | `ResultTableListener`, `MenuClass` | paridade (com 1 divergência justificada) | `keybindings-map.md` (mapa completo); queries compartilhadas com as abas auxiliares (T019) |
 
 ## 13. Workspace, temas e escala (FR-017/018/019)
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| WS-01 | Rearranjo de abas/painéis por arrastar; maximizar/restaurar | DockingFrames | pendente | SWTBot (T042) |
-| WS-02 | Layout persistido por usuário e restaurado | `PanelsLayout` | pendente | SWTBot (T042) |
-| WS-03 | Temas claro/escuro consistentes | `ThemeManager` | pendente | manual |
-| WS-04 | Escala de UI (uiScale/HiDPI) | `UiScale`, `LocalConfig` | pendente | manual |
-| WS-05 | Locale da UI segue `iped-locale` com fallback EN | `iped-app.properties` (6 locales) | pendente | manual (SC-006) |
+| WS-01 | Rearranjo de abas/painéis por arrastar; maximizar/restaurar | DockingFrames | paridade | addons e4 DnD/MinMax (T011); exercício manual no smoke visual (T058) |
+| WS-02 | Layout persistido por usuário e restaurado | `PanelsLayout` | paridade (com divergência justificada) | `WorkspaceLocationResolver` (T043) + e4 `workbench.xmi`; divergência justificada: estado em `~/.iped/ui-workspaces/<case-id>/` em vez de dentro do caso (R5 — corrige mídia somente leitura, Princípio IV); reset automático de estado corrompido/incompatível (`layout.version`); evidência: `WorkspacePersistenceTest` (T042) |
+| WS-03 | Temas claro/escuro consistentes | `ThemeManager` (legado: nativo Swing) | paridade (superset) | T044: nativo por padrão (FR-025), escuro segue o SO + toggle manual `View → Theme` (`~/.iped/UiTheme.txt`); CSS mínimo só no dark; troca em runtime aplica CSS e avisa restart p/ chrome nativo; inspeção visual AN-06 (T058) |
+| WS-04 | Escala de UI (uiScale/HiDPI) | `UiScale` (`~/.iped/UiScale.txt`) | paridade | T045: mesmo arquivo/formato do legado; SWT via `swt.autoScale` (activator early SL4), AWT bridgeado via `UiScale.loadUserSetting`; diálogo `View → UI Scale...` (chave legada `MenuListener.UiScaleDialog`); nota: tasks.md citava `LocalConfig`, mas o legado lê `~/.iped/UiScale.txt` — paridade mantida com a fonte real; verificação multi-monitor manual (T058) |
+| WS-05 | Locale da UI segue `iped-locale` com fallback EN | `iped-app.properties` (6 locales) | paridade | T009 (adaptador) + T047 (varredura: 142 chaves adicionadas, PT-BR/EN 100%, de/es/fr/it completos p/ chaves novas); labels de parts/menus do modelo e4 localizados em runtime (catálogos centrais, R7); teste anti-`!key!` em `WorkspacePersistenceTest.noRawI18nKeysOnWorkbenchSurfaces` (SC-006) |
 
 ## 14. Progresso do processamento (FR-026 — contrato progress-ui-events)
 
@@ -460,3 +460,40 @@ Notas de implementação relevantes ao gate (não-divergências):
   toque). Custo medido no caso de referência: ~1,4 s por ciclo (cadência
   mínima = `commitIntervalSeconds`). A fonte antiga fica "aposentada" um
   ciclo inteiro antes de fechar (leitores em voo).
+
+### 2026-06-12 (4) — Passada US5 (Phase 7: workspace, temas, escala, atalhos, i18n)
+
+Atualizações: KB-01 (correção factual + pendente justificado), KB-02/03/05 →
+paridade (KB-03 galeria pendente), WS-01..05 → paridade (WS-02 com divergência
+justificada de local de persistência — R5). Evidências: harness de paridade
+28/0 (4 skips justificados) + suíte SWTBot **11/11 no produto real** (Windows,
+2026-06-12, caso `F:\test_yara_java21`), incluindo o novo
+`WorkspacePersistenceTest` (T042, 7 testes) e T014/T024/T033 revalidados.
+
+- **Divergência justificada (WS-02)**: layout/preferências de apresentação
+  persistem em `~/.iped/ui-workspaces/<case-id>/` (e4 `workbench.xmi` +
+  carimbo `layout.version`), não mais dentro do caso (`PanelsLayout`) —
+  decisão R5 (mídia somente leitura; caso imutável, Princípio IV). Reset
+  automático de estado corrompido/incompatível com `.bak` de diagnóstico.
+- **Divergência justificada (KB-05/Ctrl+C)**: cópia por LINHA (campos
+  visíveis, tab-separado) em vez de célula — `FULL_SELECTION` do SWT não tem
+  foco de célula. Mapa completo em `keybindings-map.md`.
+- **Divergência justificada (menu bar)**: a UI nova tem menu `View` (tema/
+  escala) — o legado não tinha menu bar; FR-018 exige toggle manual.
+- **Aprendizados de plataforma (registrados nas notas do T043/T044/T045)**:
+  ordem `lifecycle→loadApplicationModel→lock` verificada em bytecode; chave
+  de contexto `cssTheme` é sobrescrita pós-lifecycle (canal correto = pref
+  InstanceScope `themeid`); `swt.autoScale` exige activator early (SL4).
+- **Aprendizado de harness**: o produto agora localiza labels de
+  parts/menus em runtime (T047) — lookups SWTBot por label devem resolver
+  pelos catálogos centrais (o harness herda o locale do sistema, pt_BR
+  nesta máquina). Labels EN hardcoded quebraram T024/T033 e foram
+  corrigidos na própria suíte.
+- **Aprendizado de build**: builder Java do IDE (JDT.LS/m2e) pode
+  reempacotar bundles em `target/` durante o build do reactor SEM o header
+  `Service-Component` (sem a injeção do tycho-ds-plugin) → SCR ignora o
+  bundle e os serviços DS somem no harness (sintoma: `ICaseSessionManager`
+  null, exit 13). Mitigação: suíte SWTBot via subset
+  `-pl tests/iped.rcp.tests.swtbot` (provisiona do `.m2`); rebuilds parciais
+  de bundle exigem rebuildar `iped.rcp.feature` junto (pina qualifiers
+  exatos).

@@ -1,0 +1,46 @@
+/* Minimal dark theme (task T044, FR-018, research R8): only the surfaces the
+ * OS does not darken by itself — workbench chrome (part stacks), containers
+ * and the common content controls. The window chrome (title bar, menu bar,
+ * scrollbars) is darkened natively via the SWT win32 display data / GTK dark
+ * variant set by ThemeManager, NOT here. Keep this file small on purpose:
+ * a full IDE-style theme would defeat the native-appearance goal (FR-025). */
+
+Shell, Composite, Canvas, Group, SashForm {
+    background-color: #2B2B2B;
+    color: #DDDDDD;
+}
+
+CTabFolder {
+    background-color: #2B2B2B;
+    color: #CCCCCC;
+}
+
+CTabFolder CTabItem {
+    background-color: #2B2B2B;
+    color: #BBBBBB;
+}
+
+CTabFolder CTabItem:selected {
+    background-color: #3C3F41;
+    color: #FFFFFF;
+}
+
+Table, Tree, List {
+    background-color: #2F2F2F;
+    color: #DDDDDD;
+}
+
+Text, Combo, CCombo, Spinner {
+    background-color: #383838;
+    color: #DDDDDD;
+}
+
+Label, Button {
+    background-color: #2B2B2B;
+    color: #DDDDDD;
+}
+
+ToolBar {
+    background-color: #2B2B2B;
+    color: #DDDDDD;
+}

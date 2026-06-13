@@ -3,15 +3,21 @@ package iped.rcp.app;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.ui.model.application.MApplication;
+import org.eclipse.e4.ui.model.application.ui.MUILabel;
+import org.eclipse.e4.ui.model.application.ui.basic.MPart;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenuElement;
 import org.eclipse.e4.ui.workbench.lifecycle.PostContextCreate;
 import org.eclipse.e4.ui.workbench.lifecycle.PreSave;
 import org.eclipse.e4.ui.workbench.lifecycle.ProcessAdditions;
+import org.eclipse.e4.ui.workbench.modeling.EModelService;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.DirectoryDialog;
@@ -21,7 +27,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped.app.ui.utils.UiScale;
 import iped.engine.Version;
+import iped.rcp.app.theme.ThemeManager;
 import iped.rcp.core.i18n.Messages;
 import iped.rcp.core.session.CaseOpenException;
 import iped.rcp.core.session.CaseSession;
@@ -60,6 +68,20 @@ public class LifeCycle {
             casePaths = List.of(chosen);
         }
 
+        // T043 (FR-017, research R5): per-user, per-case workspace area —
+        // must happen before the application model is loaded
+        WorkspaceLocationResolver.applyTo(context, casePaths);
+
+        // T044 (FR-018, research R8): theme before the workbench shells are
+        // created (win32 dark chrome is fixed at widget creation); needs the
+        // instance area resolved above for the CSS preference pin
+        ThemeManager.applyAtStartup(display, context);
+
+        // T045 (FR-019): the SWT side of the user scale is applied by
+        // EarlyStartup before the display exists; this aligns the bridged
+        // AWT/Swing viewers with the same ~/.iped/UiScale.txt setting
+        UiScale.loadUserSetting();
+
         ICaseSessionManager sessionManager = context.get(ICaseSessionManager.class);
         try {
             // Blocking on purpose: there is no workbench yet and the native
@@ -73,8 +95,42 @@ public class LifeCycle {
         }
     }
 
+    /**
+     * Localized labels of the static model elements (task T047, FR-020,
+     * research R7): the e4 model cannot use the central catalogs through
+     * {@code %key} (that mechanism reads per-bundle OSGI-INF/l10n), so labels
+     * are applied here — also fixing labels persisted by a previous session
+     * in another language (the restored model wins over Application.e4xmi).
+     */
+    private static final Map<String, String> MODEL_LABEL_KEYS = new LinkedHashMap<>();
+    static {
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.evidencetree", "TreeViewModel.RootName");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.categorytree", "CategoryTreeModel.RootName");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.bookmarktree", "BookmarksTreeModel.RootName");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.aifilters", "App.AIFilters");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.searchbar", "App.Search");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.results", "App.Table");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.gallery", "App.Gallery");
+        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.content", "RcpParts.Viewer");
+        MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.map", "App.Map");
+        MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.graph", "App.Links");
+        MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.timeline", "RcpParts.Timeline");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.auxtables", "RcpParts.RelatedItems");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.metadata", "App.Metadata");
+        MODEL_LABEL_KEYS.put("iped.rcp.views.part.filterspanel", "App.appliedFilters");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menu.view", "RcpMenu.View");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menu.theme", "RcpMenu.Theme");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.theme.system", "RcpMenu.Theme.System");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.theme.light", "RcpMenu.Theme.Light");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.theme.dark", "RcpMenu.Theme.Dark");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.uiscale", "RcpMenu.UiScale");
+    }
+
     @ProcessAdditions
-    void processAdditions(MApplication application) {
+    void processAdditions(MApplication application, EModelService modelService) {
+        localizeModelLabels(application, modelService);
+        ThemeManager.syncMenuSelection(application, modelService);
+
         ICaseSessionManager sessionManager = application.getContext().get(ICaseSessionManager.class);
         CaseSession session = sessionManager.getSession();
         if (session == null) {
@@ -84,6 +140,21 @@ public class LifeCycle {
                 .collect(Collectors.joining(", "));
         for (MWindow window : application.getChildren()) {
             window.setLabel(Version.APP_NAME + " - " + cases);
+        }
+    }
+
+    private void localizeModelLabels(MApplication application, EModelService modelService) {
+        for (Map.Entry<String, String> entry : MODEL_LABEL_KEYS.entrySet()) {
+            String label = Messages.getString(entry.getValue());
+            for (MPart part : modelService.findElements(application, entry.getKey(), MPart.class, null)) {
+                part.setLabel(label);
+            }
+            for (MMenuElement menu : modelService.findElements(application, entry.getKey(), MMenuElement.class,
+                    null)) {
+                if (menu instanceof MUILabel labeled) {
+                    labeled.setLabel(label);
+                }
+            }
         }
     }
 

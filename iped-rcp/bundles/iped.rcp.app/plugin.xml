@@ -2,13 +2,22 @@
 <?eclipse version="3.4"?>
 <plugin>
    <!-- Pure e4 product (research R1): no org.eclipse.ui compatibility layer.
-        Native widgets by default — no applicationCSS property (research R8);
-        the dark-theme CSS toggle arrives with T044. -->
+        Native widgets by default — no applicationCSS/cssTheme branding
+        property on purpose (research R8): the CSS engine is only initialized
+        when the effective theme is dark, by ThemeManager setting the
+        "cssTheme" context key in the lifecycle (T044). -->
    <extension id="product" point="org.eclipse.core.runtime.products">
       <product name="IPED Analysis" application="org.eclipse.e4.ui.workbench.swt.E4Application">
          <property name="appName" value="IPED"/>
          <property name="applicationXMI" value="iped.rcp.app/Application.e4xmi"/>
          <property name="lifeCycleURI" value="bundleclass://iped.rcp.app/iped.rcp.app.LifeCycle"/>
       </product>
+   </extension>
+
+   <!-- Theme pair for FR-018 (T044): "native" is an empty stylesheet (live
+        switch target only), "dark" is the minimal dark chrome. -->
+   <extension point="org.eclipse.e4.ui.css.swt.theme">
+      <theme id="iped.rcp.theme.native" label="Native" basestylesheeturi="css/native.css"/>
+      <theme id="iped.rcp.theme.dark" label="Dark" basestylesheeturi="css/dark.css"/>
    </extension>
 </plugin>

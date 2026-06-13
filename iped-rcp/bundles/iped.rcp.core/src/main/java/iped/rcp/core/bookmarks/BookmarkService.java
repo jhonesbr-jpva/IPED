@@ -203,6 +203,19 @@ public class BookmarkService implements IBookmarkService {
         save(null);
     }
 
+    /**
+     * Bulk checked-state update with a single save/event at the end — the
+     * legacy multi-setting discipline of the check-with-related shortcuts
+     * (T046, FR-021).
+     */
+    public void setCheckedEngine(Collection<IItemId> engineIds, boolean checked) {
+        IMultiBookmarks marks = bookmarks();
+        for (IItemId id : engineIds) {
+            marks.setChecked(checked, id);
+        }
+        save(null);
+    }
+
     /** Total of checked items in the session. */
     public int getTotalChecked() {
         return bookmarks().getTotalChecked();

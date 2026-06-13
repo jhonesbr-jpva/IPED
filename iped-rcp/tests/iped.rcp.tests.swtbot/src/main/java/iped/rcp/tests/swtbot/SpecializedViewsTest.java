@@ -55,10 +55,11 @@ public class SpecializedViewsTest {
     public static final String GRAPH_HOST_ID = "iped.rcp.specialized.graph.host";
     public static final String TIMELINE_HOST_ID = "iped.rcp.specialized.timeline.host";
 
-    private static final String MAP_TAB = "Map";
-    private static final String GRAPH_TAB = "Graph";
-    private static final String TIMELINE_TAB = "Timeline";
-    private static final String RESULTS_TAB = "Results";
+    // localized like the model labels since T047 (central catalogs)
+    private static final String MAP_TAB = iped.rcp.core.i18n.Messages.getString("App.Map");
+    private static final String GRAPH_TAB = iped.rcp.core.i18n.Messages.getString("App.Links");
+    private static final String TIMELINE_TAB = iped.rcp.core.i18n.Messages.getString("RcpParts.Timeline");
+    private static final String RESULTS_TAB = iped.rcp.core.i18n.Messages.getString("App.Table");
 
     private static final long SEARCH_TIMEOUT_MS = 120_000;
     private static final long SYNC_TIMEOUT_MS = 30_000;
