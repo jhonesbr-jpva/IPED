@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IPED RCP Sample Extension (Selection View)
+Bundle-SymbolicName: iped.rcp.sample.view;singleton:=true
+Bundle-Version: 4.4.0.qualifier
+Bundle-Vendor: IPED
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: iped.rcp.sample.view
+Bundle-ActivationPolicy: lazy
+Require-Bundle: iped.rcp.api,
+ org.eclipse.swt,
+ org.eclipse.e4.ui.di,
+ org.eclipse.e4.core.di,
+ org.eclipse.e4.ui.workbench
+Import-Package: jakarta.annotation,
+ jakarta.inject

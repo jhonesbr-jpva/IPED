@@ -23,6 +23,14 @@
     <properties>
         <skipUiTests>true</skipUiTests>
         <case.dir></case.dir>
+        <!-- T048/US6 opt-in hooks (default empty = legs assumption-skipped):
+             - dropins.dir: a folder whose *.jar are installed at BOOT by
+               DropinBundleLoader, so the sample fragment part appears in the
+               model (contribution leg);
+             - sample.jar: path to the built iped.rcp.sample.view jar used by
+               the runtime install leg. -->
+        <dropins.dir></dropins.dir>
+        <sample.jar></sample.jar>
     </properties>
 
     <dependencies>
@@ -87,6 +95,8 @@
                     <appArgLine>${case.dir}</appArgLine>
                     <argLine>-Xmx4g
                         -Djava.security.manager=allow
+                        -Diped.rcp.dropins.dir=${dropins.dir}
+                        -Diped.rcp.sample.jar=${sample.jar}
                         -Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*
                         --add-opens=java.base/java.util=ALL-UNNAMED
                         --add-opens=java.base/java.util.concurrent=ALL-UNNAMED

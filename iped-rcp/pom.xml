@@ -71,6 +71,11 @@
         <module>bundles/iped.rcp.app</module>
         <module>features/iped.rcp.feature</module>
         <module>products/iped.rcp.product</module>
+        <!-- Phase 8 (T051, US6): drop-in extension sample. Built by the
+             reactor (so there is a jar to deploy) but intentionally NOT part
+             of iped.rcp.feature — it ships via plugins-ext/ to prove the
+             provisional extension contract (SC-007). -->
+        <module>samples/iped.rcp.sample.view</module>
         <module>tests/iped.rcp.tests.parity</module>
         <module>tests/iped.rcp.tests.swtbot</module>
     </modules>

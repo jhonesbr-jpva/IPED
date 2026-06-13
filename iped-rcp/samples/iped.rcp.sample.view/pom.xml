@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Sample third-party extension (T051, US6, SC-007). The living test of
+         the provisional extension contract
+         (specs/004-rcp-gui-migration/contracts/ui-extension-api.contract.md):
+         it compiles against iped.rcp.api ONLY (plus platform e4/SWT), declares
+         a fragment.e4xmi contributing a part to a ModelAnchors stack, and is
+         deployed by DROP-IN (plugins-ext/), NOT by the product feature — so it
+         is deliberately absent from iped.rcp.feature. -->
+    <artifactId>iped.rcp.sample.view</artifactId>
+    <packaging>eclipse-plugin</packaging>
+</project>

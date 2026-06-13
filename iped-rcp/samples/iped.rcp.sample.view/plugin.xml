@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <!-- e4 model fragment contribution (ui-extension-api contract). The
+        fragment is reapplied on every boot ("always") so dropping the jar in /
+        removing it from plugins-ext/ is reflected on the next launch
+        regardless of any persisted workspace layout (US6 scenarios 1 and 2). -->
+   <extension point="org.eclipse.e4.workbench.model">
+      <fragment uri="fragment.e4xmi" apply="always"/>
+   </extension>
+</plugin>

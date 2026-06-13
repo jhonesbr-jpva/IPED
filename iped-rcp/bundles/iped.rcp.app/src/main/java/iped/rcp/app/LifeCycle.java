@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,13 @@ public class LifeCycle {
     @PostContextCreate
     void postContextCreate(IApplicationContext appContext, IEclipseContext context) {
         Display display = Display.getDefault();
+
+        // T050 (US6, FR-022): install drop-in third-party extensions BEFORE
+        // the application model loads, so their fragment.e4xmi contributions
+        // are in the extension registry when e4 processes model fragments. A
+        // bad drop-in is logged and skipped — the product always boots.
+        DropinBundleLoader.loadDropins(FrameworkUtil.getBundle(getClass()).getBundleContext());
+
         List<Path> casePaths = parseCaseArgs(appContext);
 
         if (casePaths.isEmpty()) {

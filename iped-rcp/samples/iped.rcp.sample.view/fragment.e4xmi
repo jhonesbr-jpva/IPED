@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample extension model fragment (T051, SC-007). Contributes one Part to a
+     stable anchor of the product model — iped.rcp.api/ModelAnchors
+     PART_STACK_RIGHT ("iped.rcp.app.partstack.right"). The part class is
+     resolved by DI and depends only on iped.rcp.api services. -->
+<fragment:ModelFragments xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:basic="http://www.eclipse.org/ui/2010/UIModel/application/ui/basic"
+    xmlns:fragment="http://www.eclipse.org/ui/2010/UIModel/fragment"
+    xmi:id="_fragments">
+  <fragments xsi:type="fragment:StringModelFragment" xmi:id="_frag1"
+      featurename="children" parentElementId="iped.rcp.app.partstack.right">
+    <elements xsi:type="basic:Part" xmi:id="_samplePart"
+        elementId="iped.rcp.sample.view.part"
+        label="Selection (sample extension)"
+        closeable="true"
+        contributionURI="bundleclass://iped.rcp.sample.view/iped.rcp.sample.view.SelectionView"/>
+  </fragments>
+</fragment:ModelFragments>

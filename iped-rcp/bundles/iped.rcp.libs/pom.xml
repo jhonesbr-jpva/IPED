@@ -86,7 +86,12 @@
                              the US3 bridge parts subclass
                              DefaultSingleCDockable to adapt part visibility
                              (T034/T036). -->
-                        <Export-Package>iped.*,org.sleuthkit.datamodel,org.slf4j,org.apache.lucene.*,org.apache.tika.*,bibliothek.*</Export-Package>
+                        <!-- All re-exports are x-internal (T049, ui-extension-api
+                             contract): the wrapper is internal plumbing for the
+                             first-party RCP bundles. Third parties compile against
+                             iped.rcp.api ONLY; the marker is advisory (no runtime /
+                             Tycho-resolution effect) but documents the contract. -->
+                        <Export-Package>iped.*;x-internal:=true,org.sleuthkit.datamodel;x-internal:=true,org.slf4j;x-internal:=true,org.apache.lucene.*;x-internal:=true,org.apache.tika.*;x-internal:=true,bibliothek.*;x-internal:=true</Export-Package>
                         <!-- Self-contained: never wire engine internals to other
                              bundles; JDK packages come from the boot delegation. -->
                         <Import-Package>!*</Import-Package>
