@@ -22,17 +22,27 @@ Captura imutável das escolhas do wizard; entrada do `ProcessingLaunchService`.
 | `mode` | enum `NEW \| APPEND \| CONTINUE \| RESTART` | `--append`/`--continue`/`--restart` | `APPEND/CONTINUE/RESTART` exigem caso existente em `outputDir/iped` |
 | `timezone` | string? | `-tz` | opcional; default = TZ do sistema |
 | `keywordsFile` | caminho? | `-l` | opcional; arquivo existente |
-| `commonOptions` | `CommonOptions` | ver abaixo | curado (Q4) |
-| `advancedParams` | mapa `chave→valor` | `-X` + flags raras | etapa "avançado"; passthrough |
+| `commonOptions` | `CommonOptions` | ver abaixo | tier B (Q4) |
+| `advancedOptions` | `AdvancedOptions` | ver abaixo | tier C; campos tipados da etapa "avançado" |
+| `advancedParams` | mapa `chave→valor` | `-X` + flags raras | tier C; passthrough literal |
+
+A partição autoritativa de **todos** os parâmetros de criação do `CmdLineArgsImpl` em
+tiers A (campos core acima), B, C e D (fora de escopo) vive em
+[contracts/new-case-wizard.contract.md](contracts/new-case-wizard.contract.md) §"Cobertura
+de opções de criação" — fonte da verdade para SC-002.
 
 **`DataSourceEntry`**: `{ path, displayName? (-dname), password? (-p) }`. Nomes de
 evidência devem ser únicos (espelha `checkDuplicateDataSources`).
 
-**`CommonOptions`** (subconjunto curado de `CmdLineArgsImpl`, Q4): `addOwner`
-(`--addowner`), `ocrSubset` (`-ocr`), `portable` (`--portable`), `noPstAttachs`
-(`--nopstattachs`), `noLinkedItems` (`--nolinkeditems`), `downloadInternetData`,
-`blocksize` (`-b`). Flags raras/de especialista **não** ganham controle (ficam em
-`advancedParams` ou só na CLI — FR-007/Out of Scope).
+**`CommonOptions`** (tier B — toggles da página *Common options*): `addOwner`
+(`--addowner`), `portable` (`--portable`), `noPstAttachs` (`--nopstattachs`),
+`noLinkedItems` (`--nolinkeditems`), `downloadInternetData` (`--downloadInternetData`).
+
+**`AdvancedOptions`** (tier C — campos tipados da página *Advanced*): `blocksize`
+(`-b`), `ocrSubset` (`-ocr`), `noContent` (`-nocontent`), `logFile` (`-log`),
+`noLogFile` (`--nologfile`), `splashMessage` (`-splash`). Demais flags raras vão por
+`advancedParams`. Parâmetros **fora de escopo** (`-remove`, `--yara-only`, `--nogui`,
+`-asap`, `--help`) **não** ganham controle (tier D do contrato).
 
 **Transições**: `NewCaseRequest` é construído incrementalmente pelas páginas do wizard
 e **congelado** ao "Concluir"; cancelar descarta-o sem efeito (FR-012).

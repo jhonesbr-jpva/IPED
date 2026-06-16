@@ -141,7 +141,7 @@ embarcado → "Salvar como" (quickstart V4 / SC-005).
 **Purpose**: documentação, transição e validação final.
 
 - [ ] T033 [P] Update `iped-rcp/CLAUDE.md` (new bundle `iped.rcp.casecreation`; new `iped.rcp.core` services `ProfileService`/`ProcessingLaunchService`/`RecentCasesStore`; File menu)
-- [ ] T034 [P] Transition (FR-020/FR-021): update launcher promotion/docs so the RCP app is the interactive case-creation entry, and confirm `iped.jar`/`Bootstrap` headless remains for automation (packaging detail; coordinate with feature 004 cut-over)
+- [ ] T034 [P] Transition (FR-020/FR-021): make the RCP app the promoted interactive case-creation entry (menu/docs/shortcuts) while **keeping `iped.exe` distributed and unchanged** as the headless/automation entry (do NOT remove the shim — its removal is a future, out-of-scope step gated on the new launcher gaining a headless mode; Clarifications 2026-06-16 / I1 remediation). Verify no interactive-creation path depends on `iped.exe` (SC-006)
 - [ ] T035 Threading/concurrency review: wizard/editor manipulate widgets on the SWT UI thread; launch/validation/IO run via the e4 Jobs API off the UI thread (Princípio V)
 - [ ] T036 Run [quickstart.md](quickstart.md) validation scenarios V1–V5 and record results
 

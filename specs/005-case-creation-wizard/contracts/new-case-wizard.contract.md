@@ -35,17 +35,52 @@ Cancelar/fechar em qualquer página: **nenhum** efeito colateral (FR-012).
 | `mode=RESTART` | `--restart` | |
 | `timezone` | `-tz <tz>` | se presente |
 | `keywordsFile` | `-l <file>` | se presente |
-| `commonOptions.addOwner` | `--addowner` | flag |
-| `commonOptions.ocrSubset` | `-ocr <cat>` | repetível |
-| `commonOptions.portable` | `--portable` | flag |
-| `commonOptions.noPstAttachs` | `--nopstattachs` | flag |
-| `commonOptions.noLinkedItems` | `--nolinkeditems` | flag |
-| `commonOptions.downloadInternetData` | `--downloadInternetData` | flag |
-| `commonOptions.blocksize` | `-b <n>` | se ≠ 0 |
-| `advancedParams[k]` | `-X k=v` ou flag literal | passthrough |
+| `commonOptions.addOwner` | `--addowner` | flag (Common) |
+| `commonOptions.portable` | `--portable` | flag (Common) |
+| `commonOptions.noPstAttachs` | `--nopstattachs` | flag (Common) |
+| `commonOptions.noLinkedItems` | `--nolinkeditems` | flag (Common) |
+| `commonOptions.downloadInternetData` | `--downloadInternetData` | flag (Common) |
+| `advanced.blocksize` | `-b <n>` | se ≠ 0 (Advanced) |
+| `advanced.ocrSubset` | `-ocr <cat>` | repetível (Advanced) |
+| `advanced.noContent` | `-nocontent <cat>` | repetível (Advanced) |
+| `advanced.logFile` | `-log <file>` | (Advanced) |
+| `advanced.noLogFile` | `--nologfile` | flag (Advanced) |
+| `advanced.splashMessage` | `-splash <msg>` | (Advanced) |
+| `advancedParams[k]` | `-X k=v` ou flag literal | passthrough (Advanced) |
 | (interativo, com GUI) | **sem** `--nogui` | a janela de progresso SWT aparece |
 
-> A UI **nunca** define `--yara-only`/`-remove` (fora do escopo de criação interativa).
+> A UI **nunca** define `--yara-only`, `-remove`, `--nogui`, `-asap` nem `--help` (ver
+> partição abaixo — tier D).
+
+## Cobertura de opções de criação — partição (SC-002)
+
+Partição **autoritativa** de todos os parâmetros de criação do `CmdLineArgsImpl` em
+quatro tiers. SC-002 ("100% das opções acessíveis pelo wizard **ou** documentadas como
+fora de escopo") é satisfeito por esta tabela: tiers A–C são acessíveis pelo wizard;
+tier D é a documentação explícita do que fica de fora.
+
+| Param (CmdLineArgsImpl) | Tier | Onde no wizard |
+|---|---|---|
+| `-d`/`-data`, `-dname`, `-p`/`-password` | **A — Core** | página *Sources* (por fonte) |
+| `-o`/`-output`, `--append`, `--continue`, `--restart` | **A — Core** | página *Output* (saída + modo) |
+| `-profile` | **A — Core** | página *Profile* |
+| `-tz`/`-timezone`, `-l`/`-keywordlist` | **A — Core** | topo da página *Common options* |
+| `--addowner`, `--portable`, `--nopstattachs`, `--nolinkeditems`, `--downloadInternetData` | **B — Common** | toggles da página *Common options* |
+| `-b`/`-blocksize`, `-ocr`, `-nocontent`, `-log`, `--nologfile`, `-splash` | **C — Advanced** | página *Advanced* (campos tipados) |
+| `-X` (extras dinâmicos) + qualquer flag rara não listada | **C — Advanced** | página *Advanced* (passthrough `k=v` / flag literal) |
+| `-remove` | **D — Out of scope** | remoção de evidência (workflow distinto, não criação) |
+| `--yara-only` | **D — Out of scope** | refresh de caso já processado (não criação) |
+| `--nogui` | **D — Out of scope** | o wizard é sempre GUI; nunca passado |
+| `-asap` | **D — Out of scope (v1)** | integração ASAP/PF (injeta info de caso no HTML report) — adiada; permanece só na CLI |
+| `--help`/`-h`/`/?` | **D — Out of scope** | só CLI |
+
+**Decisão ASAP**: o modo `-asap` (integração com o sistema de gerenciamento de casos da
+PF) fica **fora do escopo desta feature** — permanece disponível pela CLI/`Main` (os
+construtores ASAP de `Main` são intocados). Reavaliável como melhoria futura do wizard.
+
+**Regra de evolução**: um novo parâmetro de criação adicionado ao `CmdLineArgsImpl`
+**MUST** ser classificado nesta tabela (A/B/C/D) no mesmo PR — caso contrário SC-002
+regride.
 
 ## Invariantes
 

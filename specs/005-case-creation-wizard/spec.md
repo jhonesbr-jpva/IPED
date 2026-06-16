@@ -33,11 +33,12 @@ o investigador crie perfis novos (tipicamente clonando um perfil existente e
 ajustando quais funcionalidades de processamento ficam ativas e suas opções), em vez
 de editar arquivos de configuração manualmente.
 
-Com isso, o **lançador gráfico autônomo de criação de casos (`iped.exe`) é
-aposentado** a partir do release de cut-over (consistente com a estratégia de
-cut-over total da feature 004): toda criação interativa de casos passa a ocorrer pela
-UI RCP. O motor de processamento dirigido por linha de comando permanece disponível
-para automação e cenários de servidor (ver Assumptions e FR-016).
+Com isso, a **criação interativa de casos deixa de depender do `iped.exe`** e passa a
+ocorrer pela UI RCP. O `iped.exe` **permanece distribuído** como porta de execução
+headless (automação, scripts, servidores) — apenas deixa de ser a porta promovida para
+criação interativa. A remoção completa do `iped.exe` fica como passo **futuro**,
+condicionado a o novo launcher RCP ganhar um modo headless equivalente (ver
+Clarifications e Assumptions).
 
 A feature é **preservadora de comportamento de processamento**: o resultado forense
 de um caso criado pelo wizard com um dado perfil é equivalente ao do mesmo perfil
@@ -61,6 +62,11 @@ gestão de perfis assistida.
   curado? → A: Subconjunto curado de opções comuns na UI (+ etapa "avançado"); flags
   raras/de especialista permanecem na linha de comando/arquivos de configuração e
   documentadas.
+- Q: O `iped.exe` é removido nesta feature? → A: Não — `iped.exe` **permanece
+  distribuído** como entry headless (automação/servidores); apenas deixa de ser a porta
+  promovida para criação interativa. A remoção completa fica para o futuro, quando o
+  novo launcher RCP oferecer um modo headless equivalente (remediação do achado I1 do
+  `/speckit-analyze`).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -270,16 +276,17 @@ caso coerente com as escolhas feitas.
 - **FR-019**: O sistema MUST validar o nome do perfil (unicidade e caracteres
   válidos) e impedir colisões de nome.
 
-**Transição (aposentadoria do lançador `iped.exe`)**
+**Transição (`iped.exe` deixa de ser a porta de criação interativa)**
 
-- **FR-020**: A criação interativa de casos MUST passar a ocorrer pela UI RCP; o
-  lançador gráfico autônomo de criação de casos (`iped.exe`) MUST deixar de ser
-  distribuído a partir do release de cut-over, de forma consistente com a estratégia
-  de cut-over total da feature 004.
-- **FR-021**: O motor de processamento dirigido por linha de comando (execução
-  headless, sem interface gráfica) MUST permanecer disponível e inalterado para
-  automação e cenários de servidor; a aposentadoria refere-se ao **front-end gráfico
-  autônomo de criação**, não ao motor de processamento.
+- **FR-020**: A criação interativa de casos MUST passar a ocorrer pela UI RCP, que se
+  torna a porta promovida (menu, documentação, atalhos). O `iped.exe` MUST deixar de
+  ser apresentado/promovido como o caminho de criação interativa; não é necessário usá-lo
+  (nem um terminal) para criar um caso.
+- **FR-021**: O `iped.exe`/motor de processamento dirigido por linha de comando (execução
+  headless) MUST **permanecer distribuído e inalterado** para automação, scripts e
+  cenários de servidor. A remoção do `iped.exe` é um passo **futuro fora do escopo
+  desta feature**, condicionado a o novo launcher RCP oferecer um modo headless
+  equivalente (decisão registrada nas Clarifications 2026-06-16).
 
 **Consistência com a plataforma RCP (feature 004)**
 
@@ -316,7 +323,9 @@ caso coerente com as escolhas feitas.
   terminal nem o antigo lançador), a partir de uma evidência de referência, em até 3
   minutos de interação até o início do processamento.
 - **SC-002**: 100% das opções de criação de caso aceitas hoje pelo fluxo atual estão
-  acessíveis pelo assistente ou explicitamente documentadas como fora de escopo.
+  acessíveis pelo assistente ou explicitamente documentadas como fora de escopo,
+  conforme a partição A/B/C/D em
+  `contracts/new-case-wizard.contract.md` (fonte da verdade).
 - **SC-003**: O assistente rejeita 100% das submissões inválidas testadas (fonte
   inexistente, saída não gravável, conflito de saída não resolvido) com mensagem
   clara e sem iniciar processamento.
@@ -326,9 +335,10 @@ caso coerente com as escolhas feitas.
 - **SC-005**: Um perfil criado pela tela de perfis aparece e é selecionável no
   assistente de Novo Caso em 100% dos casos, e produz um caso coerente com as
   funcionalidades habilitadas/desabilitadas escolhidas.
-- **SC-006**: A partir do release de cut-over, o lançador `iped.exe` de criação de
-  casos não é distribuído, e toda criação interativa ocorre pela UI RCP (verificado
-  por inspeção do release).
+- **SC-006**: Toda criação interativa de caso pode ser realizada de ponta a ponta pela
+  UI RCP **sem usar `iped.exe` nem um terminal** (verificado por inspeção do fluxo). O
+  `iped.exe` permanece no release apenas como entry headless para automação — nenhum
+  caminho de criação interativa depende dele.
 - **SC-007**: 100% dos textos visíveis das novas telas estão localizados em português
   e inglês; nos demais idiomas suportados não há chaves de mensagem cruas na tela
   (fallback funcionando).
@@ -343,11 +353,12 @@ caso coerente com as escolhas feitas.
   processamento e a abertura de casos já existem ou foram migrados na 004. Esta
   feature adiciona a porta de entrada de criação (menu + wizard) e a gestão de
   perfis sobre essa base.
-- **Aposentadoria restrita ao front-end gráfico**: "aposentar `iped.exe`" significa
-  retirar o lançador gráfico autônomo de criação de casos. O motor de processamento e
-  sua interface de linha de comando permanecem para automação, scripts e servidores
-  (perfis como `blind`/`triage` continuam executáveis sem GUI). Confirmado na
-  clarificação 2026-06-16.
+- **`iped.exe` permanece como entry headless**: "aposentar `iped.exe`" significa apenas
+  que ele deixa de ser a porta promovida para **criação interativa** — o binário/CLI
+  **continua distribuído e inalterado** para automação, scripts e servidores (perfis
+  como `blind`/`triage` continuam executáveis sem GUI). A remoção do `iped.exe` é passo
+  futuro, fora do escopo, condicionado a um modo headless no novo launcher RCP.
+  Confirmado nas clarificações 2026-06-16 (incl. remediação I1 do `/speckit-analyze`).
 - **Editor de perfis completo**: o editor parte de um perfil existente (clonar) e
   expõe para edição todas as opções de configuração do pipeline que o perfil
   parametriza (flags de habilitação + parâmetros dos componentes de processamento),
@@ -357,8 +368,11 @@ caso coerente com as escolhas feitas.
 - **Execução do processamento**: o job de processamento disparado pelo wizard usa o
   mesmo motor de processamento atual (executado como processo separado, conforme o
   modelo vigente), preservando isolamento de falhas; a UI apenas dispara e acompanha.
-- **Estratégia de entrega**: cut-over total, alinhada à feature 004 — não há período
-  com o lançador antigo e o novo wizard coexistindo no mesmo release.
+- **Estratégia de entrega**: o cut-over total da feature 004 refere-se à **UI de
+  análise** (a UI Swing antiga é substituída). Para **criação**, o `iped.exe`/CLI
+  **coexiste** intencionalmente como entry headless (não como porta interativa
+  concorrente) — ver Clarifications/FR-021. Não há duas UIs *interativas* de criação no
+  mesmo release.
 - **Plataformas e idiomas**: Windows e Linux, com o conjunto de idiomas já suportado
   pela UI (paridade com a feature 004); macOS e novos idiomas fora de escopo.
 - **Perfis embarcados atuais**: forensic, pedo, triage, fastmode e blind permanecem
@@ -369,12 +383,16 @@ caso coerente com as escolhas feitas.
 - Novas funcionalidades ou etapas de processamento (qualquer task/análise que não
   exista hoje no motor). A feature expõe e parametriza o que já existe.
 - Mudanças no formato do caso, do índice ou no resultado forense de um dado perfil.
-- Remoção ou alteração do motor de processamento por linha de comando (apenas o
-  lançador gráfico autônomo de criação é aposentado).
-- Controles no **assistente de Novo Caso** para flags raras/de especialista de
-  criação de caso (permanecem acessíveis pela linha de comando/arquivos de
-  configuração; ver FR-007). Observação: o **editor de perfis** é completo e cobre
-  todas as opções de configuração do pipeline (FR-016).
+- Remoção ou alteração do motor/`iped.exe` de processamento por linha de comando:
+  `iped.exe` **permanece distribuído** como entry headless; só deixa de ser a porta
+  promovida de criação interativa (FR-020/FR-021). A remoção do `iped.exe` é passo
+  futuro, condicionado a um modo headless no novo launcher RCP.
+- Controles no **assistente de Novo Caso** para flags raras/de especialista de criação
+  de caso (tier D da partição em `contracts/new-case-wizard.contract.md`) — incluindo o
+  **modo ASAP** (`-asap`, integração PF), `-remove`, `--yara-only` e `--nogui`:
+  permanecem acessíveis só pela linha de comando/arquivos de configuração (ver FR-007).
+  Observação: o **editor de perfis** é completo e cobre todas as opções de configuração
+  do pipeline (FR-016).
 - Agendamento, enfileiramento ou orquestração de múltiplos jobs de processamento
   (criação de um caso por vez pela UI).
 - Suporte a macOS e tradução para novos idiomas.

@@ -38,13 +38,15 @@ não por terminal/atalho `iped.exe`.
 ## R2. "Retire iped.exe" — escopo preciso e reconciliação FR-020 × FR-021
 
 **Decision**: Interpretar a aposentadoria como **retirar `iped.exe` como porta de
-entrada promovida para criar casos**. O motor de processamento (`iped.jar`/`Bootstrap`,
-invocável por `java -jar` ou por um launcher de console) **permanece distribuído e
-inalterado** para automação/servidores (FR-021, Clarifications Q1). No empacotamento do
-cut-over, o shim `iped.exe` (launch4j) deixa de ser apresentado como o caminho de
-criação; documentação e atalhos passam a apontar para a UI. Decidir no `tasks`/cut-over
-se o shim é removido ou mantido como entry headless documentado — é detalhe de
-empacotamento, não de comportamento.
+entrada promovida para criar casos**, **mantendo `iped.exe` distribuído** como entry
+headless. O motor de processamento (`iped.jar`/`Bootstrap`, invocável por `java -jar`,
+pelo `iped.exe` ou por um launcher de console) **permanece distribuído e inalterado**
+para automação/servidores (FR-021, Clarifications Q1). O shim `iped.exe` (launch4j)
+**não é removido** nesta feature — apenas deixa de ser apresentado como o caminho de
+criação interativa; documentação e atalhos passam a apontar para a UI. A **remoção
+completa do `iped.exe` é passo futuro**, fora do escopo, condicionado a o novo launcher
+RCP oferecer um modo headless equivalente (decisão do usuário na remediação do achado I1
+do `/speckit-analyze`, 2026-06-16).
 
 **Rationale**: No código atual `iped.exe`→`iped.jar` é uma **CLI** (exige `-d`/`-o`;
 `CmdLineArgsImpl` lança erro sem datasource) — não há um "launcher gráfico" separado a
