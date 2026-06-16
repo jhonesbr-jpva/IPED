@@ -105,6 +105,7 @@
         <module>bundles/iped.rcp.specialized</module>
         <module>bundles/iped.rcp.progress</module>
         <module>bundles/iped.rcp.app</module>
+        <module>bundles/iped.rcp.casecreation</module>
         <module>features/iped.rcp.feature</module>
         <module>products/iped.rcp.product</module>
         <!-- Phase 8 (T051, US6): drop-in extension sample. Built by the

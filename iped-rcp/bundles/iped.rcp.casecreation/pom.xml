@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Case creation & opening UI (feature 005-case-creation-wizard):
+         New Case wizard, profile create/edit dialogs and the Open/New/Manage
+         Profiles command handlers. The toolkit-free logic (BootstrapCommandBuilder,
+         ProcessingLaunchService, ProfileService) lives in iped.rcp.core; this
+         bundle is the SWT/JFace surface (tasks T013-T017, T026-T028). -->
+    <artifactId>iped.rcp.casecreation</artifactId>
+    <packaging>eclipse-plugin</packaging>
+
+    <dependencies>
+        <!-- per-module pomDependencies=consider rule: the engine wrapper must
+             join this module's target platform -->
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.libs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

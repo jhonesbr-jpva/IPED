@@ -39,9 +39,9 @@ testing. Builds on the feature 004 RCP platform (e4/SWT/Tycho), reusing
 
 **Purpose**: criar e registrar o novo bundle de UI da feature.
 
-- [ ] T001 Create the new bundle skeleton `iped-rcp/bundles/iped.rcp.casecreation/` (`META-INF/MANIFEST.MF`, `build.properties`, `pom.xml` packaging `eclipse-plugin`, `plugin.xml`) matching the Tycho conventions of the other `iped.rcp.*` bundles
-- [ ] T002 Register `iped.rcp.casecreation` in `iped-rcp/features/iped.rcp.feature/feature.xml` and `iped-rcp/products/iped.rcp.product/iped-ui.product`
-- [ ] T003 [P] Declare bundle dependencies in `iped-rcp/bundles/iped.rcp.casecreation/META-INF/MANIFEST.MF` (Require-Bundle/Import-Package: `iped.rcp.core`, `iped.rcp.api`, `org.eclipse.jface`, `org.eclipse.e4.ui.*`, `org.eclipse.swt`) and enable `tycho-ds-plugin` in its `pom.xml` if DS is used
+- [x] T001 Create the new bundle skeleton `iped-rcp/bundles/iped.rcp.casecreation/` (`META-INF/MANIFEST.MF`, `build.properties`, `pom.xml` packaging `eclipse-plugin`, `plugin.xml`) matching the Tycho conventions of the other `iped.rcp.*` bundles
+- [x] T002 Register `iped.rcp.casecreation` in `iped-rcp/features/iped.rcp.feature/feature.xml` and as a reactor module in `iped-rcp/pom.xml` (the `iped-ui.product` is feature-based — `useFeatures="true"` — so it needs no per-bundle edit)
+- [x] T003 [P] Declare bundle dependencies in `iped-rcp/bundles/iped.rcp.casecreation/META-INF/MANIFEST.MF` (Require-Bundle/Import-Package: `iped.rcp.core`, `iped.rcp.api`, `org.eclipse.jface`, `org.eclipse.e4.ui.*`, `org.eclipse.swt`) and enable `tycho-ds-plugin` in its `pom.xml` if DS is used
 
 **Checkpoint**: bundle compiles empty and is part of the product.
 
@@ -74,11 +74,11 @@ com um criado pela CLI (mesmo perfil/evidência) — devem ser equivalentes (qui
 
 ### Headless services & tests for User Story 1
 
-- [ ] T007 [P] [US1] Create `NewCaseRequest`, `DataSourceEntry`, `CommonOptions`, `ProcessingMode` (NEW/APPEND/CONTINUE/RESTART) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/processing/` per [data-model.md](data-model.md) §1
-- [ ] T008 [P] [US1] Create `ProfileDescriptor` (built-in/user) + `ProfileService.listProfiles()` discovery (scan `profiles/`) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/profiles/` (mutating ops come in US3)
-- [ ] T009 [US1] Implement `BootstrapCommandBuilder` (`NewCaseRequest` → Bootstrap arg list) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/processing/BootstrapCommandBuilder.java` per [contracts/new-case-wizard.contract.md](contracts/new-case-wizard.contract.md) (depends on T007)
+- [x] T007 [P] [US1] Create `NewCaseRequest`, `DataSourceEntry`, `CommonOptions`, `AdvancedOptions`, `ProcessingMode` (NEW/APPEND/CONTINUE/RESTART) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/processing/` per [data-model.md](data-model.md) §1
+- [x] T008 [P] [US1] Create `ProfileDescriptor` (built-in/user) + `ProfileService.listProfiles()` discovery (scan `profiles/`) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/profiles/` (mutating ops come in US3)
+- [x] T009 [US1] Implement `BootstrapCommandBuilder` (`NewCaseRequest` → Bootstrap arg list) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/processing/BootstrapCommandBuilder.java` per [contracts/new-case-wizard.contract.md](contracts/new-case-wizard.contract.md) (depends on T007)
 - [ ] T010 [US1] Implement `ProcessingLaunchService` (OSGi DS) + `ProcessingJobHandle` in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/processing/` — resolve java/`iped.jar`, spawn `Bootstrap` subprocess, lifecycle, FR-024 same-output conflict guard — per [contracts/processing-launch.contract.md](contracts/processing-launch.contract.md) (depends on T009)
-- [ ] T011 [P] [US1] Headless test: `BootstrapCommandBuilder` arg mapping + FR-008 validations (source exists, output writable/not-subfolder, mode/case rules) in `iped-rcp/tests/iped.rcp.tests.parity/` (covers SC-003)
+- [x] T011 [P] [US1] Headless test: `BootstrapCommandBuilder` arg mapping + FR-008 validations (source exists, output writable/not-subfolder, mode/case rules) in `iped-rcp/tests/iped.rcp.tests.parity/` (covers SC-003)
 - [ ] T012 [P] [US1] Headless **equivalence** test: case created via `BootstrapCommandBuilder` launch vs direct CLI with same profile/evidence → same item/category/index-field universe (FR-013/SC-004) in `iped-rcp/tests/iped.rcp.tests.parity/`
 
 ### UI for User Story 1
