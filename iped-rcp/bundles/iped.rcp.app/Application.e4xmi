@@ -19,6 +19,7 @@
     <mainMenu xmi:id="_menuMain" elementId="iped.rcp.app.menu.main">
       <children xsi:type="menu:Menu" xmi:id="_menuFile" elementId="iped.rcp.app.menu.file" label="File">
         <children xsi:type="menu:HandledMenuItem" xmi:id="_miNewCase" elementId="iped.rcp.app.menuitem.newcase" label="New Case..." command="_cmdNewCase"/>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_miOpenCase" elementId="iped.rcp.app.menuitem.opencase" label="Open Case..." command="_cmdOpenCase"/>
       </children>
       <children xsi:type="menu:Menu" xmi:id="_menuView" elementId="iped.rcp.app.menu.view" label="View">
         <children xsi:type="menu:Menu" xmi:id="_menuTheme" elementId="iped.rcp.app.menu.theme" label="Theme">
@@ -75,6 +76,8 @@
   <commands xmi:id="_cmdManageBookmarks" elementId="iped.rcp.command.managebookmarks" commandName="Manage Bookmarks"/>
   <handlers xmi:id="_handlerNewCase" elementId="iped.rcp.app.handler.newcase" contributionURI="bundleclass://iped.rcp.casecreation/iped.rcp.casecreation.handlers.NewCaseHandler" command="_cmdNewCase"/>
   <commands xmi:id="_cmdNewCase" elementId="iped.rcp.command.newcase" commandName="New Case"/>
+  <handlers xmi:id="_handlerOpenCase" elementId="iped.rcp.app.handler.opencase" contributionURI="bundleclass://iped.rcp.casecreation/iped.rcp.casecreation.handlers.OpenCaseHandler" command="_cmdOpenCase"/>
+  <commands xmi:id="_cmdOpenCase" elementId="iped.rcp.command.opencase" commandName="Open Case"/>
   <addons xmi:id="_addonCommandService" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_addonContextService" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_addonBindingService" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>

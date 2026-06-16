@@ -56,7 +56,7 @@ capacidade de subir sem caso (a porta de entrada do menu).
 
 - [x] T004 Add the **File** main-menu container (first child of `mainMenu`) with command-service wiring in `iped-rcp/bundles/iped.rcp.app/Application.e4xmi`, per [contracts/case-menu-commands.contract.md](contracts/case-menu-commands.contract.md) (items are added by each story)
 - [x] T005 Modify `iped-rcp/bundles/iped.rcp.app/src/main/java/iped/rcp/app/LifeCycle.java` to allow starting **without a case** (empty perspective driven by the File menu) instead of forcing a `DirectoryDialog` at boot (research R6 / Complexity Tracking)
-- [ ] T006 [P] Add base i18n keys for the File menu (`Menu.File`, separators labels if any) to all 6 `iped-app/resources/localization/iped-app*.properties` bundles
+- [x] T006 [P] Add base i18n keys for the File menu (`Menu.File`, separators labels if any) to all 6 `iped-app/resources/localization/iped-app*.properties` bundles
 
 **Checkpoint**: app boots to an empty workbench with an (empty) File menu; ready for stories.
 
@@ -102,10 +102,10 @@ submenu **Recent Cases** para reabertura rápida.
 (paridade com a abertura da 004) e confirmar que aparece em Recent Cases (quickstart V3).
 
 - [ ] T018 [P] [US2] Implement `RecentCasesStore` (`~/.iped/recent-cases.*`, add/update/prune, cap) in `iped-rcp/bundles/iped.rcp.core/src/main/java/iped/rcp/core/processing/RecentCasesStore.java` per [data-model.md](data-model.md) §5
-- [ ] T019 [US2] Implement `OpenCaseHandler` (native `DirectoryDialog` → `ICaseSessionManager.openCase`) and `OpenRecentHandler` in `iped-rcp/bundles/iped.rcp.casecreation/src/main/java/iped/rcp/casecreation/handlers/` (invalid folder → clear message, no crash)
-- [ ] T020 [US2] Add `iped.rcp.command.opencase` + Open Case menuitem and the dynamic **Recent Cases** submenu (populated from `RecentCasesStore`) to `iped-rcp/bundles/iped.rcp.app/Application.e4xmi` (depends on T004, T018, T019)
+- [~] T019 [US2] `OpenCaseHandler` done (native `DirectoryDialog` → `CaseOpener` → `ICaseSessionManager.open` on an e4 Job; invalid folder → `CaseOpenException` dialog). `OpenRecentHandler` deferred with Recent Cases.
+- [~] T020 [US2] Open Case command + menuitem added to `Application.e4xmi` (+ `RcpMenu.OpenCase` label in `LifeCycle`). The dynamic **Recent Cases** submenu is deferred (e4 parameterized-command + `@AboutToShow`; safer to wire with a runtime to verify).
 - [ ] T021 [US2] Update `RecentCasesStore` on every case open (Open/New/near-live) — wire into the session-open path in `iped-rcp/bundles/iped.rcp.casecreation/` / handlers (depends on T018)
-- [ ] T022 [P] [US2] Add i18n keys for Open Case / Recent Cases to all 6 `iped-app/resources/localization/iped-app*.properties` bundles
+- [~] T022 [P] [US2] Open Case i18n keys added to `iped-desktop-messages` EN + pt_BR (Recent Cases keys come with the submenu)
 - [ ] T023 [P] [US2] Headless test for `RecentCasesStore` (add/update/prune/cap) + SWTBot test for Open Case valid/invalid + recent reopen in `iped-rcp/tests/iped.rcp.tests.parity/` and `iped-rcp/tests/iped.rcp.tests.swtbot/`
 
 **Checkpoint**: User Stories 1 e 2 funcionam independentemente.
