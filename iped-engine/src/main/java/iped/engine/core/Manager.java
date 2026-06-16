@@ -866,6 +866,18 @@ public class Manager {
             IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped.localization.Messages.BUNDLES_FOLDER),
                     new File(output, iped.localization.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
+            // Feature 004 (T053): copy the Eclipse RCP analysis UI into the
+            // self-contained case next to jre/ and lib/, so the case carries
+            // the exact UI it was processed with (case-launcher-packaging
+            // contract; also what the near-live "open analysis" launcher resolves
+            // at <case>/iped/ui). Only present in -P rcp releases, so guarded
+            // like bin/ below — the default (Swing) build has no ui/ and is
+            // unaffected (FR-028; until the cut-over release).
+            File uiDir = new File(Configuration.getInstance().appRoot, "ui"); //$NON-NLS-1$
+            if (uiDir.exists()) {
+                IOUtil.copyDirectory(uiDir, new File(output, "ui"), true); //$NON-NLS-1$
+            }
+
             // Copy tools. For now, skip copying mplayer
             File source = new File(Configuration.getInstance().appRoot, "tools");
             for (File file : source.listFiles()) {

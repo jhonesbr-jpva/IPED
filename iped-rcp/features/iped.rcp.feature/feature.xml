@@ -14,6 +14,7 @@
       see LICENSE.txt in the repository root).
    </license>
 
+   <plugin id="iped.rcp.sleuthkit" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
    <plugin id="iped.rcp.libs" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
    <plugin id="iped.rcp.api" download-size="0" install-size="0" version="0.0.0" unpack="false"/>
    <plugin id="iped.rcp.core" download-size="0" install-size="0" version="0.0.0" unpack="false"/>

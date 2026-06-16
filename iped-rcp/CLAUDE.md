@@ -22,6 +22,7 @@ iped-rcp/                                  # reactor Tycho (perfil -P rcp no pom
 │   └── iped-rcp.target                    # Eclipse Platform 4.32 + Nebula Gallery/NatTable + SWTBot (p2 pinado)
 ├── bundles/
 │   ├── iped.rcp.libs/                     # WRAPPER: iped-engine + iped-app(classes) + deps num único class space
+│   ├── iped.rcp.sleuthkit/                # HOST bundle do org.sleuthkit.datamodel (jar wrapped; sem fragment nativo)
 │   ├── iped.rcp.api/                      # API de extensão PROVISÓRIA (serviços, tópicos de evento, âncoras)
 │   ├── iped.rcp.core/                     # sessão de caso, serviços headless (DS), i18n, eventos, modelos de árvore
 │   ├── iped.rcp.views/                    # parts SWT: resultados, galeria, árvores, metadados, filtros, busca, bookmarks
@@ -30,7 +31,7 @@ iped-rcp/                                  # reactor Tycho (perfil -P rcp no pom
 │   ├── iped.rcp.progress/                 # janela de progresso SWT standalone (PLAIN JAR, roda na JVM de processamento)
 │   └── iped.rcp.app/                      # Application.e4xmi, LifeCycle, splash, temas, scale, drop-ins, produto
 ├── features/
-│   └── iped.rcp.feature/                  # agrupa os 7 bundles de produção
+│   └── iped.rcp.feature/                  # agrupa os 8 bundles de produção
 ├── products/
 │   └── iped.rcp.product/                  # iped-ui.product (.product) + p2-director (win64 + linux64)
 ├── samples/
@@ -62,10 +63,19 @@ Instruções bnd relevantes (em [bundles/iped.rcp.libs/pom.xml](bundles/iped.rcp
 - `Embed-Dependency: *;scope=compile|runtime` + `Embed-Transitive` → engine roda no classpath plano de sempre (FR-028).
 - `Import-Package: !*` → bundle autocontido; pacotes JDK vêm de *boot delegation*.
 - `DynamicImport-Package: *` → engine usa reflection/SPI pesado (Tika, JNA, scripting).
-- `Export-Package` cresce **sob demanda**, conforme as UI bundles consomem pacotes: hoje `iped.*`, `org.sleuthkit.datamodel`, `org.slf4j`, `org.apache.lucene.*`, `org.apache.tika.*`, `bibliothek.*` — todos `x-internal:=true`.
+- `Export-Package` cresce **sob demanda**, conforme as UI bundles consomem pacotes: hoje `iped.*`, `org.slf4j`, `org.apache.lucene.*`, `org.apache.tika.*`, `bibliothek.*` — todos `x-internal:=true`. **Não exporta mais `org.sleuthkit.datamodel`** (movido para `iped.rcp.sleuthkit`, §4.1); em troca exporta os pacotes que o datamodel toca em-processo: `org.sqlite`, `com.google.common.*`, `com.google.gson.*`, `com.mchange.v2.c3p0`, `com.zaxxer.sparsebits`, `org.apache.commons.lang3`, `org.joda.time`, `org.postgresql.util`.
+- `Embed-Dependency: *;scope=compile|runtime;artifactId=!sleuthkit` → o jar do Sleuthkit **não** é mais embutido aqui.
 - `_nouses:=true` e `_fixupmessages` silenciam warnings benignos de split-package (Lucene) e default-package (jars legados).
 
 > ⚠️ **Cuidados**: jars assinados (ex.: BouncyCastle JCE) podem não funcionar embutidos — se aparecer, extrair como bundle wrapped separado. Ao precisar de um pacote do engine numa UI bundle, **adicione-o ao `Export-Package`** do wrapper (sempre `x-internal`), não crie novas dependências diretas.
+
+### 4.1 Bundle host do Sleuthkit — `iped.rcp.sleuthkit`
+
+Separado do wrapper para que `org.sleuthkit.datamodel` viva no seu próprio class space OSGi. Também construído com o **Felix `maven-bundle-plugin`** (consumido via `pomDependencies=consider`).
+
+- Embute **só** `org.sleuthkit:sleuthkit` (o pom `install-file` não tem deps transitivas) e exporta `org.sleuthkit.*;x-internal:=true`. `Import-Package: !*` + `DynamicImport-Package: *`.
+- **Sem fragment / `Bundle-NativeCode`**: o JNI do Sleuthkit roda **out-of-process** (`SleuthkitServer` = `java -cp <caso>/iped/lib/*`), e o `libtsk_jni` é auto-extraído do próprio jar pelo `org.sleuthkit.datamodel.LibraryUtils`. Um fragment nativo nunca seria acionado pelo framework OSGi aqui.
+- **Uso in-process**: a UI de análise abre o `SleuthkitCase` (SQLite via `sqlite-jdbc`, **sem** JNI) para navegar a árvore TSK (`IPEDSource.openSleuthkitCase`). Esse caminho referencia sqlite/guava/gson/c3p0/joda/commons-lang3/sparsebits/postgresql — que ficam embutidos no `iped.rcp.libs` e são resolvidos aqui via dynamic import (cópia única; um único load nativo do sqlite).
 
 ## 5. API de extensão provisória — `iped.rcp.api`
 

@@ -22,5 +22,12 @@
             <artifactId>iped.rcp.libs</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Same reason for the felix-built Sleuthkit host bundle: it is a
+             plugin of this feature, so it must join the target platform. -->
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.sleuthkit</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

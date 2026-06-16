@@ -122,6 +122,34 @@ public final class Messages {
         return result;
     }
 
+    /**
+     * Exports the resolved localization folder to the legacy engine resolver
+     * ({@link iped.localization.Messages#LOCALIZATION_DIR_PROP}) so
+     * {@link iped.localization.Messages#getExternalBundle}, called from inside
+     * the OSGi wrapper bundle, finds the catalogs without relying on its
+     * jar-relative / working-directory heuristics — which break for an installed
+     * product whose working directory is outside the source tree (task T065).
+     *
+     * <p>
+     * Reuses {@link #resolveBundlesDir()} (the single source of truth for the
+     * folder location in the RCP product). No-op when the engine property is
+     * already set explicitly, or when the folder cannot be resolved (the engine
+     * resolver then reports its own clear error).
+     */
+    public static void exportEngineLocalizationDir() {
+        if (System.getProperty(iped.localization.Messages.LOCALIZATION_DIR_PROP) != null) {
+            return; // explicit override wins (e.g. -Diped.localization.dir)
+        }
+        File dir = resolveBundlesDir();
+        if (dir != null) {
+            System.setProperty(iped.localization.Messages.LOCALIZATION_DIR_PROP, dir.getAbsolutePath());
+            LOGGER.info("Exported engine localization dir: {}", dir.getAbsolutePath());
+        } else {
+            LOGGER.warn("Could not resolve localization folder to export to the engine; set -D{}",
+                    iped.localization.Messages.LOCALIZATION_DIR_PROP);
+        }
+    }
+
     /** Clears cached locale and bundles (locale switch in tests/preferences). */
     public static synchronized void reset() {
         locale = null;

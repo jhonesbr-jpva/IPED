@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped.rcp</groupId>
+        <artifactId>iped-rcp-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <!-- Host bundle dedicated to the Sleuthkit Java datamodel
+         (org.sleuthkit:sleuthkit), split out of the iped.rcp.libs engine
+         wrapper so it owns its own OSGi class space.
+
+         Why a separate bundle (not embedded in iped.rcp.libs):
+         - keeps the datamodel API surface (org.sleuthkit.datamodel.*) in a
+           small, clearly-scoped bundle instead of buried in the engine mega
+           wrapper;
+         - the Sleuthkit JNI native code (libtsk_jni) is NOT loaded inside this
+           OSGi process: IPED runs Sleuthkit out-of-process (SleuthkitServer,
+           a plain `java -cp <case>/iped/lib/*` JVM) and the native lib is
+           self-extracted from this same jar by org.sleuthkit.datamodel
+           .LibraryUtils. So no Bundle-NativeCode / native fragment is needed
+           here — it would never be triggered by the framework.
+
+         In-process usage (RCP analysis UI): IPEDSource opens the existing TSK
+         case via SleuthkitCase (pure sqlite-jdbc, no JNI) to browse the file
+         tree. That datamodel code references sqlite/guava/gson/c3p0/joda/
+         commons-lang3/sparsebits/postgresql, which all live embedded in
+         iped.rcp.libs. Those packages are re-exported there (x-internal) and
+         resolved here lazily through DynamicImport-Package:* — single copy of
+         sqlite et al. (and a single native sqlite load).
+
+         Built with the Felix maven-bundle-plugin (not Tycho) and consumed by
+         the Tycho bundles / the wrapper through pomDependencies=consider. -->
+    <artifactId>iped.rcp.sleuthkit</artifactId>
+    <packaging>bundle</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.sleuthkit</groupId>
+            <artifactId>sleuthkit</artifactId>
+            <version>${sleuthkit.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>5.1.9</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>iped.rcp.sleuthkit</Bundle-SymbolicName>
+                        <Bundle-Name>IPED Sleuthkit datamodel (wrapped)</Bundle-Name>
+                        <Bundle-Vendor>IPED</Bundle-Vendor>
+                        <Automatic-Module-Name>iped.rcp.sleuthkit</Automatic-Module-Name>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-21</Bundle-RequiredExecutionEnvironment>
+                        <!-- Embed only the sleuthkit jar (its install-file pom
+                             declares no transitive deps; they come from the
+                             engine wrapper exports, see below). The jar carries
+                             NATIVELIBS/.../libtsk_jni.dll, used only by the
+                             out-of-process SleuthkitServer. -->
+                        <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
+                        <Embed-Transitive>false</Embed-Transitive>
+                        <Embed-Directory>lib</Embed-Directory>
+                        <!-- The only public-ish surface: the datamodel classes
+                             (TskCoreException, SleuthkitCase, ...). x-internal
+                             because third parties compile against iped.rcp.api
+                             ONLY (same contract as the wrapper re-exports). -->
+                        <Export-Package>org.sleuthkit.*;x-internal:=true</Export-Package>
+                        <!-- Self-contained: no mandatory imports. -->
+                        <Import-Package>!*</Import-Package>
+                        <!-- Runtime deps of org.sleuthkit.datamodel (sqlite,
+                             guava, gson, c3p0, sparsebits, commons-lang3,
+                             joda-time, postgresql.util) are exported by
+                             iped.rcp.libs and wired lazily here. -->
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                        <_nouses>true</_nouses>
+                        <_failok>false</_failok>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -59,6 +59,13 @@ public class LifeCycle {
     void postContextCreate(IApplicationContext appContext, IEclipseContext context) {
         Display display = Display.getDefault();
 
+        // T065: point the legacy engine localization resolver
+        // (iped.localization.Messages) at the release localization/ folder
+        // before any engine i18n runs (case open loads engine configs). From
+        // inside the OSGi wrapper its jar-relative/working-dir heuristics fail
+        // for an installed product; this reuses the RCP resolver (T009).
+        Messages.exportEngineLocalizationDir();
+
         // T050 (US6, FR-022): install drop-in third-party extensions BEFORE
         // the application model loads, so their fragment.e4xmi contributions
         // are in the extension registry when e4 processes model fragments. A

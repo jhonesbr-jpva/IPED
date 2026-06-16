@@ -41,6 +41,12 @@
             <artifactId>iped.rcp.libs</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- same for the Sleuthkit host bundle (a feature plugin) -->
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.sleuthkit</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

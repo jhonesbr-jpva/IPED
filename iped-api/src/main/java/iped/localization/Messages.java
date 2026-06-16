@@ -11,6 +11,7 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
@@ -22,24 +23,21 @@ public class Messages {
     public static final String BUNDLES_FOLDER = "localization";
     public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/";
 
+    /**
+     * System property pointing directly at the {@value #BUNDLES_FOLDER} folder.
+     * When set to an existing directory it takes precedence over the
+     * jar-relative and working-directory heuristics below. The RCP product
+     * sets it at boot so this resolver works from inside the OSGi wrapper
+     * bundle, where the class location is not a usable {@code file:} jar path
+     * and the working directory may be outside the source tree (task T065).
+     */
+    public static final String LOCALIZATION_DIR_PROP = "iped.localization.dir";
+
     private Messages() {
     }
 
     public static ResourceBundle getExternalBundle(String bundleName, Locale locale) {
-        File file = null;
-        try {
-            URL url = URLUtil.getURL(Messages.class);
-            file = new File(new File(url.toURI()).getParentFile().getParentFile(), BUNDLES_FOLDER);
-        } catch (URISyntaxException e1) {
-            e1.printStackTrace();
-        }
-        if (file != null && !file.exists()) {
-            File baseFile = new File(System.getProperty("user.dir"));
-            do {
-                baseFile = baseFile.getParentFile();
-                file = new File(baseFile, BUNDLES_FOLDER_PREFIX + BUNDLES_FOLDER);
-            } while (!file.exists());
-        }
+        File file = resolveBundlesFolder();
         try {
             URL[] urls = { file.toURI().toURL() };
             ClassLoader loader = new URLClassLoader(urls);
@@ -47,6 +45,52 @@ public class Messages {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Locates the {@value #BUNDLES_FOLDER} folder, in order: the
+     * {@link #LOCALIZATION_DIR_PROP} system property, the folder next to this
+     * class' jar (release/dev layout), then a bounded walk up from the working
+     * directory to the source tree. Throws a clear {@link MissingResourceException}
+     * instead of overflowing at the filesystem root when nothing is found, and
+     * tolerates a non-{@code file:} class location (OSGi wrapper) instead of
+     * failing with a {@code NullPointerException} (task T065).
+     */
+    private static File resolveBundlesFolder() {
+        // 1) explicit override (e.g. set by the RCP product at boot — T065)
+        String explicit = System.getProperty(LOCALIZATION_DIR_PROP);
+        if (explicit != null && !explicit.isBlank()) {
+            File dir = new File(explicit);
+            if (dir.isDirectory()) {
+                return dir;
+            }
+        }
+        // 2) folder next to this class' jar (standard release / dev layout)
+        File file = null;
+        try {
+            URL url = URLUtil.getURL(Messages.class);
+            if (url != null && "file".equalsIgnoreCase(url.getProtocol())) {
+                file = new File(new File(url.toURI()).getParentFile().getParentFile(), BUNDLES_FOLDER);
+            }
+        } catch (URISyntaxException | IllegalArgumentException e) {
+            // class location is not a usable file: jar path (e.g. inside the
+            // OSGi wrapper bundle) — fall through to the working-directory walk-up
+        }
+        if (file != null && file.exists()) {
+            return file;
+        }
+        // 3) bounded walk up from the working directory to the source tree
+        File baseFile = new File(System.getProperty("user.dir")).getAbsoluteFile();
+        while (baseFile != null) {
+            File candidate = new File(baseFile, BUNDLES_FOLDER_PREFIX + BUNDLES_FOLDER);
+            if (candidate.exists()) {
+                return candidate;
+            }
+            baseFile = baseFile.getParentFile();
+        }
+        throw new MissingResourceException(
+                "Localization folder '" + BUNDLES_FOLDER + "' not found; set -D" + LOCALIZATION_DIR_PROP,
+                Messages.class.getName(), BUNDLES_FOLDER);
     }
 
     private static class UTF8Control extends Control {
