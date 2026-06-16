@@ -17,6 +17,9 @@
          lifecycle (central catalogs, research R7); theme radio selection is
          synchronized from the persisted preference on every boot. -->
     <mainMenu xmi:id="_menuMain" elementId="iped.rcp.app.menu.main">
+      <children xsi:type="menu:Menu" xmi:id="_menuFile" elementId="iped.rcp.app.menu.file" label="File">
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_miNewCase" elementId="iped.rcp.app.menuitem.newcase" label="New Case..." command="_cmdNewCase"/>
+      </children>
       <children xsi:type="menu:Menu" xmi:id="_menuView" elementId="iped.rcp.app.menu.view" label="View">
         <children xsi:type="menu:Menu" xmi:id="_menuTheme" elementId="iped.rcp.app.menu.theme" label="Theme">
           <children xsi:type="menu:DirectMenuItem" xmi:id="_miThemeSystem" elementId="iped.rcp.app.menuitem.theme.system" label="System" type="Radio" contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.theme.SetThemeHandler$System"/>
@@ -70,6 +73,8 @@
   </rootContext>
   <handlers xmi:id="_handlerManageBookmarks" elementId="iped.rcp.app.handler.managebookmarks" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.handlers.ManageBookmarksHandler" command="_cmdManageBookmarks"/>
   <commands xmi:id="_cmdManageBookmarks" elementId="iped.rcp.command.managebookmarks" commandName="Manage Bookmarks"/>
+  <handlers xmi:id="_handlerNewCase" elementId="iped.rcp.app.handler.newcase" contributionURI="bundleclass://iped.rcp.casecreation/iped.rcp.casecreation.handlers.NewCaseHandler" command="_cmdNewCase"/>
+  <commands xmi:id="_cmdNewCase" elementId="iped.rcp.command.newcase" commandName="New Case"/>
   <addons xmi:id="_addonCommandService" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_addonContextService" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_addonBindingService" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>

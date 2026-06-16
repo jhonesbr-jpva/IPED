@@ -101,6 +101,16 @@ public class ProcessingLaunchService {
     }
 
     /**
+     * @return the release {@code profiles/} folder (built-in + user profiles,
+     *         where {@code -profile <name>} resolves; research R3), or
+     *         {@code null} when the install root cannot be resolved
+     */
+    public Path profilesDir() {
+        Path root = resolveInstallRoot();
+        return root == null ? null : root.resolve("profiles");
+    }
+
+    /**
      * Assembles the full command line: {@code <java> -jar <iped.jar> <args>}
      * (the {@code <args>} from {@link BootstrapCommandBuilder}). Pure — testable.
      */

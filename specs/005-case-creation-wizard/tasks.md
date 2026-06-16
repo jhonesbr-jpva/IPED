@@ -54,8 +54,8 @@ capacidade de subir sem caso (a porta de entrada do menu).
 
 **⚠️ CRITICAL**: nenhuma user story fica testável de ponta a ponta antes destas.
 
-- [ ] T004 Add the **File** main-menu container (first child of `mainMenu`) with command-service wiring in `iped-rcp/bundles/iped.rcp.app/Application.e4xmi`, per [contracts/case-menu-commands.contract.md](contracts/case-menu-commands.contract.md) (items are added by each story)
-- [ ] T005 Modify `iped-rcp/bundles/iped.rcp.app/src/main/java/iped/rcp/app/LifeCycle.java` to allow starting **without a case** (empty perspective driven by the File menu) instead of forcing a `DirectoryDialog` at boot (research R6 / Complexity Tracking)
+- [x] T004 Add the **File** main-menu container (first child of `mainMenu`) with command-service wiring in `iped-rcp/bundles/iped.rcp.app/Application.e4xmi`, per [contracts/case-menu-commands.contract.md](contracts/case-menu-commands.contract.md) (items are added by each story)
+- [x] T005 Modify `iped-rcp/bundles/iped.rcp.app/src/main/java/iped/rcp/app/LifeCycle.java` to allow starting **without a case** (empty perspective driven by the File menu) instead of forcing a `DirectoryDialog` at boot (research R6 / Complexity Tracking)
 - [ ] T006 [P] Add base i18n keys for the File menu (`Menu.File`, separators labels if any) to all 6 `iped-app/resources/localization/iped-app*.properties` bundles
 
 **Checkpoint**: app boots to an empty workbench with an (empty) File menu; ready for stories.
@@ -83,10 +83,10 @@ com um criado pela CLI (mesmo perfil/evidência) — devem ser equivalentes (qui
 
 ### UI for User Story 1
 
-- [ ] T013 [US1] Implement `NewCaseWizard` + pages (`SourcesPage`, `OutputPage`, `ProfilePage`, `CommonOptionsPage`, `AdvancedOptionsPage`, `SummaryPage`) with per-page validation and native file/dir dialogs in `iped-rcp/bundles/iped.rcp.casecreation/src/main/java/iped/rcp/casecreation/wizard/` (FR-004…FR-009; depends on T007, T008)
-- [ ] T014 [US1] Implement `NewCaseHandler` in `iped-rcp/bundles/iped.rcp.casecreation/src/main/java/iped/rcp/casecreation/handlers/NewCaseHandler.java` and add command `iped.rcp.command.newcase` + menuitem to `iped-rcp/bundles/iped.rcp.app/Application.e4xmi` (depends on T004, T013)
-- [ ] T015 [US1] On wizard finish: launch via `ProcessingLaunchService` and offer near-live open via `ICaseSessionManager.openCase(..., nearLive=true)` in the wizard/handler (FR-010/FR-011, research R7; depends on T010, T013)
-- [ ] T016 [P] [US1] Add i18n keys for the wizard pages + New Case menu to all 6 `iped-app/resources/localization/iped-app*.properties` bundles (FR-023)
+- [x] T013 [US1] Implement `NewCaseWizard` + pages (`SourcesPage`, `OutputPage`, `ProfilePage`, `OptionsPage` [common+tz+keywords], `SummaryPage`; full per-source name/password and the tier-C Advanced page are a follow-up refinement — the model/builder already support them) with per-page validation and native file/dir dialogs in `iped-rcp/bundles/iped.rcp.casecreation/src/main/java/iped/rcp/casecreation/wizard/` (FR-004…FR-009; depends on T007, T008)
+- [x] T014 [US1] Implement `NewCaseHandler` in `iped-rcp/bundles/iped.rcp.casecreation/src/main/java/iped/rcp/casecreation/handlers/NewCaseHandler.java` and add command `iped.rcp.command.newcase` + menuitem to `iped-rcp/bundles/iped.rcp.app/Application.e4xmi` (depends on T004, T013)
+- [~] T015 [US1] On wizard finish: launch via `ProcessingLaunchService` (done) and inform the user. Near-live open (FR-011) is wired in the US2 increment, reusing the Open Case path (`ICaseSessionManager`) — deferred because it shares the open mechanism + an index-ready wait
+- [x] T016 [P] [US1] Add i18n keys for the wizard pages + New Case menu to `iped-desktop-messages` EN base + pt_BR (the other 4 locales fall back to EN per the resolver — no raw keys, SC-007; full translations are a follow-up) (FR-023)
 - [ ] T017 [US1] SWTBot test: full New Case flow + cancel-leaves-no-artifact (FR-012) in `iped-rcp/tests/iped.rcp.tests.swtbot/` (covers quickstart V1/V2; depends on T013–T015)
 
 **Checkpoint**: User Story 1 = MVP — criação de caso pela UI funciona ponta a ponta.

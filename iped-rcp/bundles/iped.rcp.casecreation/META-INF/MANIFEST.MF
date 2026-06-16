@@ -23,4 +23,6 @@ Require-Bundle: iped.rcp.api,
  org.eclipse.e4.core.services
 Import-Package: jakarta.annotation,
  jakarta.inject
-Export-Package: iped.rcp.casecreation;x-internal:=true
+Export-Package: iped.rcp.casecreation;x-internal:=true,
+ iped.rcp.casecreation.handlers;x-internal:=true,
+ iped.rcp.casecreation.wizard;x-internal:=true
