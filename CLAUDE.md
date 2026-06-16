@@ -287,7 +287,10 @@ A árvore de releases está em `ReleaseNotes.txt` (180 KB) — referência detal
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/004-rcp-gui-migration/plan.md](specs/004-rcp-gui-migration/plan.md)
-(feature ativa: migração da GUI para Eclipse RCP — ver também research.md,
-data-model.md, contracts/ e quickstart.md no mesmo diretório).
+[specs/005-case-creation-wizard/plan.md](specs/005-case-creation-wizard/plan.md)
+(feature ativa: criação/abertura de casos na GUI RCP — menu Open/New Case,
+wizard de Novo Caso que lança o `Bootstrap` out-of-process, e editor de perfis
+completo; estende a feature 004. Ver também research.md, data-model.md,
+contracts/ e quickstart.md no mesmo diretório).
+Plano anterior (base): [specs/004-rcp-gui-migration/plan.md](specs/004-rcp-gui-migration/plan.md).
 <!-- SPECKIT END -->
