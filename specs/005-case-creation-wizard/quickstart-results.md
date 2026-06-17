@@ -12,7 +12,7 @@ Ambiente: produto RCP `iped-uic.exe` (Win x64) + engine release deste repo em
 | Cenário | Status | Nota |
 |---|---|---|
 | V1 — New Case ponta a ponta | ✅ **PASS** | processou com `forensic` e abriu no RCP UI |
-| V2 — Validações do wizard | ⏳ pendente | — |
+| V2 — Validações do wizard | ✅ **PASS** | 6/6 casos bloqueiam corretamente, nenhum processo lançado |
 | V3 — Open Case (+ recentes) | 🟡 parcial | Open Case ✅ (abriu o caso do V1); invalid-folder + Recent Cases pendentes (Recent Cases **deferido** T018/T021) |
 | V4 — Criar/editar perfil | 🟡 validado | clone `triage`→`triage-copy` criado e **processado pelo engine** ✅; editor (Preferences) coberto por testes headless + smoke anterior; re-confirmar edição→save→override enxuto opcional |
 | V5 — i18n (`-nl pt_BR`/`en`) | ⏳ pendente | EN+pt_BR completos; demais locales caem no EN (sem chave crua) |
@@ -43,6 +43,18 @@ Ambiente: produto RCP `iped-uic.exe` (Win x64) + engine release deste repo em
   `RegexTask.loadCache`). **Resolvido rebuildando o release** (`mvn clean install`) → engine
   atual (FST-free), confirmado: `fst-2.57.jar` removido do `lib/` e "Java 21 not tested" some.
 
+## V2 — detalhes (todos validados pelo usuário 2026-06-17)
+
+1. Sem fonte → Next/Finish desabilitados (página). ✅
+2. Saída vazia → Next/Finish desabilitados (página). ✅
+3. Saída = subpasta da fonte → erro no Concluir, **não sobrescreve** a pasta da fonte, sem lançar. ✅
+4. Modo New sobre caso existente → erro no Concluir. ✅
+5. Append/Continue/Restart sem caso → erro no Concluir. ✅
+6. Cancelar → nenhum artefato. ✅
+
+(`fonte inexistente` e `saída não gravável` não são facilmente provocáveis pela GUI —
+cobertos pela validação unit `BootstrapCommandBuilderTest`/T011.)
+
 ## Revisão dos logs de processamento (12:24 triage, 12:34 forensic) — nada a corrigir
 
 Ambos concluíram. Apenas ruído **pré-existente e benigno** do engine (igual no CLI normal):
@@ -57,7 +69,6 @@ Ambos concluíram. Apenas ruído **pré-existente e benigno** do engine (igual n
 
 ## Pendências de validação
 
-- V2 (validações do wizard: fonte inexistente / saída não gravável / saída ⊂ fonte / cancelar).
 - V3 (pasta inválida → mensagem; Recent Cases é deferido).
 - V4 (re-confirmar opcional no release fresco: editar flag → salvar → checar override enxuto;
   embarcado → "Save As…"; colisão de nome rejeitada).
