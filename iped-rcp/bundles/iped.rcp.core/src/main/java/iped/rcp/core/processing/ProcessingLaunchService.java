@@ -117,6 +117,13 @@ public class ProcessingLaunchService {
     static List<String> buildFullCommand(Path javaExe, Path ipedJar, NewCaseRequest request) {
         List<String> command = new ArrayList<>();
         command.add(javaExe.toString());
+        // Required on Java 21+: the engine installs a SecurityManager (see
+        // Configuration.loadConfigurables) to sandbox the HTML viewers, and
+        // System.setSecurityManager throws UnsupportedOperationException without
+        // this flag. iped.bat / iped.exe pass it to the Bootstrap JVM, which
+        // forwards it to the forked processing JVM (Bootstrap.getCurrentJVMArgs);
+        // we bypass those launchers (java -jar iped.jar), so we must pass it.
+        command.add("-Djava.security.manager=allow");
         command.add("-jar");
         command.add(ipedJar.toString());
         command.addAll(BootstrapCommandBuilder.buildArgs(request));

@@ -21,9 +21,14 @@ reusando o `Bootstrap`/`iped.jar` existente (R1) sem tocar o engine.
 2. **iped.jar**: `<root>/iped.jar` (entry `iped.app.bootstrap.Bootstrap`). `<root>` é a
    raiz da instalação (descoberta a partir da localização do produto RCP; o produto fica
    em `<root>/ui/`).
-3. Comando = `[ java, -jar, <root>/iped.jar, <args do new-case-wizard.contract> ]`.
-   `Bootstrap` cuida de `-Xmx`, `--add-opens`, plugins, TSK, UNO, splash e da descoberta
-   da **janela de progresso SWT** (R-004.R10 — já implementada).
+3. Comando = `[ java, -Djava.security.manager=allow, -jar, <root>/iped.jar, <args do new-case-wizard.contract> ]`.
+   O `-Djava.security.manager=allow` é **obrigatório no Java 21+** (o engine instala um
+   `SecurityManager` em `Configuration.loadConfigurables`; `System.setSecurityManager`
+   lança `UnsupportedOperationException` sem ele). É o que o `iped.bat`/`iped.exe` passam
+   ao JVM do `Bootstrap` (que o repassa ao JVM filho via `getCurrentJVMArgs`); como a UI
+   **bypassa** esses launchers (`java -jar iped.jar`), ela precisa passá-lo. `Bootstrap`
+   cuida do resto: `-Xmx`, `--add-opens`/`--add-exports`, plugins, TSK, UNO, splash e da
+   descoberta da **janela de progresso SWT** (R-004.R10 — já implementada).
 
 ## Ciclo de vida e sinais
 

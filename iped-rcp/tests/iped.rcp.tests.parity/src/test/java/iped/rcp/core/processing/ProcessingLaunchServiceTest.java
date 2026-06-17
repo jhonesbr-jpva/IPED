@@ -42,9 +42,10 @@ class ProcessingLaunchServiceTest {
         List<String> cmd = ProcessingLaunchService.buildFullCommand(java, ipedJar, req);
 
         assertEquals(java.toString(), cmd.get(0));
-        assertEquals("-jar", cmd.get(1));
-        assertEquals(ipedJar.toString(), cmd.get(2));
-        assertEquals("-d", cmd.get(3), "Bootstrap args must follow the jar");
+        assertEquals("-Djava.security.manager=allow", cmd.get(1), "Java 21 SecurityManager flag (iped.bat parity)");
+        assertEquals("-jar", cmd.get(2));
+        assertEquals(ipedJar.toString(), cmd.get(3));
+        assertEquals("-d", cmd.get(4), "Bootstrap args must follow the jar");
         assertTrue(cmd.contains("-profile"));
         assertTrue(cmd.contains("triage"));
     }
