@@ -1,67 +1,74 @@
 package iped.rcp.casecreation.profiles;
 
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.TitleAreaDialog;
+import org.eclipse.jface.preference.IPreferenceNode;
+import org.eclipse.jface.preference.PreferenceDialog;
+import org.eclipse.jface.preference.PreferenceManager;
+import org.eclipse.jface.preference.PreferenceNode;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import iped.rcp.core.i18n.Messages;
 import iped.rcp.core.profiles.AdvancedFile;
 import iped.rcp.core.profiles.ConfigFileGroup;
+import iped.rcp.core.profiles.ConfigOption;
 import iped.rcp.core.profiles.ProfileConfigModel;
 import iped.rcp.core.profiles.ProfileDescriptor;
 import iped.rcp.core.profiles.ProfileService;
 import iped.rcp.core.profiles.ProfileValidation;
 
 /**
- * Full, file-driven profile editor (feature 005, US3, T027,
- * contracts/profile-editor.contract.md). The left list holds every config file
- * of the profile (key=value groups then advanced {@code .xml}/{@code .json}
- * files); selecting one shows its editor on the right — a {@link ConfigOptionGrid}
- * for groups, a raw-text editor for advanced files.
+ * Full, file-driven profile editor in the Eclipse-Preferences idiom (feature
+ * 005, US3, contracts/profile-editor.contract.md): a category tree on the
+ * left (root files, the {@code conf/} modules, the advanced files) and a typed
+ * page per config file on the right ({@link ConfigFilePreferencePage} with
+ * checkboxes/fields, {@link AdvancedFilePreferencePage} for {@code .xml}/
+ * {@code .json}). Each page's <em>Restore Defaults</em> drops that file's
+ * overrides.
  *
  * <p>
- * Built-in profiles are read-only templates (FR-018): they can be edited
- * in-memory but the primary action is "Save As…", which writes a new user
- * profile. User profiles save in place. Only overridden options/files are
- * persisted (lean profiles), via {@link ProfileService#saveModel}.
+ * Built-in profiles are read-only templates (FR-018): the primary action is
+ * "Save As…", which writes a new user profile. User profiles save in place.
+ * Only overridden options/files are persisted (lean profiles), gated by
+ * {@link ProfileValidation}. The headless model/service are unchanged — this is
+ * purely the presentation layer.
  */
-public class ProfileEditorDialog extends TitleAreaDialog {
+public class ProfileEditorDialog extends PreferenceDialog {
 
     private final ProfileService service;
     private final Path profilesDir;
     private final ProfileDescriptor descriptor;
     private final ProfileConfigModel model;
-
-    private final Map<String, Control> editors = new LinkedHashMap<>();
-    private StackLayout stackLayout;
-    private Composite editorStack;
     private String savedProfileName;
 
     public ProfileEditorDialog(Shell parentShell, ProfileService service, Path profilesDir,
             ProfileDescriptor descriptor) {
-        super(parentShell);
+        this(parentShell, service, profilesDir, descriptor, service.loadModel(profilesDir, descriptor.name()));
+    }
+
+    private ProfileEditorDialog(Shell parentShell, ProfileService service, Path profilesDir,
+            ProfileDescriptor descriptor, ProfileConfigModel model) {
+        super(parentShell, buildManager(model));
         this.service = service;
         this.profilesDir = profilesDir;
         this.descriptor = descriptor;
-        this.model = service.loadModel(profilesDir, descriptor.name());
-        setHelpAvailable(false);
+        this.model = model;
     }
 
     /** @return the profile written on a successful save (the same name, or the Save-As name). */
@@ -69,94 +76,113 @@ public class ProfileEditorDialog extends TitleAreaDialog {
         return savedProfileName;
     }
 
-    @Override
-    protected void configureShell(Shell shell) {
-        super.configureShell(shell);
-        shell.setText(Messages.getString("ProfileEditor.shell.title", descriptor.name()));
+    /** Builds the preference tree: root files, a {@code conf/} category, and an advanced-files category. */
+    private static PreferenceManager buildManager(ProfileConfigModel model) {
+        PreferenceManager manager = new PreferenceManager();
+
+        for (ConfigFileGroup group : model.groups()) {
+            if (!group.fileName().contains("/")) {
+                manager.addToRoot(new PreferenceNode(group.fileName(), new ConfigFilePreferencePage(group,
+                        group.fileName())));
+            }
+        }
+
+        List<ConfigFileGroup> confGroups = model.groups().stream().filter(g -> g.fileName().contains("/")).toList();
+        if (!confGroups.isEmpty()) {
+            // node ids must NOT contain '.' — PreferenceManager.addTo() treats it as a path separator
+            PreferenceNode confCategory = new PreferenceNode("confCategory", new CategoryPreferencePage(
+                    Messages.getString("ProfileEditor.category.conf"), Messages.getString("ProfileEditor.category.hint")));
+            manager.addToRoot(confCategory);
+            for (ConfigFileGroup group : confGroups) {
+                manager.addTo(confCategory.getId(),
+                        new PreferenceNode(group.fileName(), new ConfigFilePreferencePage(group, lastSegment(group.fileName()))));
+            }
+        }
+
+        if (!model.advancedFiles().isEmpty()) {
+            PreferenceNode advCategory = new PreferenceNode("advancedCategory", new CategoryPreferencePage(
+                    Messages.getString("ProfileEditor.category.advanced"),
+                    Messages.getString("ProfileEditor.category.hint")));
+            manager.addToRoot(advCategory);
+            for (AdvancedFile file : model.advancedFiles()) {
+                manager.addTo(advCategory.getId(),
+                        new PreferenceNode(file.fileName(), new AdvancedFilePreferencePage(file, lastSegment(file.fileName()))));
+            }
+        }
+        return manager;
+    }
+
+    private static String lastSegment(String path) {
+        int slash = path.lastIndexOf('/');
+        return slash < 0 ? path : path.substring(slash + 1);
     }
 
     @Override
-    protected boolean isResizable() {
-        return true;
+    protected void configureShell(Shell shell) {
+        super.configureShell(shell);
+        // (Object) forces the varargs formatting overload, not getString(bundle, key)
+        shell.setText(Messages.getString(
+                descriptor.isBuiltIn() ? "ProfileEditor.shell.title.builtin" : "ProfileEditor.shell.title",
+                (Object) descriptor.name()));
     }
 
     @Override
     protected Point getInitialSize() {
-        return new Point(820, 560);
+        return new Point(860, 600);
     }
 
+    /** Adds a filter field above the standard category tree (find an option by key/description/file). */
     @Override
-    protected Control createDialogArea(Composite parent) {
-        setTitle(Messages.getString("ProfileEditor.title", descriptor.name()));
-        setMessage(descriptor.isBuiltIn() ? Messages.getString("ProfileEditor.message.builtin")
-                : Messages.getString("ProfileEditor.message.user"));
+    protected Control createTreeAreaContents(Composite parent) {
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        composite.setLayout(layout);
+        GridData compositeData = new GridData(GridData.FILL_VERTICAL);
+        compositeData.widthHint = 220;
+        composite.setLayoutData(compositeData);
 
-        Composite area = (Composite) super.createDialogArea(parent);
-        SashForm sash = new SashForm(area, SWT.HORIZONTAL);
-        sash.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        Text filter = new Text(composite, SWT.SEARCH | SWT.ICON_SEARCH | SWT.ICON_CANCEL | SWT.BORDER);
+        filter.setMessage(Messages.getString("ProfileEditor.filter.message"));
+        filter.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-        List fileList = new List(sash, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.H_SCROLL);
+        Control tree = super.createTreeAreaContents(composite);
+        tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        editorStack = new Composite(sash, SWT.NONE);
-        stackLayout = new StackLayout();
-        editorStack.setLayout(stackLayout);
-
-        buildEditors(fileList);
-        sash.setWeights(new int[] { 1, 3 });
-
-        fileList.addListener(SWT.Selection, e -> showEditor(fileList.getSelection()));
-        if (fileList.getItemCount() > 0) {
-            fileList.select(0);
-            showEditor(fileList.getSelection());
-        }
-        return area;
-    }
-
-    /** Creates one editor control per config file and lists their names. */
-    private void buildEditors(List fileList) {
-        for (ConfigFileGroup group : model.groups()) {
-            ConfigOptionGrid grid = new ConfigOptionGrid(editorStack, SWT.NONE);
-            grid.setGroup(group);
-            editors.put(group.fileName(), grid);
-            fileList.add(group.fileName());
-        }
-        for (AdvancedFile file : model.advancedFiles()) {
-            Text text = new Text(editorStack,
-                    SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
-            text.setText(file.content());
-            text.addModifyListener(e -> file.setContent(text.getText()));
-            editors.put(file.fileName(), text);
-            fileList.add(file.fileName());
-        }
-    }
-
-    private void showEditor(String[] selection) {
-        if (selection.length == 0) {
-            return;
-        }
-        Control control = editors.get(selection[0]);
-        if (control != null) {
-            stackLayout.topControl = control;
-            editorStack.layout();
-        }
+        OptionTreeFilter optionFilter = new OptionTreeFilter();
+        getTreeViewer().addFilter(optionFilter);
+        filter.addModifyListener(e -> {
+            optionFilter.setPattern(filter.getText());
+            getTreeViewer().refresh();
+            if (!filter.getText().isBlank()) {
+                getTreeViewer().expandAll();
+            }
+        });
+        return composite;
     }
 
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
-        String okLabel = descriptor.isBuiltIn() ? Messages.getString("ProfileEditor.button.saveAs")
-                : Messages.getString("ProfileEditor.button.save");
-        createButton(parent, IDialogConstants.OK_ID, okLabel, true);
-        createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+        super.createButtonsForButtonBar(parent);
+        Button ok = getButton(IDialogConstants.OK_ID);
+        if (ok != null) {
+            ok.setText(Messages.getString(
+                    descriptor.isBuiltIn() ? "ProfileEditor.button.saveAs" : "ProfileEditor.button.save"));
+        }
     }
 
     @Override
     protected void okPressed() {
+        flushCreatedPages();
+
         ProfileValidation validation = ProfileValidation.validate(model);
         if (!validation.isValid()) {
             MessageDialog.openError(getShell(), Messages.getString("ProfileEditor.error.title"),
                     String.join("\n", validation.errors()));
             return;
         }
+
         String targetName = descriptor.isBuiltIn() ? promptSaveAsName() : descriptor.name();
         if (targetName == null) {
             return; // user canceled the Save-As prompt
@@ -169,7 +195,18 @@ public class ProfileEditorDialog extends TitleAreaDialog {
                     ex.getMessage() != null ? ex.getMessage() : ex.toString());
             return;
         }
-        super.okPressed();
+        setReturnCode(Window.OK);
+        close();
+    }
+
+    /** Flushes the controls of every page the user actually opened into the model. */
+    private void flushCreatedPages() {
+        for (Object element : getPreferenceManager().getElements(PreferenceManager.PRE_ORDER)) {
+            IPreferenceNode node = (IPreferenceNode) element;
+            if (node.getPage() != null) {
+                node.getPage().performOk();
+            }
+        }
     }
 
     /** Prompts for a new (valid, non-colliding) user-profile name for Save As (FR-018/FR-019). */
@@ -186,5 +223,52 @@ public class ProfileEditorDialog extends TitleAreaDialog {
         InputDialog dialog = new InputDialog(getShell(), Messages.getString("ProfileEditor.saveAs.title"),
                 Messages.getString("ProfileEditor.saveAs.message"), descriptor.name() + "-copy", validator);
         return dialog.open() == Window.OK ? dialog.getValue() : null;
+    }
+
+    /**
+     * Filters the category tree by the search text: a config-file node matches
+     * when its name, or any of its options' key/description, contains the text; a
+     * category node is kept when any of its children match.
+     */
+    private final class OptionTreeFilter extends ViewerFilter {
+
+        private String pattern = "";
+
+        void setPattern(String text) {
+            pattern = text == null ? "" : text.trim().toLowerCase();
+        }
+
+        @Override
+        public boolean select(Viewer viewer, Object parentElement, Object element) {
+            return pattern.isEmpty() || matches((IPreferenceNode) element);
+        }
+
+        private boolean matches(IPreferenceNode node) {
+            ConfigFileGroup group = model.groups().stream().filter(g -> g.fileName().equals(node.getId())).findFirst()
+                    .orElse(null);
+            if (group != null) {
+                if (group.fileName().toLowerCase().contains(pattern)) {
+                    return true;
+                }
+                for (ConfigOption option : group.options()) {
+                    if (option.key().toLowerCase().contains(pattern) || (option.description() != null
+                            && option.description().toLowerCase().contains(pattern))) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            AdvancedFile advanced = model.advancedFiles().stream().filter(f -> f.fileName().equals(node.getId()))
+                    .findFirst().orElse(null);
+            if (advanced != null) {
+                return advanced.fileName().toLowerCase().contains(pattern);
+            }
+            for (IPreferenceNode child : node.getSubNodes()) {
+                if (matches(child)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

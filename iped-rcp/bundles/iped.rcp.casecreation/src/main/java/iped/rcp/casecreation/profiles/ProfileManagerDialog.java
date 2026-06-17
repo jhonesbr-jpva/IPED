@@ -193,7 +193,7 @@ public class ProfileManagerDialog extends TitleAreaDialog {
             return;
         }
         String name = promptName(Messages.getString("ProfileManager.clone.title"),
-                Messages.getString("ProfileManager.clone.message", selected.name()), selected.name() + "-copy");
+                Messages.getString("ProfileManager.clone.message", (Object) selected.name()), selected.name() + "-copy");
         if (name != null) {
             createAndSelect(name, selected.name());
         }
@@ -206,7 +206,7 @@ public class ProfileManagerDialog extends TitleAreaDialog {
         }
         boolean confirmed = MessageDialog.openConfirm(getShell(),
                 Messages.getString("ProfileManager.delete.title"),
-                Messages.getString("ProfileManager.delete.confirm", selected.name()));
+                Messages.getString("ProfileManager.delete.confirm", (Object) selected.name()));
         if (confirmed) {
             try {
                 service.deleteProfile(profilesDir, selected.name());
