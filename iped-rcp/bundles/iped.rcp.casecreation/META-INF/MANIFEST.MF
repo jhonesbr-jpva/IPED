@@ -25,4 +25,5 @@ Import-Package: jakarta.annotation,
  jakarta.inject
 Export-Package: iped.rcp.casecreation;x-internal:=true,
  iped.rcp.casecreation.handlers;x-internal:=true,
+ iped.rcp.casecreation.profiles;x-internal:=true,
  iped.rcp.casecreation.wizard;x-internal:=true

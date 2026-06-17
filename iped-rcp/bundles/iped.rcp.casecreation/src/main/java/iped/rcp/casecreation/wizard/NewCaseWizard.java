@@ -13,7 +13,6 @@ import iped.rcp.core.processing.BootstrapCommandBuilder;
 import iped.rcp.core.processing.LaunchException;
 import iped.rcp.core.processing.NewCaseRequest;
 import iped.rcp.core.processing.ProcessingLaunchService;
-import iped.rcp.core.profiles.ProfileDescriptor;
 import iped.rcp.core.profiles.ProfileService;
 
 /**
@@ -50,10 +49,9 @@ public class NewCaseWizard extends Wizard {
 
     @Override
     public void addPages() {
-        List<ProfileDescriptor> profiles = profileService.listProfiles(profilesDir);
         sourcesPage = new SourcesPage();
         outputPage = new OutputPage();
-        profilePage = new ProfilePage(profiles);
+        profilePage = new ProfilePage(profileService, profilesDir);
         optionsPage = new OptionsPage();
         addPage(sourcesPage);
         addPage(outputPage);

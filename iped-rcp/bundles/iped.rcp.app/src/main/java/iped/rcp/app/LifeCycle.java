@@ -135,6 +135,7 @@ public class LifeCycle {
         MODEL_LABEL_KEYS.put("iped.rcp.app.menu.file", "RcpMenu.File");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.newcase", "RcpMenu.NewCase");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.opencase", "RcpMenu.OpenCase");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.manageprofiles", "RcpMenu.ManageProfiles");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menu.view", "RcpMenu.View");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menu.theme", "RcpMenu.Theme");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.theme.system", "RcpMenu.Theme.System");
