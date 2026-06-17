@@ -1,6 +1,8 @@
 # Módulo `iped-rcp`
 
-> **Nova GUI do IPED em Eclipse RCP (e4 puro)**. Reactor **Tycho** dedicado que substitui — por *cut-over total* — todas as superfícies gráficas Swing/JavaFX do IPED (UI de análise, janela de progresso, splash, diálogos do inicializador) por uma aplicação **Eclipse 4 sobre SWT/JFace/OSGi**, com widgets nativos do SO. Feature ativa **004-rcp-gui-migration** — ver [specs/004-rcp-gui-migration/plan.md](../specs/004-rcp-gui-migration/plan.md), `research.md` (decisões R1–R14), `data-model.md`, `contracts/` e `parity-inventory.md`.
+> **Nova GUI do IPED em Eclipse RCP (e4 puro)**. Reactor **Tycho** dedicado que substitui — por *cut-over total* — todas as superfícies gráficas Swing/JavaFX do IPED (UI de análise, janela de progresso, splash, diálogos do inicializador) por uma aplicação **Eclipse 4 sobre SWT/JFace/OSGi**, com widgets nativos do SO. Feature base **004-rcp-gui-migration** — ver [specs/004-rcp-gui-migration/plan.md](../specs/004-rcp-gui-migration/plan.md), `research.md` (decisões R1–R14), `data-model.md`, `contracts/` e `parity-inventory.md`.
+>
+> A feature **005-case-creation-wizard** estende esta GUI com **criação/abertura de casos** (menu File com New/Open Case, wizard que lança o `Bootstrap` out-of-process) e **editor de perfis completo** — bundle de UI `iped.rcp.casecreation` (§11.1) + serviços `processing/` e `profiles/` no `iped.rcp.core` (§6). Ver [specs/005-case-creation-wizard/plan.md](../specs/005-case-creation-wizard/plan.md).
 
 ## 1. Propósito e estratégia
 
@@ -22,15 +24,17 @@ iped-rcp/                                  # reactor Tycho (perfil -P rcp no pom
 │   └── iped-rcp.target                    # Eclipse Platform 4.32 + Nebula Gallery/NatTable + SWTBot (p2 pinado)
 ├── bundles/
 │   ├── iped.rcp.libs/                     # WRAPPER: iped-engine + iped-app(classes) + deps num único class space
+│   ├── iped.rcp.sleuthkit/                # HOST bundle do org.sleuthkit.datamodel (jar wrapped; sem fragment nativo)
 │   ├── iped.rcp.api/                      # API de extensão PROVISÓRIA (serviços, tópicos de evento, âncoras)
 │   ├── iped.rcp.core/                     # sessão de caso, serviços headless (DS), i18n, eventos, modelos de árvore
 │   ├── iped.rcp.views/                    # parts SWT: resultados, galeria, árvores, metadados, filtros, busca, bookmarks
+│   ├── iped.rcp.casecreation/             # menu File: New/Open Case (wizard out-of-process) + editor de perfis (feature 005)
 │   ├── iped.rcp.viewers/                  # hosts SWT_AWT dos viewers de conteúdo existentes
 │   ├── iped.rcp.specialized/              # parts bridgeadas: mapa, grafo, timeline
 │   ├── iped.rcp.progress/                 # janela de progresso SWT standalone (PLAIN JAR, roda na JVM de processamento)
 │   └── iped.rcp.app/                      # Application.e4xmi, LifeCycle, splash, temas, scale, drop-ins, produto
 ├── features/
-│   └── iped.rcp.feature/                  # agrupa os 7 bundles de produção
+│   └── iped.rcp.feature/                  # agrupa os 9 bundles de produção
 ├── products/
 │   └── iped.rcp.product/                  # iped-ui.product (.product) + p2-director (win64 + linux64)
 ├── samples/
@@ -62,10 +66,19 @@ Instruções bnd relevantes (em [bundles/iped.rcp.libs/pom.xml](bundles/iped.rcp
 - `Embed-Dependency: *;scope=compile|runtime` + `Embed-Transitive` → engine roda no classpath plano de sempre (FR-028).
 - `Import-Package: !*` → bundle autocontido; pacotes JDK vêm de *boot delegation*.
 - `DynamicImport-Package: *` → engine usa reflection/SPI pesado (Tika, JNA, scripting).
-- `Export-Package` cresce **sob demanda**, conforme as UI bundles consomem pacotes: hoje `iped.*`, `org.sleuthkit.datamodel`, `org.slf4j`, `org.apache.lucene.*`, `org.apache.tika.*`, `bibliothek.*` — todos `x-internal:=true`.
+- `Export-Package` cresce **sob demanda**, conforme as UI bundles consomem pacotes: hoje `iped.*`, `org.slf4j`, `org.apache.lucene.*`, `org.apache.tika.*`, `bibliothek.*` — todos `x-internal:=true`. **Não exporta mais `org.sleuthkit.datamodel`** (movido para `iped.rcp.sleuthkit`, §4.1); em troca exporta os pacotes que o datamodel toca em-processo: `org.sqlite`, `com.google.common.*`, `com.google.gson.*`, `com.mchange.v2.c3p0`, `com.zaxxer.sparsebits`, `org.apache.commons.lang3`, `org.joda.time`, `org.postgresql.util`.
+- `Embed-Dependency: *;scope=compile|runtime;artifactId=!sleuthkit` → o jar do Sleuthkit **não** é mais embutido aqui.
 - `_nouses:=true` e `_fixupmessages` silenciam warnings benignos de split-package (Lucene) e default-package (jars legados).
 
 > ⚠️ **Cuidados**: jars assinados (ex.: BouncyCastle JCE) podem não funcionar embutidos — se aparecer, extrair como bundle wrapped separado. Ao precisar de um pacote do engine numa UI bundle, **adicione-o ao `Export-Package`** do wrapper (sempre `x-internal`), não crie novas dependências diretas.
+
+### 4.1 Bundle host do Sleuthkit — `iped.rcp.sleuthkit`
+
+Separado do wrapper para que `org.sleuthkit.datamodel` viva no seu próprio class space OSGi. Também construído com o **Felix `maven-bundle-plugin`** (consumido via `pomDependencies=consider`).
+
+- Embute **só** `org.sleuthkit:sleuthkit` (o pom `install-file` não tem deps transitivas) e exporta `org.sleuthkit.*;x-internal:=true`. `Import-Package: !*` + `DynamicImport-Package: *`.
+- **Sem fragment / `Bundle-NativeCode`**: o JNI do Sleuthkit roda **out-of-process** (`SleuthkitServer` = `java -cp <caso>/iped/lib/*`), e o `libtsk_jni` é auto-extraído do próprio jar pelo `org.sleuthkit.datamodel.LibraryUtils`. Um fragment nativo nunca seria acionado pelo framework OSGi aqui.
+- **Uso in-process**: a UI de análise abre o `SleuthkitCase` (SQLite via `sqlite-jdbc`, **sem** JNI) para navegar a árvore TSK (`IPEDSource.openSleuthkitCase`). Esse caminho referencia sqlite/guava/gson/c3p0/joda/commons-lang3/sparsebits/postgresql — que ficam embutidos no `iped.rcp.libs` e são resolvidos aqui via dynamic import (cópia única; um único load nativo do sqlite).
 
 ## 5. API de extensão provisória — `iped.rcp.api`
 
@@ -93,6 +106,8 @@ UI-toolkit free de propósito (o harness de paridade headless o dirige direto). 
 - **i18n** (`i18n/Messages`, research R7/FR-020): adaptador para os catálogos existentes (`iped-app/resources/localization/*.properties`, distribuídos como `localization/`). **Fonte única** de traduções — sem catálogos por-bundle. Precedência de locale: `iped-locale` (system prop) > `-nl`/`osgi.nl` (Equinox) > default da JVM; empurra o resultado de volta no `LocaleResolver` para o engine/viewers legados renderizarem no mesmo idioma.
 - **Eventos** (`events/`): `UiEventPublisher` desacopla a publicação no `IEventBroker` do e4 (wired em T012) do serviço de sessão.
 - **Filtros, metadados, árvores** (`filters/`, `metadata/`, `trees/`): estado de filtros, agregação de facetas (`MetadataAggregator`, `ValueCount*`), modelos de árvore (evidência, categorias, bookmarks, AI filters), `ResultSet`/`ResultSorter`.
+- **Lançamento de processamento** (`processing/`, feature 005): `BootstrapCommandBuilder` mapeia um `NewCaseRequest` (+ `DataSourceEntry`/`CommonOptions`/`AdvancedOptions`/`ProcessingMode`) para os args do `Bootstrap` (`-d/-o/-profile/…`) e valida (FR-008, **nunca** `--nogui`); `ProcessingLaunchService` (DS) resolve java/`iped.jar` e dispara o processamento **out-of-process** com guarda de conflito de saída (FR-024) e expõe `profilesDir()`. Coberto por `BootstrapCommandBuilderTest`/`ProcessingLaunchServiceTest`.
+- **Perfis** (`profiles/`, feature 005): `ProfileService` descobre (`listProfiles`) e edita perfis dirigido pelos arquivos de config — `loadModel` faz merge base (config canônico = `profilesDir.getParent()`) ← override do perfil em `ProfileConfigModel`/`ConfigFileGroup`/`ConfigOption` (+ `AdvancedFile` p/ xml/json; comentário `#` vira descrição); `saveModel` grava **só** as chaves redefinidas (perfis enxutos, UTF-8) e poda arquivos sem override; `createProfile`/`deleteProfile` com embarcados read-only (FR-018). Toolkit-free, coberto por `ProfileServiceTest`.
 
 ## 7. Parts SWT — `iped.rcp.views`
 
@@ -127,7 +142,7 @@ Parts bridgeadas das views que dependem de tecnologia AWT/Swing/JavaFX pesada:
 
 ## 11. Aplicação e produto — `iped.rcp.app`
 
-- **`LifeCycle`** (e4 lifecycle): em `@PostContextCreate` resolve o caso (args de programa **ou** `DirectoryDialog` nativo), carrega drop-ins (antes do model), resolve workspace por-caso, aplica tema e scale, e **abre a sessão antes do workbench renderizar** (splash nativo dá o feedback — substitui `SplashScreenManager`/`StartUpControl`, FR-027). `@ProcessAdditions` localiza labels do model (R7) e seta o título. `@PreSave` fecha a sessão.
+- **`LifeCycle`** (e4 lifecycle): em `@PostContextCreate` resolve o caso a partir dos **args de programa**; se houver caso, carrega drop-ins (antes do model), resolve workspace por-caso, aplica tema e scale, e **abre a sessão antes do workbench renderizar** (splash nativo dá o feedback — substitui `SplashScreenManager`/`StartUpControl`, FR-027). **Sem caso, sobe um workbench vazio** dirigido pelo menu File (feature 005, T005 — substituiu o `DirectoryDialog` de boot). `@ProcessAdditions` localiza labels do model (R7, incl. os itens do menu File via `MODEL_LABEL_KEYS`) e seta o título. `@PreSave` fecha a sessão.
   - Args aceitos (paridade com `AppMain`): um ou mais caminhos de caso e/ou `-multicases <dir-ou-txt>`; opções `-xxx` desconhecidas são ignoradas.
 - **`startup/EarlyStartup`** (Bundle-Activator, start level 4 eager): seta `swt.autoScale` **antes** de qualquer classe SWT (T045/FR-019).
 - **Temas** (`theme/ThemeManager`, `SetThemeHandler`, `ThemePreferences`; research R8/FR-018): **widgets nativos por padrão** — o engine CSS só é inicializado quando o tema efetivo é *dark*. Par de temas em [plugin.xml](bundles/iped.rcp.app/plugin.xml): `iped.rcp.theme.native` (vazio) e `iped.rcp.theme.dark`.
@@ -136,6 +151,17 @@ Parts bridgeadas das views que dependem de tecnologia AWT/Swing/JavaFX pesada:
 - **Drop-ins** (`DropinBundleLoader`, US6/FR-022): instala/inicia todo `.jar` em `plugins-ext/` da instalação (e de `<case>/iped/ui/`) **antes** do model carregar, para que `fragment.e4xmi` apareça no registry. Jar quebrado é logado e pulado — **o produto sempre sobe**. Sem p2/auto-update.
 
 **Modelo da aplicação**: [Application.e4xmi](bundles/iped.rcp.app/Application.e4xmi) (part stacks ancorados por `ModelAnchors`). **Produto**: [iped-ui.product](bundles/iped.rcp.product/iped-ui.product) — feature-based, launcher `iped-ui`, `vmArgs` carregam os `--add-opens` Java 21 do engine + `-Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*` (bridge AWT/FX, R4).
+
+### 11.1 Criação e abertura de casos — `iped.rcp.casecreation` (feature 005)
+
+Bundle de UI que **aposenta o `iped.exe` como entrada interativa** de criação de casos (o shim segue distribuído para uso headless/automação — remoção é passo futuro). Contribui o menu **File** e seus diálogos; toda a lógica sem toolkit fica no `iped.rcp.core` (§6, `processing/` + `profiles/`).
+
+- **Menu File** (em [Application.e4xmi](bundles/iped.rcp.app/Application.e4xmi)): **New Case…**, **Open Case…**, **Manage Profiles…** (comandos `iped.rcp.command.{newcase,opencase,manageprofiles}` + handlers no bundle; labels localizados em `LifeCycle.MODEL_LABEL_KEYS` → chaves `RcpMenu.*`).
+- **New Case** (`wizard/NewCaseWizard` + páginas `Sources/Output/Profile/Options/Summary`): coleta fontes, saída/modo, perfil e opções; valida via `BootstrapCommandBuilder` e dispara o `ProcessingLaunchService` (subprocesso `Bootstrap` — a janela de progresso da §10 acompanha). A `ProfilePage` tem atalho **Manage Profiles…** que reescaneia o combo (FR-017).
+- **Open Case** (`handlers/OpenCaseHandler` → `CaseOpener`): `DirectoryDialog` nativo → abre o caso via `ICaseSessionManager` **fora da UI thread**, atrás de um `ProgressMonitorDialog` (gauge indeterminado, modal); near-live é auto-habilitado pelo serviço de sessão. *(Recent Cases ainda deferido — T018/T021.)*
+- **Editor de perfis** (`profiles/`): `ProfileManagerDialog` (criar/clonar/editar/excluir; embarcados read-only) e `ProfileEditorDialog` no **idioma Preferences do Eclipse** — `PreferenceDialog` com árvore de categorias (arquivos raiz / `conf/` / avançados) e página tipada por arquivo (`ConfigFilePreferencePage`: checkbox p/ BOOLEAN, campo p/ INT/TEXT, tooltip do comentário `#`, **Restore Defaults** = descartar overrides daquele arquivo; `AdvancedFilePreferencePage`: texto p/ xml/json) + campo de **busca** que filtra a árvore por nome do arquivo/chave/descrição. Embarcado → **Save As…** novo perfil de usuário.
+
+> ⚠️ **i18n**: os ids de nó do `PreferenceManager` **não podem conter `.`** (é separador de path em `addTo()`); e `Messages.getString(key, arg)` com **um único arg `String`** casa no overload `getString(bundleName, key)`, não no formatador varargs → renderiza `!arg!` (faça cast do arg para `(Object)`).
 
 ## 12. Como buildar
 
@@ -196,7 +222,8 @@ O produto é construído pelo `p2-director` para **win32.win32.x86_64** e **gtk.
 
 ## 17. Referências
 
-- Plano e decisões: [specs/004-rcp-gui-migration/plan.md](../specs/004-rcp-gui-migration/plan.md), `research.md` (R1–R14), `data-model.md`, `quickstart.md`, `parity-inventory.md`, `contracts/`.
+- Plano e decisões (004, base): [specs/004-rcp-gui-migration/plan.md](../specs/004-rcp-gui-migration/plan.md), `research.md` (R1–R14), `data-model.md`, `quickstart.md`, `parity-inventory.md`, `contracts/`.
+- Criação/abertura de casos + perfis (005): [specs/005-case-creation-wizard/plan.md](../specs/005-case-creation-wizard/plan.md), `research.md` (R1–R8), `data-model.md`, `contracts/` (`new-case-wizard`, `processing-launch`, `profile-editor`, `case-menu-commands`), `quickstart.md`.
 - Módulos consumidos: [iped-engine/CLAUDE.md](../iped-engine/CLAUDE.md), [iped-viewers/CLAUDE.md](../iped-viewers/CLAUDE.md), [iped-geo/CLAUDE.md](../iped-geo/CLAUDE.md), [iped-app/CLAUDE.md](../iped-app/CLAUDE.md).
 - Eclipse RCP/e4: <https://www.eclipse.org/eclipse/platform-ui/>
 - Eclipse Tycho: <https://tycho.eclipseprojects.io/>

@@ -62,6 +62,8 @@ Total: ~250 arquivos Java.
 
 ## 3. Entry points e Bootstrap
 
+> **Transição (feature 005, FR-020/FR-021)**: `Bootstrap`/`iped.exe` é a entrada **headless** (CLI, automação, scripts, servidores) e **permanece distribuída e inalterada**. A **criação/abertura interativa de casos** passou a ser a GUI RCP (`ui/iped-ui` ▸ File ▸ New/Open Case; o wizard chama `java -jar iped.jar` out-of-process, não `iped.exe`). Ou seja: `iped.exe` deixou de ser a porta **promovida** para criação interativa, mas segue válido headless. Ver [iped-rcp/CLAUDE.md](../iped-rcp/CLAUDE.md) §11.1.
+
 ### 3.1 `Bootstrap` ([`iped/app/bootstrap/Bootstrap.java`](src/main/java/iped/app/bootstrap/Bootstrap.java))
 
 Lança uma **JVM filha** com classpath e flags montados dinamicamente. Responsabilidades:

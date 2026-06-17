@@ -28,7 +28,39 @@
              by the swt-windows/swt-linux profiles below; OSGi bundles keep
              getting SWT from the target platform instead. -->
         <swt.version>3.126.0</swt.version>
+        <!-- Kept in lockstep with the root iped-parent pom (property
+             sleuthkit.version there). The iped.rcp.sleuthkit host bundle
+             wraps exactly this artifact. -->
+        <sleuthkit.version>4.12.0.p1</sleuthkit.version>
     </properties>
+
+    <!-- Mirror the root iped-parent repositories. Needed standalone because
+         iped.rcp.sleuthkit depends DIRECTLY on org.sleuthkit:sleuthkit, which
+         is published on the iped-maven (gitlab) repo, not Maven Central; a
+         direct dependency triggers a provenance re-check that fails without
+         this repo declared. -->
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <layout>default</layout>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>mvn-repo</id>
+            <url>https://gitlab.com/iped-project/iped-maven/raw/master</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <profiles>
         <!-- Maven profiles in a DEPENDENCY's pom are not activated when the
@@ -61,6 +93,10 @@
              Remaining bundles, features, products, samples and test modules
              are added by the rest of Phase 2+ (see
              specs/004-rcp-gui-migration/tasks.md). -->
+        <!-- Sleuthkit datamodel host bundle: split out of iped.rcp.libs so
+             org.sleuthkit.datamodel lives in its own OSGi class space. Built
+             before the wrapper (independent of other reactor modules). -->
+        <module>bundles/iped.rcp.sleuthkit</module>
         <module>bundles/iped.rcp.libs</module>
         <module>bundles/iped.rcp.api</module>
         <module>bundles/iped.rcp.core</module>
@@ -69,6 +105,7 @@
         <module>bundles/iped.rcp.specialized</module>
         <module>bundles/iped.rcp.progress</module>
         <module>bundles/iped.rcp.app</module>
+        <module>bundles/iped.rcp.casecreation</module>
         <module>features/iped.rcp.feature</module>
         <module>products/iped.rcp.product</module>
         <!-- Phase 8 (T051, US6): drop-in extension sample. Built by the

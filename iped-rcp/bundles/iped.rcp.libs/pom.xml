@@ -64,13 +64,17 @@
                         <Bundle-Vendor>IPED</Bundle-Vendor>
                         <Automatic-Module-Name>iped.rcp.libs</Automatic-Module-Name>
                         <Bundle-RequiredExecutionEnvironment>JavaSE-21</Bundle-RequiredExecutionEnvironment>
-                        <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
+                        <!-- artifactId=!sleuthkit: the Sleuthkit datamodel jar
+                             is no longer embedded here — it lives in the
+                             dedicated iped.rcp.sleuthkit host bundle. The
+                             engine's references to org.sleuthkit.datamodel
+                             resolve via DynamicImport-Package:* below, wired to
+                             that bundle's export. -->
+                        <Embed-Dependency>*;scope=compile|runtime;artifactId=!sleuthkit</Embed-Dependency>
                         <Embed-Transitive>true</Embed-Transitive>
                         <Embed-Directory>lib</Embed-Directory>
                         <!-- Exports grow on demand as UI bundles consume engine
                              packages (T006 follow-up note above):
-                             - org.sleuthkit.datamodel: TskCoreException thrown by
-                               IPEDSource.checkImagePaths() (T008);
                              - org.slf4j: UI bundles must log through the engine's
                                backend (single Log4j2 pipeline, constitution IV);
                              - org.apache.lucene.*: engine open/search API surface
@@ -91,7 +95,17 @@
                              first-party RCP bundles. Third parties compile against
                              iped.rcp.api ONLY; the marker is advisory (no runtime /
                              Tycho-resolution effect) but documents the contract. -->
-                        <Export-Package>iped.*;x-internal:=true,org.sleuthkit.datamodel;x-internal:=true,org.slf4j;x-internal:=true,org.apache.lucene.*;x-internal:=true,org.apache.tika.*;x-internal:=true,bibliothek.*;x-internal:=true</Export-Package>
+                        <!-- org.sleuthkit.datamodel moved to the dedicated
+                             iped.rcp.sleuthkit bundle. In return, this wrapper
+                             now re-exports the packages that the datamodel
+                             touches in-process (IPEDSource opens SleuthkitCase
+                             over sqlite-jdbc to browse the TSK tree): sqlite,
+                             guava, gson, c3p0, sparsebits, commons-lang3,
+                             joda-time and postgresql.util. They stay embedded
+                             here (single copy / single native sqlite load) and
+                             are wired into iped.rcp.sleuthkit via its
+                             DynamicImport-Package:*. -->
+                        <Export-Package>iped.*;x-internal:=true,org.slf4j;x-internal:=true,org.apache.lucene.*;x-internal:=true,org.apache.tika.*;x-internal:=true,bibliothek.*;x-internal:=true,org.sqlite;x-internal:=true,com.google.common.*;x-internal:=true,com.google.gson.*;x-internal:=true,com.mchange.v2.c3p0;x-internal:=true,com.zaxxer.sparsebits;x-internal:=true,org.apache.commons.lang3;x-internal:=true,org.joda.time;x-internal:=true,org.postgresql.util;x-internal:=true</Export-Package>
                         <!-- Self-contained: never wire engine internals to other
                              bundles; JDK packages come from the boot delegation. -->
                         <Import-Package>!*</Import-Package>

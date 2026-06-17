@@ -13,6 +13,12 @@
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     	<parent.root>${resources.dir}/../..</parent.root>
+    	<!-- JAR wrapped by IPED-SearchApp.exe (launch4j, l4j-searchapp). Default
+    	     is the legacy Swing UI jar (BootstrapUI/AppMain); the -P rcp profile
+    	     overrides it to the tiny RCP shim (SearchAppLauncher) so the case
+    	     launches the Eclipse RCP UI instead (feature 004, T054). Until the
+    	     cut-over (T059) the default build keeps the Swing launcher. -->
+    	<searchapp.launcher.jar>iped/lib/iped-search-app.jar</searchapp.launcher.jar>
     </properties>
     
     <dependencies>
@@ -1017,8 +1023,10 @@
                                          jar live under iped/ (case/iped/jre, case/iped/lib). launch4j resolves
                                          both <jar> and <jre><path> relative to the exe dir, so they must be
                                          iped/... (NOT ../...). chdir=. keeps cwd at the case root, matching the
-                                         hand-written IPED-SearchApp.bat that this replaces. (003) -->
-                                    <jar>iped/lib/iped-search-app.jar</jar>
+                                         hand-written IPED-SearchApp.bat that this replaces. (003)
+                                         The wrapped jar is parameterized (feature 004, T054): default
+                                         is the Swing UI jar; -P rcp swaps it for the RCP shim jar. -->
+                                    <jar>${searchapp.launcher.jar}</jar>
                                     <chdir>.</chdir>
                                     <icon>${resources.dir}/root/iped.ico</icon>
                                     <jre>
@@ -1039,6 +1047,79 @@
                                         <internalName>IPED-SearchApp</internalName>
                                         <originalFilename>IPED-SearchApp.exe</originalFilename>
                                     </versionInfo>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Feature 004 (T054): Eclipse RCP analysis-UI launcher wiring.
+             Opt-in with the root -P rcp profile (which also adds the iped-rcp
+             reactor) — same profile id, so a single -P rcp activates both. The
+             default (Swing) build keeps IPED-SearchApp.exe pointing at
+             iped-search-app.jar until the cut-over (T059). -->
+        <profile>
+            <id>rcp</id>
+            <properties>
+                <!-- IPED-SearchApp.exe wraps the tiny RCP shim instead of the
+                     Swing UI jar (see SearchAppLauncher / l4j-searchapp). -->
+                <searchapp.launcher.jar>iped/lib/iped-searchapp-launcher.jar</searchapp.launcher.jar>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Standalone jar with ONLY SearchAppLauncher (JDK-only,
+                         no class path). IPED-SearchApp.exe wraps it; it execs
+                         <case>/iped/ui/iped-ui.exe with -vm <case>/iped/jre/bin. -->
+                    <plugin>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create-searchapp-launcher-jar</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <finalName>iped-searchapp-launcher</finalName>
+                                    <outputDirectory>${lib.dir}</outputDirectory>
+                                    <forceCreation>true</forceCreation>
+                                    <archive>
+                                        <addMavenDescriptor>false</addMavenDescriptor>
+                                        <manifest>
+                                            <mainClass>iped.app.bootstrap.SearchAppLauncher</mainClass>
+                                        </manifest>
+                                    </archive>
+                                    <includes>
+                                        <include>iped/app/bootstrap/SearchAppLauncher.class</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Linux case-root shim (no launch4j on Linux). Copied to
+                         release/bin/ so Manager.prepareOutputFolder places it at
+                         the case root next to IPED-SearchApp.exe. NOTE: the exec
+                         bit is not preserved through the resources copy nor
+                         Manager's IOUtil.copyDirectory — run with `sh` or chmod
+                         on Linux until the broader Linux exec-bit handling lands
+                         (T061 validation). -->
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-rcp-searchapp-sh</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${release.dir}/bin</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <filtering>false</filtering>
+                                            <directory>${resources.dir}/rcp/bin</directory>
+                                        </resource>
+                                    </resources>
                                 </configuration>
                             </execution>
                         </executions>

@@ -118,7 +118,8 @@ iped-<version>/
 ├── models/                           # modelos AI (DIE, NSFW, Vosk)
 ├── jre/                              # JRE embutido (Windows)
 ├── plugins/                          # JARs externos (Stanford CoreNLP, telegram-decoder, java-dbx, ...)
-└── iped.exe / bin/                   # launchers
+├── ui/                               # GUI RCP (iped-ui[.exe]) — análise + criação/abertura interativa de casos (feature 004/005)
+└── iped.exe / bin/                   # launchers de processamento headless (CLI)
 ```
 
 CLI principais (entry points):
@@ -126,6 +127,8 @@ CLI principais (entry points):
 - `iped.app.bootstrap.BootstrapUI` — UI de busca/análise.
 - `iped.engine.webapi.Main` — Web API.
 - `iped.engine.hashdb.HashDBTool` — ferramenta de base de hashes.
+
+> **Criação/abertura interativa de casos (feature 005, FR-020/FR-021)**: no release com a GUI RCP, a porta **promovida** para criar/abrir casos interativamente é o **`ui/iped-ui`** — menu **File ▸ New Case** (wizard) / **Open Case** + **Manage Profiles** (editor de perfis). O wizard dispara o processamento **out-of-process via `java -jar iped.jar`** (não usa `iped.exe`; verificado, SC-006). O **`iped.exe`/`Bootstrap` CLI permanece distribuído e inalterado** como entry **headless** (automação, scripts, servidores) — apenas **deixa de ser a porta promovida** para criação interativa. Remover o `iped.exe` é passo **futuro/fora de escopo**, condicionado a um modo headless no novo launcher RCP. Ver [iped-rcp/CLAUDE.md](iped-rcp/CLAUDE.md) §11.1 e [specs/005-case-creation-wizard/](specs/005-case-creation-wizard/).
 
 `Bootstrap` é responsável por:
 - Ler `-Xms/-Xmx` (limita ao tamanho da RAM física; default = 25% da RAM, máx 32 GB).
@@ -287,7 +290,10 @@ A árvore de releases está em `ReleaseNotes.txt` (180 KB) — referência detal
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/004-rcp-gui-migration/plan.md](specs/004-rcp-gui-migration/plan.md)
-(feature ativa: migração da GUI para Eclipse RCP — ver também research.md,
-data-model.md, contracts/ e quickstart.md no mesmo diretório).
+[specs/005-case-creation-wizard/plan.md](specs/005-case-creation-wizard/plan.md)
+(feature ativa: criação/abertura de casos na GUI RCP — menu Open/New Case,
+wizard de Novo Caso que lança o `Bootstrap` out-of-process, e editor de perfis
+completo; estende a feature 004. Ver também research.md, data-model.md,
+contracts/ e quickstart.md no mesmo diretório).
+Plano anterior (base): [specs/004-rcp-gui-migration/plan.md](specs/004-rcp-gui-migration/plan.md).
 <!-- SPECKIT END -->

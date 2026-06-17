@@ -20,7 +20,6 @@ import org.eclipse.e4.ui.workbench.lifecycle.ProcessAdditions;
 import org.eclipse.e4.ui.workbench.modeling.EModelService;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -59,6 +58,13 @@ public class LifeCycle {
     void postContextCreate(IApplicationContext appContext, IEclipseContext context) {
         Display display = Display.getDefault();
 
+        // T065: point the legacy engine localization resolver
+        // (iped.localization.Messages) at the release localization/ folder
+        // before any engine i18n runs (case open loads engine configs). From
+        // inside the OSGi wrapper its jar-relative/working-dir heuristics fail
+        // for an installed product; this reuses the RCP resolver (T009).
+        Messages.exportEngineLocalizationDir();
+
         // T050 (US6, FR-022): install drop-in third-party extensions BEFORE
         // the application model loads, so their fragment.e4xmi contributions
         // are in the extension registry when e4 processes model fragments. A
@@ -66,23 +72,21 @@ public class LifeCycle {
         DropinBundleLoader.loadDropins(FrameworkUtil.getBundle(getClass()).getBundleContext());
 
         List<Path> casePaths = parseCaseArgs(appContext);
+        boolean hasCase = !casePaths.isEmpty();
 
-        if (casePaths.isEmpty()) {
-            Path chosen = askCaseFolder(display);
-            if (chosen == null) {
-                LOGGER.info("No case selected, exiting");
-                System.exit(0);
-            }
-            casePaths = List.of(chosen);
+        // Feature 005 (T005): when no case is passed at startup, boot the
+        // workbench WITHOUT a case — the File menu (New/Open Case) is the entry
+        // point — instead of forcing a folder dialog and exiting on cancel.
+
+        // T043 (FR-017, research R5): per-user, per-case workspace area — only
+        // when a case is given at startup; the menu-driven flow uses the
+        // product's default instance area (osgi.instance.area.default).
+        if (hasCase) {
+            WorkspaceLocationResolver.applyTo(context, casePaths);
         }
 
-        // T043 (FR-017, research R5): per-user, per-case workspace area —
-        // must happen before the application model is loaded
-        WorkspaceLocationResolver.applyTo(context, casePaths);
-
         // T044 (FR-018, research R8): theme before the workbench shells are
-        // created (win32 dark chrome is fixed at widget creation); needs the
-        // instance area resolved above for the CSS preference pin
+        // created (win32 dark chrome is fixed at widget creation)
         ThemeManager.applyAtStartup(display, context);
 
         // T045 (FR-019): the SWT side of the user scale is applied by
@@ -90,16 +94,18 @@ public class LifeCycle {
         // AWT/Swing viewers with the same ~/.iped/UiScale.txt setting
         UiScale.loadUserSetting();
 
-        ICaseSessionManager sessionManager = context.get(ICaseSessionManager.class);
-        try {
-            // Blocking on purpose: there is no workbench yet and the native
-            // splash gives the startup feedback (FR-027). In-session reloads
-            // and long operations use Jobs once parts exist (US1+).
-            sessionManager.open(casePaths);
-        } catch (CaseOpenException e) {
-            LOGGER.error("Could not open case session", e);
-            showError(display, e.getMessage());
-            System.exit(1);
+        if (hasCase) {
+            ICaseSessionManager sessionManager = context.get(ICaseSessionManager.class);
+            try {
+                // Blocking on purpose: there is no workbench yet and the native
+                // splash gives the startup feedback (FR-027). Runtime open of a
+                // different case goes through the File menu and a Job (US1/US2).
+                sessionManager.open(casePaths);
+            } catch (CaseOpenException e) {
+                LOGGER.error("Could not open case session", e);
+                showError(display, e.getMessage());
+                System.exit(1);
+            }
         }
     }
 
@@ -126,6 +132,10 @@ public class LifeCycle {
         MODEL_LABEL_KEYS.put("iped.rcp.views.part.auxtables", "RcpParts.RelatedItems");
         MODEL_LABEL_KEYS.put("iped.rcp.views.part.metadata", "App.Metadata");
         MODEL_LABEL_KEYS.put("iped.rcp.views.part.filterspanel", "App.appliedFilters");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menu.file", "RcpMenu.File");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.newcase", "RcpMenu.NewCase");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.opencase", "RcpMenu.OpenCase");
+        MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.manageprofiles", "RcpMenu.ManageProfiles");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menu.view", "RcpMenu.View");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menu.theme", "RcpMenu.Theme");
         MODEL_LABEL_KEYS.put("iped.rcp.app.menuitem.theme.system", "RcpMenu.Theme.System");
@@ -140,6 +150,13 @@ public class LifeCycle {
         ThemeManager.syncMenuSelection(application, modelService);
 
         ICaseSessionManager sessionManager = application.getContext().get(ICaseSessionManager.class);
+        if (sessionManager == null) {
+            // The OSGi DS services are not registered — typically the Service-Component
+            // header was stripped from a bundle manifest (see iped.rcp.core/META-INF).
+            // Don't crash the whole workbench on boot; log so it stays diagnosable.
+            LOGGER.error("ICaseSessionManager not available (OSGi DS not registered?); skipping window title setup");
+            return;
+        }
         CaseSession session = sessionManager.getSession();
         if (session == null) {
             return;
@@ -157,8 +174,12 @@ public class LifeCycle {
             for (MPart part : modelService.findElements(application, entry.getKey(), MPart.class, null)) {
                 part.setLabel(label);
             }
-            for (MMenuElement menu : modelService.findElements(application, entry.getKey(), MMenuElement.class,
-                    null)) {
+            // The main menu lives on the window outside any perspective, so the
+            // default search scope (ANYWHERE, which covers perspectives -> parts)
+            // misses it; IN_MAIN_MENU is required or the menu labels stay in the
+            // e4xmi (English) default regardless of locale.
+            for (MMenuElement menu : modelService.findElements(application, entry.getKey(), MMenuElement.class, null,
+                    EModelService.ANYWHERE | EModelService.IN_MAIN_MENU)) {
                 if (menu instanceof MUILabel labeled) {
                     labeled.setLabel(label);
                 }
@@ -203,19 +224,6 @@ public class LifeCycle {
             }
         }
         return casePaths;
-    }
-
-    private Path askCaseFolder(Display display) {
-        Shell shell = new Shell(display);
-        try {
-            DirectoryDialog dialog = new DirectoryDialog(shell, SWT.OPEN);
-            dialog.setText(Messages.getString("AppLifeCycle.selectCase.title"));
-            dialog.setMessage(Messages.getString("AppLifeCycle.selectCase.message"));
-            String dir = dialog.open();
-            return dir != null ? Path.of(dir) : null;
-        } finally {
-            shell.dispose();
-        }
     }
 
     private void showError(Display display, String message) {

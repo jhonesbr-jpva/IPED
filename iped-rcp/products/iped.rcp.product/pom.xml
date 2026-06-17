@@ -17,12 +17,30 @@
     <artifactId>iped.rcp.product</artifactId>
     <packaging>eclipse-repository</packaging>
 
+    <properties>
+        <!-- T052 (case-launcher-packaging contract): the materialized product
+             is copied into the IPED release as ui/. The release is assembled
+             by iped-app under the ROOT reactor target
+             (IPED/target/release/iped-<ver>/, since iped-app's release.dir is
+             ${project.parent.build.directory}/release/...). From this module
+             that is three levels up. ${rcp.product.platform} (set per build OS
+             by the profiles below) selects the matching materialized product
+             so a Windows release carries only win32 and a Linux release only
+             linux/gtk. -->
+        <rcp.release.ui.dir>${project.basedir}/../../../target/release/iped-${project.version}/ui</rcp.release.ui.dir>
+    </properties>
+
     <dependencies>
         <!-- See the note in the feature pom: the felix-built wrapper must be
              declared per-module to join the target platform. -->
         <dependency>
             <groupId>iped.rcp</groupId>
             <artifactId>iped.rcp.libs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped.rcp</groupId>
+            <artifactId>iped.rcp.sleuthkit</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -42,6 +60,91 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- T052: integrate the materialized product into the IPED release
+                 as ui/ (case-launcher-packaging contract). This must run on the
+                 RCP side, not in iped-app/pom.xml: the RCP reactor depends on
+                 iped-app (the wrapper embeds engine + app), so the product is
+                 only materialized AFTER iped-app's package phase. Bound to
+                 verify (after materialize-products in package) so a single
+                 `mvn -P rcp clean verify` yields a populated ui/ — contract
+                 acceptance criterion 1. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-product-to-release-ui</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy todir="${rcp.release.ui.dir}" overwrite="true">
+                                    <fileset dir="${project.build.directory}/products/iped.rcp.product/${rcp.product.platform}"/>
+                                </copy>
+                                <!-- empty drop-in folder for third-party extensions (US6/FR-022) -->
+                                <mkdir dir="${rcp.release.ui.dir}/plugins-ext"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Per build-OS selection of the materialized product to ship in the
+             release ui/ (mirrors the parent's swt-windows/swt-linux pattern;
+             see the rcp.release.ui.dir note above). -->
+        <profile>
+            <id>rcp-product-windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <rcp.product.platform>win32/win32/x86_64</rcp.product.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>rcp-product-linux</id>
+            <activation>
+                <os><family>unix</family></os>
+            </activation>
+            <properties>
+                <rcp.product.platform>linux/gtk/x86_64</rcp.product.platform>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Ant <copy> does not preserve the executable bit; restore
+                         it on the native equinox launcher so the Linux release
+                         ui/ is runnable. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>chmod-linux-launcher</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <chmod perm="755">
+                                            <fileset dir="${rcp.release.ui.dir}">
+                                                <include name="iped-ui"/>
+                                            </fileset>
+                                        </chmod>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
