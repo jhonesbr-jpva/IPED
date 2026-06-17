@@ -150,6 +150,13 @@ public class LifeCycle {
         ThemeManager.syncMenuSelection(application, modelService);
 
         ICaseSessionManager sessionManager = application.getContext().get(ICaseSessionManager.class);
+        if (sessionManager == null) {
+            // The OSGi DS services are not registered — typically the Service-Component
+            // header was stripped from a bundle manifest (see iped.rcp.core/META-INF).
+            // Don't crash the whole workbench on boot; log so it stays diagnosable.
+            LOGGER.error("ICaseSessionManager not available (OSGi DS not registered?); skipping window title setup");
+            return;
+        }
         CaseSession session = sessionManager.getSession();
         if (session == null) {
             return;

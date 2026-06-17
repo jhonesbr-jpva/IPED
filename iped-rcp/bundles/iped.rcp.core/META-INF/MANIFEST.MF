@@ -7,6 +7,7 @@ Bundle-Vendor: IPED
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: iped.rcp.core
 Bundle-ActivationPolicy: lazy
+Service-Component: OSGI-INF/*.xml
 Require-Bundle: iped.rcp.api,
  iped.rcp.libs,
  org.eclipse.e4.core.contexts,
