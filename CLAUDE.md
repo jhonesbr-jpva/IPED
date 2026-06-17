@@ -118,7 +118,8 @@ iped-<version>/
 ├── models/                           # modelos AI (DIE, NSFW, Vosk)
 ├── jre/                              # JRE embutido (Windows)
 ├── plugins/                          # JARs externos (Stanford CoreNLP, telegram-decoder, java-dbx, ...)
-└── iped.exe / bin/                   # launchers
+├── ui/                               # GUI RCP (iped-ui[.exe]) — análise + criação/abertura interativa de casos (feature 004/005)
+└── iped.exe / bin/                   # launchers de processamento headless (CLI)
 ```
 
 CLI principais (entry points):
@@ -126,6 +127,8 @@ CLI principais (entry points):
 - `iped.app.bootstrap.BootstrapUI` — UI de busca/análise.
 - `iped.engine.webapi.Main` — Web API.
 - `iped.engine.hashdb.HashDBTool` — ferramenta de base de hashes.
+
+> **Criação/abertura interativa de casos (feature 005, FR-020/FR-021)**: no release com a GUI RCP, a porta **promovida** para criar/abrir casos interativamente é o **`ui/iped-ui`** — menu **File ▸ New Case** (wizard) / **Open Case** + **Manage Profiles** (editor de perfis). O wizard dispara o processamento **out-of-process via `java -jar iped.jar`** (não usa `iped.exe`; verificado, SC-006). O **`iped.exe`/`Bootstrap` CLI permanece distribuído e inalterado** como entry **headless** (automação, scripts, servidores) — apenas **deixa de ser a porta promovida** para criação interativa. Remover o `iped.exe` é passo **futuro/fora de escopo**, condicionado a um modo headless no novo launcher RCP. Ver [iped-rcp/CLAUDE.md](iped-rcp/CLAUDE.md) §11.1 e [specs/005-case-creation-wizard/](specs/005-case-creation-wizard/).
 
 `Bootstrap` é responsável por:
 - Ler `-Xms/-Xmx` (limita ao tamanho da RAM física; default = 25% da RAM, máx 32 GB).
