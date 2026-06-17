@@ -13,9 +13,9 @@ Ambiente: produto RCP `iped-uic.exe` (Win x64) + engine release deste repo em
 |---|---|---|
 | V1 — New Case ponta a ponta | ✅ **PASS** | processou com `forensic` e abriu no RCP UI |
 | V2 — Validações do wizard | ✅ **PASS** | 6/6 casos bloqueiam corretamente, nenhum processo lançado |
-| V3 — Open Case (+ recentes) | 🟡 parcial | Open Case ✅ (abriu o caso do V1); invalid-folder + Recent Cases pendentes (Recent Cases **deferido** T018/T021) |
-| V4 — Criar/editar perfil | 🟡 validado | clone `triage`→`triage-copy` criado e **processado pelo engine** ✅; editor (Preferences) coberto por testes headless + smoke anterior; re-confirmar edição→save→override enxuto opcional |
-| V5 — i18n (`-nl pt_BR`/`en`) | ⏳ pendente | EN+pt_BR completos; demais locales caem no EN (sem chave crua) |
+| V3 — Open Case (+ recentes) | ✅ **PASS** | Open Case ✅ (abriu o caso do V1); pasta inválida → erro claro ✅. Recent Cases **deferido** (T018/T021) |
+| V4 — Criar/editar perfil | ✅ **PASS** | clone/editar/salvar (override enxuto) ✅; embarcado → "Save As…" ✅; colisão rejeitada ✅; novo perfil aparece no wizard ✅ |
+| V5 — i18n (`-nl pt_BR`/`en`) | ✅ **PASS** | menu + wizard + editor localizados em pt_BR e en (após 2 fixes, abaixo); sem chaves cruas |
 
 ## V1 — detalhes
 
@@ -67,9 +67,15 @@ Ambos concluíram. Apenas ruído **pré-existente e benigno** do engine (igual n
   reflection frágil no Java 21) e `No module named 'numpy'` (task Python opcional). Inofensivos,
   não introduzidos pela 005.
 
-## Pendências de validação
+## Resultado final — T036 completo (V1–V5 ✅)
 
-- V3 (pasta inválida → mensagem; Recent Cases é deferido).
-- V4 (re-confirmar opcional no release fresco: editar flag → salvar → checar override enxuto;
-  embarcado → "Save As…"; colisão de nome rejeitada).
-- V5 (subir com `-nl pt_BR` e `-nl en`; conferir ausência de chaves cruas nos demais locales).
+Todos os cenários do quickstart passaram. Único deferido: **Recent Cases** (T018/T021), por design.
+
+### Bugs reais encontrados pelo T036 e corrigidos
+
+| # | Sintoma | Causa | Fix |
+|---|---|---|---|
+| 1 | New Case abortava o processamento (`UnsupportedOperationException: Security Manager`) | subprocesso `java -jar iped.jar` sem `-Djava.security.manager=allow` (engine instala SM no Java 21) | `ProcessingLaunchService.buildFullCommand` passa o flag (espelha `iped.bat`) — `4b95f3088` |
+| 2 | Processamento falhava com FST `unknown object tag -84` + PNG `IllegalAccessError` | `-Diped.install.dir` apontava p/ um **engine antigo** (pré-Java-21) | rebuild do release (`mvn clean install`) — ambiente, não código |
+| 3 | Itens do menu principal sempre em inglês | `findElements` de 4 args (escopo `ANYWHERE`) não cobre o main menu | `findElements(..., ANYWHERE \| IN_MAIN_MENU)` — `691e1c383` |
+| 4 | GUI não subia (`NPE: ICaseSessionManager null`) | header `Service-Component` removido do MANIFEST do `iped.rcp.core` (hazard m2e/tycho-ds) | declarar `Service-Component: OSGI-INF/*.xml` no MANIFEST fonte + null-guard no boot — `6ec9ca55a` |
