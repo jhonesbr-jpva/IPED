@@ -167,8 +167,12 @@ public class LifeCycle {
             for (MPart part : modelService.findElements(application, entry.getKey(), MPart.class, null)) {
                 part.setLabel(label);
             }
-            for (MMenuElement menu : modelService.findElements(application, entry.getKey(), MMenuElement.class,
-                    null)) {
+            // The main menu lives on the window outside any perspective, so the
+            // default search scope (ANYWHERE, which covers perspectives -> parts)
+            // misses it; IN_MAIN_MENU is required or the menu labels stay in the
+            // e4xmi (English) default regardless of locale.
+            for (MMenuElement menu : modelService.findElements(application, entry.getKey(), MMenuElement.class, null,
+                    EModelService.ANYWHERE | EModelService.IN_MAIN_MENU)) {
                 if (menu instanceof MUILabel labeled) {
                     labeled.setLabel(label);
                 }
