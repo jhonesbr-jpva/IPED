@@ -22,6 +22,8 @@
         <children xsi:type="menu:HandledMenuItem" xmi:id="_miOpenCase" elementId="iped.rcp.app.menuitem.opencase" label="Open Case..." command="_cmdOpenCase"/>
         <children xsi:type="menu:MenuSeparator" xmi:id="_miFileSep1" elementId="iped.rcp.app.menu.file.sep1"/>
         <children xsi:type="menu:HandledMenuItem" xmi:id="_miManageProfiles" elementId="iped.rcp.app.menuitem.manageprofiles" label="Manage Profiles..." command="_cmdManageProfiles"/>
+        <children xsi:type="menu:MenuSeparator" xmi:id="_miFileSep2" elementId="iped.rcp.app.menu.file.sep2"/>
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_miExit" elementId="iped.rcp.app.menuitem.exit" label="Exit" command="_cmdExit"/>
       </children>
       <children xsi:type="menu:Menu" xmi:id="_menuView" elementId="iped.rcp.app.menu.view" label="View">
         <children xsi:type="menu:Menu" xmi:id="_menuTheme" elementId="iped.rcp.app.menu.theme" label="Theme">
@@ -31,6 +33,9 @@
         </children>
         <children xsi:type="menu:MenuSeparator" xmi:id="_miViewSep1" elementId="iped.rcp.app.menu.view.sep1"/>
         <children xsi:type="menu:DirectMenuItem" xmi:id="_miUiScale" elementId="iped.rcp.app.menuitem.uiscale" label="UI Scale..." contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.settings.UiScaleHandler"/>
+      </children>
+      <children xsi:type="menu:Menu" xmi:id="_menuHelp" elementId="iped.rcp.app.menu.help" label="Help">
+        <children xsi:type="menu:HandledMenuItem" xmi:id="_miAbout" elementId="iped.rcp.app.menuitem.about" label="About IPED" command="_cmdAbout"/>
       </children>
     </mainMenu>
     <children xsi:type="advanced:PerspectiveStack" xmi:id="_perspectiveStack" elementId="iped.rcp.app.perspectivestack" selectedElement="_perspectiveMain">
@@ -69,6 +74,7 @@
        specs/004-rcp-gui-migration/keybindings-map.md -->
   <bindingTables xmi:id="_bindingTableWindow" elementId="iped.rcp.app.bindingtable.window" bindingContext="_ctxWindow">
     <bindings xmi:id="_kbManageBookmarks" elementId="iped.rcp.app.kb.managebookmarks" keySequence="M1+B" command="_cmdManageBookmarks"/>
+    <bindings xmi:id="_kbExit" elementId="iped.rcp.app.kb.exit" keySequence="M1+Q" command="_cmdExit"/>
   </bindingTables>
   <rootContext xsi:type="commands:BindingContext" xmi:id="_ctxDialogAndWindow" elementId="org.eclipse.ui.contexts.dialogAndWindow" name="In Dialogs and Windows">
     <children xmi:id="_ctxWindow" elementId="org.eclipse.ui.contexts.window" name="In Windows"/>
@@ -82,6 +88,10 @@
   <commands xmi:id="_cmdOpenCase" elementId="iped.rcp.command.opencase" commandName="Open Case"/>
   <handlers xmi:id="_handlerManageProfiles" elementId="iped.rcp.app.handler.manageprofiles" contributionURI="bundleclass://iped.rcp.casecreation/iped.rcp.casecreation.handlers.ManageProfilesHandler" command="_cmdManageProfiles"/>
   <commands xmi:id="_cmdManageProfiles" elementId="iped.rcp.command.manageprofiles" commandName="Manage Profiles"/>
+  <handlers xmi:id="_handlerExit" elementId="iped.rcp.app.handler.exit" contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.handlers.QuitHandler" command="_cmdExit"/>
+  <commands xmi:id="_cmdExit" elementId="iped.rcp.command.exit" commandName="Exit"/>
+  <handlers xmi:id="_handlerAbout" elementId="iped.rcp.app.handler.about" contributionURI="bundleclass://iped.rcp.app/iped.rcp.app.handlers.AboutHandler" command="_cmdAbout"/>
+  <commands xmi:id="_cmdAbout" elementId="iped.rcp.command.about" commandName="About"/>
   <addons xmi:id="_addonCommandService" elementId="org.eclipse.e4.core.commands.service" contributionURI="bundleclass://org.eclipse.e4.core.commands/org.eclipse.e4.core.commands.CommandServiceAddon"/>
   <addons xmi:id="_addonContextService" elementId="org.eclipse.e4.ui.contexts.service" contributionURI="bundleclass://org.eclipse.e4.ui.services/org.eclipse.e4.ui.services.ContextServiceAddon"/>
   <addons xmi:id="_addonBindingService" elementId="org.eclipse.e4.ui.bindings.service" contributionURI="bundleclass://org.eclipse.e4.ui.bindings/org.eclipse.e4.ui.bindings.BindingServiceAddon"/>

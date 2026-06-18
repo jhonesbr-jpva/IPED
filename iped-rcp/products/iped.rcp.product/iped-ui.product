@@ -8,14 +8,31 @@
        R5); osgi.instance.area.default below is only the safety net if the
        resolver cannot run. An explicit -data still wins.
      - vmArgs carry the engine's Java 21 module opens (same set Bootstrap
-       passes to the processing JVM) plus boot delegation for the JavaFX/AWT
-       bridge (research R4) -->
+       passes to the processing JVM), boot delegation for the JavaFX/AWT
+       bridge (research R4), and osgi.bundlefile.limit raised well above the
+       ~600 bundle files. The iped.rcp.libs fat bundle alone has a 475-entry
+       Bundle-ClassPath (engine + Lucene + Tika + all deps embedded as nested
+       jars); under the default MRU limit Equinox evicted and reopened those
+       nested jars during class loading, re-parsing each ZIP central directory
+       and pinning one core for tens of seconds at startup. Keeping them all
+       open removes the thrashing (startup CPU settles in ~5s, RSS ~217MB vs
+       ~1.3GB before). -->
+
 <product name="IPED Analysis" uid="iped.rcp.product" id="iped.rcp.app.product" application="org.eclipse.e4.ui.workbench.swt.E4Application" version="4.4.0.qualifier" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
 
    <launcherArgs>
+      <!-- -nosplash: the native Equinox splash deadlocks racily (~1 in 3
+           launches) during framework startup — the main thread blocks in
+           JNIBridge._update_splash (called from EclipseStarter.setStartLevel,
+           before the SWT Display exists) and the workbench never renders. Seen
+           on BOTH iped-ui.exe (GUI) and iped-uic.exe (console). Suppressing the
+           splash is 100% reliable; the <splash> element below is kept only as
+           the (now unused) resource anchor. Diagnose a hang with jstack: main
+           stuck at _update_splash/setStartLevel = the splash race. -->
+      <programArgs>-nosplash</programArgs>
       <vmArgs>--add-opens=java.base/java.util=ALL-UNNAMED
 --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
 --add-opens=java.base/java.lang=ALL-UNNAMED
@@ -28,6 +45,7 @@
 -Djava.security.manager=allow
 -Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*
 -Dfile.encoding=UTF-8
+-Dosgi.bundlefile.limit=2000
 -Dosgi.instance.area.default=@user.home/.iped/ui-workspaces/default
       </vmArgs>
       <vmArgsLin>-Dsun.awt.xembedserver=true

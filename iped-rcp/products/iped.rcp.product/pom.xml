@@ -106,6 +106,44 @@
             <properties>
                 <rcp.product.platform>win32/win32/x86_64</rcp.product.platform>
             </properties>
+            <build>
+                <plugins>
+                    <!-- Pin the standalone launcher to the release's bundled
+                         Java 21 jre/ so `ui/iped-ui[c].exe` runs without the
+                         case-root shim (feature 005 promotes ui/iped-ui as the
+                         interactive case-creation entry, launched before any
+                         case root / shim exists). The p2-director emits an
+                         iped-ui.ini WITHOUT -vm, so it would otherwise fall back
+                         to whatever Java is on PATH — and the engine's
+                         -Djava.security.manager=allow (vmArgs) aborts VM init on
+                         Java 24+ (JEP 486). jre/ is a sibling of ui/ in both the
+                         release and the case-copied <case>/iped/ layout, so the
+                         relative ../jre/bin holds in both. Windows-only: on Linux
+                         the bundled jre/ is the Windows JRE and the system Java 21
+                         is used instead (matches the iped.exe launch4j config). -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>pin-windows-jre-in-launcher-ini</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <replace file="${rcp.release.ui.dir}/iped-ui.ini"
+                                                 token="-vmargs"
+                                                 value="-vm${line.separator}../jre/bin${line.separator}-vmargs"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <id>rcp-product-linux</id>

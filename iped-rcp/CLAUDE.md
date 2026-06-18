@@ -149,8 +149,14 @@ Parts bridgeadas das views que dependem de tecnologia AWT/Swing/JavaFX pesada:
 - **Scale** (`settings/UiScaleHandler`) — lê/grava `~/.iped/UiScale.txt`, alinhando AWT/Swing bridgeados.
 - **Workspace** (`WorkspaceLocationResolver`, research R5/FR-017): área por-usuário/por-caso em `~/.iped/ui-workspaces/<case-id>/` (**não** dentro do caso — melhora o status quo em mídia read-only). Resolvida antes do model carregar; `-data` explícito ainda vence.
 - **Drop-ins** (`DropinBundleLoader`, US6/FR-022): instala/inicia todo `.jar` em `plugins-ext/` da instalação (e de `<case>/iped/ui/`) **antes** do model carregar, para que `fragment.e4xmi` apareça no registry. Jar quebrado é logado e pulado — **o produto sempre sobe**. Sem p2/auto-update.
+- **Menus app-level** (em [Application.e4xmi](bundles/iped.rcp.app/Application.e4xmi); handlers em `iped.rcp.app.handlers`/diálogos em `iped.rcp.app.about`):
+  - **File ▸ Exit** — `QuitHandler` → `IWorkbench.close()` (shutdown limpo do e4: `@PreSave` fecha a sessão); atalho `Ctrl+Q` (`M1+Q`).
+  - **Help ▸ About IPED** — `AboutHandler` → `AboutDialog` (estilo About do Eclipse: produto/versão de `iped.engine.Version` + botão **Installation Details** → `InstallationDetailsDialog`, abas **Features** (scan de `<install>/features/`, label/provider via regex no `feature.xml` — sem DOM), **Plugins** (`BundleContext.getBundles()`) e **Configuration** (dump de `System.getProperties()` + copiar)). SWT/JFace **puro** — o e4 puro não traz os diálogos About/Installation do `org.eclipse.ui` (FR-028, fora da camada bridgeada).
+  - Labels localizados em `LifeCycle.MODEL_LABEL_KEYS` → chaves `RcpMenu.*`/`RcpAbout.*` (EN + PT-BR). O menu **View** (Theme/UI Scale) vem dos handlers de tema/escala acima.
 
-**Modelo da aplicação**: [Application.e4xmi](bundles/iped.rcp.app/Application.e4xmi) (part stacks ancorados por `ModelAnchors`). **Produto**: [iped-ui.product](bundles/iped.rcp.product/iped-ui.product) — feature-based, launcher `iped-ui`, `vmArgs` carregam os `--add-opens` Java 21 do engine + `-Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*` (bridge AWT/FX, R4).
+> ⚠️ **Modelo e4 persistido vence sobre o `Application.e4xmi`**: ao mudar menus/parts, apague o `workbench.xmi` em `~/.iped/ui-workspaces/<id>/.metadata/.plugins/org.eclipse.e4.workbench/` para o e4 carregar o modelo novo (o `LifeCycle` re-aplica só os **labels**, não a estrutura).
+
+**Modelo da aplicação**: [Application.e4xmi](bundles/iped.rcp.app/Application.e4xmi) (part stacks ancorados por `ModelAnchors`; menus File/View/Help). **Produto**: [iped-ui.product](bundles/iped.rcp.product/iped-ui.product) — feature-based, launcher `iped-ui`. `vmArgs`: os `--add-opens` Java 21 do engine, `-Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*` (bridge AWT/FX, R4), `-Djava.security.manager=allow` (engine instala SM no Java 21 — **aborta no Java 24+/JEP 486**, daí o `-vm` na jre 21 embarcada ser obrigatório) e **`-Dosgi.bundlefile.limit=2000`** — sem ele o Equinox faz thrashing de open/close nos ~475 jars aninhados do `Bundle-ClassPath` do `iped.rcp.libs`, prendendo ~1 core por dezenas de segundos no startup (ver memória `project_iped_rcp_startup_bundlefile`).
 
 ### 11.1 Criação e abertura de casos — `iped.rcp.casecreation` (feature 005)
 
@@ -184,6 +190,10 @@ Detalhes em [specs/004-rcp-gui-migration/quickstart.md](../specs/004-rcp-gui-mig
 ## 13. Como rodar (release)
 
 O produto é construído pelo `p2-director` para **win32.win32.x86_64** e **gtk.linux.x86_64** e integrado ao release; o caso autocontido carrega a UI com que foi processado (`Manager.prepareOutputFolder` copia `ui/` para `<caso>/iped/`). No Windows, o shim `IPED-SearchApp.exe` (launch4j, raiz do caso) executa o launcher Equinox `iped-ui` com `-vm <caso>/iped/jre/bin`.
+
+O launcher **standalone** `ui/iped-ui.exe` (entrada promovida de criação de casos da feature 005, rodada **sem** o shim, antes de existir um caso) também resolve a jre 21 sozinho: o profile `rcp-product-windows` injeta `-vm ../jre/bin` no `iped-ui.ini` materializado (a `jre/` é irmã da `ui/` tanto no release quanto em `<caso>/iped/`). Sem isso o Equinox cairia no Java do PATH — e o `-Djava.security.manager=allow` aborta a VM no Java 24+ (JEP 486).
+
+> ⚠️ **Splash nativo dá deadlock _racy_ — desabilitado via `-nosplash`**: o splash do Equinox trava em ~1/3 das subidas, em **ambos** os launchers (`iped-ui.exe` GUI e `iped-uic.exe` console): a thread `main` bloqueia no método nativo `JNIBridge._update_splash` durante `EclipseStarter.setStartLevel` (antes do Display SWT existir) e o workbench **nunca renderiza**. Por isso o `.product` passa **`-nosplash`** em `<launcherArgs><programArgs>` (100% confiável; o `<splash>` fica só como âncora de recurso, sem efeito). Diagnóstico de um boot travado: `jstack` mostra `main` parada em `_update_splash`/`setStartLevel` (CPU ~0, RSS ~120 MB); subida sadia fica em `OS.WaitMessage`→`Display.sleep`→`eventLoopIdle` (RSS ~220 MB). Para debug com console, `iped-uic.exe` serve igual (o `-nosplash` do ini vale para os dois launchers).
 
 ## 14. Threading
 
