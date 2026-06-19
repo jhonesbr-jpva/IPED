@@ -15,6 +15,7 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.slf4j.Logger;
@@ -68,7 +69,9 @@ public class CategoryTreePart {
         viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         viewer.getTree().setData(SearchBarPart.SWTBOT_KEY, TREE_WIDGET_ID);
         viewer.setContentProvider(new CategoryContentProvider());
-        viewer.setLabelProvider(new LabelProvider());
+        CategoryIcons icons = new CategoryIcons(parent.getDisplay());
+        viewer.setLabelProvider(new CategoryLabelProvider(icons));
+        viewer.getTree().addDisposeListener(e -> icons.dispose());
         viewer.addSelectionChangedListener(event -> onSelectionChanged());
 
         CaseSession session = sessionManager.getSession();
@@ -175,6 +178,30 @@ public class CategoryTreePart {
                 viewer.setInput(null);
             }
         });
+    }
+
+    /**
+     * Keeps the legacy {@code name (count)} text ({@link Category#toString()})
+     * and adds the category decorator icon (parity with the Swing
+     * {@code CategoryTreeCellRenderer}).
+     */
+    private static class CategoryLabelProvider extends LabelProvider {
+
+        private final CategoryIcons icons;
+
+        CategoryLabelProvider(CategoryIcons icons) {
+            this.icons = icons;
+        }
+
+        @Override
+        public String getText(Object element) {
+            return element == null ? "" : element.toString();
+        }
+
+        @Override
+        public Image getImage(Object element) {
+            return element instanceof Category category ? icons.forCategory(category) : null;
+        }
     }
 
     private static class CategoryContentProvider implements ITreeContentProvider {

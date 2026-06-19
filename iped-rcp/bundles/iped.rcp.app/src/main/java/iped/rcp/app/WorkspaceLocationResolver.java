@@ -57,8 +57,10 @@ public final class WorkspaceLocationResolver {
      * Generation of the static application model. Bump on incompatible
      * {@code Application.e4xmi} changes; existing workspaces reset silently.
      * Version 2: main menu + commands/keybindings (T044/T046).
+     * Version 3: top toolbar with New/Open Case items.
+     * Version 4: toolbar items switched to icons (iconURI).
      */
-    public static final String LAYOUT_VERSION = "2";
+    public static final String LAYOUT_VERSION = "4";
 
     /** Outcome of {@link #validateOrResetState(Path)}. */
     public enum StateCheck {
@@ -125,6 +127,32 @@ public final class WorkspaceLocationResolver {
             LOGGER.error("Could not apply per-case workspace area; using default", e);
             return false;
         }
+    }
+
+    /**
+     * Validates the persisted state of the framework default instance area
+     * (the menu-driven, no-case boot uses {@code osgi.instance.area.default}
+     * rather than a per-case area, so {@link #applyTo} does not run). This keeps
+     * the layout-version reset symmetric: an incompatible
+     * {@code Application.e4xmi} change resets the stale {@code workbench.xmi}
+     * here too. Never sets the location (the product default stands); only
+     * validates the already-resolved area URL.
+     *
+     * @return the state outcome, or {@code null} when the area cannot be
+     *         resolved (boot proceeds untouched)
+     */
+    public static StateCheck validateDefaultArea(IEclipseContext context) {
+        Location location = (Location) context.get("instanceLocation");
+        if (location == null) {
+            return null;
+        }
+        File area = areaFile(location);
+        if (area == null) {
+            return null;
+        }
+        StateCheck check = validateOrResetState(area.toPath());
+        LOGGER.info("Default workspace area: {} (state: {})", area, check);
+        return check;
     }
 
     /**

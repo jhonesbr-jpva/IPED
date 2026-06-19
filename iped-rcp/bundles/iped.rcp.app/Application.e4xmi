@@ -38,6 +38,16 @@
         <children xsi:type="menu:HandledMenuItem" xmi:id="_miAbout" elementId="iped.rcp.app.menuitem.about" label="About IPED" command="_cmdAbout"/>
       </children>
     </mainMenu>
+    <!-- Top toolbar: quick access to the case entry points. Icon-only items
+         (the label is shown as the tooltip, localized at runtime); the standard
+         "new"/"open" art is shipped in this bundle under icons/ with @1.5x/@2x
+         HiDPI variants. The two HandledToolItems reuse the File-menu commands. -->
+    <trimBars xmi:id="_trimTop" elementId="iped.rcp.app.trimbar.top" side="Top">
+      <children xsi:type="menu:ToolBar" xmi:id="_toolbarMain" elementId="iped.rcp.app.toolbar.main">
+        <children xsi:type="menu:HandledToolItem" xmi:id="_tiNewCase" elementId="iped.rcp.app.toolitem.newcase" label="New Case" tooltip="New Case" iconURI="platform:/plugin/iped.rcp.app/icons/new_case.png" command="_cmdNewCase"/>
+        <children xsi:type="menu:HandledToolItem" xmi:id="_tiOpenCase" elementId="iped.rcp.app.toolitem.opencase" label="Open Case" tooltip="Open Case" iconURI="platform:/plugin/iped.rcp.app/icons/open_case.png" command="_cmdOpenCase"/>
+      </children>
+    </trimBars>
     <children xsi:type="advanced:PerspectiveStack" xmi:id="_perspectiveStack" elementId="iped.rcp.app.perspectivestack" selectedElement="_perspectiveMain">
       <children xsi:type="advanced:Perspective" xmi:id="_perspectiveMain" elementId="iped.rcp.app.perspective.main">
         <children xsi:type="basic:PartSashContainer" xmi:id="_sashRoot" elementId="iped.rcp.app.sash.root" horizontal="true">
