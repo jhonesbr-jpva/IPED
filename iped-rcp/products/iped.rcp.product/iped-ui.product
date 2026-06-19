@@ -7,8 +7,13 @@
        area ~/.iped/ui-workspaces/<case-id> before the model loads (research
        R5); osgi.instance.area.default below is only the safety net if the
        resolver cannot run. An explicit -data still wins.
-     - vmArgs carry the engine's Java 21 module opens (same set Bootstrap
-       passes to the processing JVM), boot delegation for the JavaFX/AWT
+     - vmArgs carry the engine's Java 21 module opens AND the PNG-reader
+       exports (same set Bootstrap passes to the processing JVM): the bundled
+       patched PNG reader (png-reader-*.jar, package com.sun.imageio.plugins.png2)
+       reaches into JDK-internal java.desktop packages, so without the two
+       add-exports flags below the Swing ImageViewer/TiffViewer bridged into
+       the content part throws IllegalAccessError when decoding its toolbar PNG
+       icons (IconUtil/ImageIO.read). Also boot delegation for the JavaFX/AWT
        bridge (research R4), and osgi.bundlefile.limit raised well above the
        ~600 bundle files. The iped.rcp.libs fat bundle alone has a 475-entry
        Bundle-ClassPath (engine + Lucene + Tika + all deps embedded as nested
@@ -42,6 +47,8 @@
 --add-opens=java.base/java.nio=ALL-UNNAMED
 --add-opens=java.base/java.text=ALL-UNNAMED
 --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+--add-exports=java.desktop/com.sun.imageio.plugins.common=ALL-UNNAMED
+--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED
 -Djava.security.manager=allow
 -Dorg.osgi.framework.bootdelegation=javafx.*,com.sun.*,jdk.*
 -Dfile.encoding=UTF-8

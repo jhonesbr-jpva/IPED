@@ -212,7 +212,13 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
                         bk = ipedChartsPanel.getChartPanel().getBackground();
                     }
                     int mult = bk.getRed() >= 240 ? -1 : 1;
-                    Color bklight = new Color(bk.getRed() + (20 * mult), bk.getGreen() + (20 * mult), bk.getBlue() + (20 * mult));
+                    // Clamp each channel to [0,255]: mult is decided from the red channel only,
+                    // so adding +/-20 to green/blue could overflow the valid range and make
+                    // new Color(...) throw IllegalArgumentException (e.g. with the RCP theme's
+                    // background, where a near-saturated green/blue channel flooded the EDT).
+                    int delta = 20 * mult;
+                    Color bklight = new Color(clampColorChannel(bk.getRed() + delta), clampColorChannel(bk.getGreen() + delta),
+                            clampColorChannel(bk.getBlue() + delta));
                     curMouseResponsiveChartEntity.setMouseOverPaint(bklight);
                     g2.dispose();
                     self.getChart().getPlot().notifyListeners(new PlotChangeEvent(self.getChart().getPlot()));
@@ -299,6 +305,11 @@ public class IpedChartPanel extends ChartPanel implements KeyListener {
     @Override
     public void mouseMoved(MouseEvent e) {
         super.mouseMoved(e);
+    }
+
+    /** Clamps a computed RGB component to the valid {@code [0,255]} range. */
+    private static int clampColorChannel(int value) {
+        return Math.max(0, Math.min(255, value));
     }
 
     public Date[] findDefinedFilterDates(Date date) {

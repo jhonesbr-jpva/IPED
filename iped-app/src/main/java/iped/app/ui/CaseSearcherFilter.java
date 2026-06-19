@@ -110,7 +110,11 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 numFilters++;
         }
 
-        if (applyUIFilters) {
+        // filterManager is null when this runs outside the Swing App (e.g. the RCP
+        // GUI bridges IpedChartsPanel but never builds App.createGUI()'s FilterManager;
+        // UI filters there are applied by the RCP search service instead). Mirror the
+        // guard already used in the doInBackground result-set filter loop below.
+        if (applyUIFilters && filterManager != null) {
             List<IQueryFilterer> queryFilterers = filterManager.queryFilterers;
             for (Iterator iterator = queryFilterers.iterator(); iterator.hasNext();) {
                 IQueryFilterer iQueryFilterer = (IQueryFilterer) iterator.next();
@@ -200,7 +204,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                 if (this.isCancelled()) {
                     throw new CancellationException();
                 }
-                if (unionsArray != null) {
+                if (unionsArray != null && filterManager != null) {
                     MultiSearchResult newresult = filterManager.applyFilter(unionsArray, result);
                     if (newresult != result) {
                         numFilters++;
@@ -208,7 +212,7 @@ public class CaseSearcherFilter extends CancelableWorker<MultiSearchResult, Obje
                         result.setIPEDSource(ipedCase);
                     }
                 }
-                if (excludeUnionsArray != null) {
+                if (excludeUnionsArray != null && filterManager != null) {
                     MultiSearchResult newresult = filterManager.applyExcludeFilter(excludeUnionsArray, result);
                     if (newresult != result) {
                         numFilters++;
