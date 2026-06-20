@@ -5,6 +5,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
@@ -77,6 +78,14 @@ public final class SwtImages {
     public static ImageData scaledTo(ImageData source, int width, int height) {
         if (source.width == width && source.height == height) {
             return source;
+        }
+        // Only an alpha channel survives the AWT round-trip. Palette/mask
+        // transparency (e.g. the legacy plus/minus toolbar icons, whose
+        // transparent index is a literal cyan) must use SWT's own scaler, which
+        // preserves the transparent pixel — otherwise the AWT path paints that
+        // index as its RGB, giving the icon a cyan background.
+        if (source.getTransparencyType() != SWT.TRANSPARENCY_ALPHA) {
+            return source.scaledTo(width, height);
         }
         BufferedImage scaled = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = scaled.createGraphics();

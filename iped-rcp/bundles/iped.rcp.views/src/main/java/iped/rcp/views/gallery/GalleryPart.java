@@ -1,5 +1,6 @@
 package iped.rcp.views.gallery;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -21,14 +22,22 @@ import org.eclipse.nebula.widgets.gallery.GalleryItem;
 import org.eclipse.nebula.widgets.gallery.NoGroupRenderer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageDataProvider;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import iped.data.IItemId;
 import iped.rcp.api.ItemId;
 import iped.rcp.api.SelectionContext;
 import iped.rcp.api.UiEventTopics;
+import iped.rcp.core.i18n.Messages;
 import iped.rcp.core.search.ResultSet;
 import iped.rcp.core.search.SearchService;
 import iped.rcp.core.session.CaseSession;
@@ -51,8 +60,20 @@ public class GalleryPart {
     /** SWTBot widget id (contract of FiltersGalleryTest - T024). */
     public static final String GALLERY_WIDGET_ID = "iped.rcp.views.gallery";
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GalleryPart.class);
+
     /** Same bound as the legacy GalleryModel image cache. */
     private static final int IMAGE_CACHE_SIZE = 1000;
+
+    /** Extra cell height for the item label drawn under the thumbnail. */
+    private static final int LABEL_EXTRA = 20;
+    /** Smallest gallery cell (more columns); largest is derived from the thumb size. */
+    private static final int MIN_CELL = 64;
+    /** Cell-size delta per zoom step (legacy zoom changes the column count). */
+    private static final int ZOOM_STEP = 32;
+
+    /** Displayed size (px at 100%) of the zoom toolbar icons. */
+    private static final int TOOLBAR_ICON_SIZE = 24;
 
     @Inject
     private SearchService searchService;
@@ -70,8 +91,17 @@ public class GalleryPart {
     private MPart part;
 
     private Gallery gallery;
+    private NoGroupRenderer groupRenderer;
     private GalleryThumbProvider thumbProvider;
     private ExecutorService executor;
+
+    /** Current gallery cell size (zoom state) and its upper bound. */
+    private int cellSize;
+    private int maxCell;
+    private ToolItem zoomInItem;
+    private ToolItem zoomOutItem;
+    private Image zoomInIcon;
+    private Image zoomOutIcon;
 
     private volatile long renderedGeneration = -1;
     /** Bumps on every reset so stale decode completions are dropped. */
@@ -96,14 +126,24 @@ public class GalleryPart {
 
     @PostConstruct
     public void createComposite(Composite parent) {
-        parent.setLayout(new FillLayout());
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        layout.verticalSpacing = 0;
+        parent.setLayout(layout);
+
+        int thumbSize = currentThumbSize();
+        cellSize = thumbSize;
+        maxCell = Math.max(thumbSize * 2, MIN_CELL + ZOOM_STEP);
+
+        createToolBar(parent);
 
         gallery = new Gallery(parent, SWT.VIRTUAL | SWT.V_SCROLL | SWT.MULTI | SWT.BORDER);
+        gallery.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         gallery.setData(SearchBarPart.SWTBOT_KEY, GALLERY_WIDGET_ID);
 
-        NoGroupRenderer groupRenderer = new NoGroupRenderer();
-        int thumbSize = currentThumbSize();
-        groupRenderer.setItemSize(thumbSize, thumbSize + 20);
+        groupRenderer = new NoGroupRenderer();
+        groupRenderer.setItemSize(cellSize, cellSize + LABEL_EXTRA);
         groupRenderer.setMinMargin(3);
         groupRenderer.setAutoMargin(true);
         gallery.setGroupRenderer(groupRenderer);
@@ -116,10 +156,82 @@ public class GalleryPart {
         gallery.addListener(SWT.Selection, this::onSelection);
 
         gallery.setItemCount(1);
+        updateZoomButtons();
 
         ResultSet current = searchService.getCurrent();
         if (current != null) {
             onResultsChanged(current.generation());
+        }
+    }
+
+    /** Gallery toolbar: zoom out / zoom in (parity with the legacy gallery). */
+    private void createToolBar(Composite parent) {
+        ToolBar toolBar = new ToolBar(parent, SWT.FLAT | SWT.HORIZONTAL);
+        toolBar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+        zoomOutIcon = loadToolIcon(parent, "zoom_out");
+        zoomInIcon = loadToolIcon(parent, "zoom_in");
+
+        zoomOutItem = new ToolItem(toolBar, SWT.PUSH);
+        zoomOutItem.setToolTipText(Messages.getString("RcpGallery.ZoomOut"));
+        if (zoomOutIcon != null) {
+            zoomOutItem.setImage(zoomOutIcon);
+        } else {
+            zoomOutItem.setText("-");
+        }
+        zoomOutItem.addListener(SWT.Selection, e -> zoom(-ZOOM_STEP));
+
+        zoomInItem = new ToolItem(toolBar, SWT.PUSH);
+        zoomInItem.setToolTipText(Messages.getString("RcpGallery.ZoomIn"));
+        if (zoomInIcon != null) {
+            zoomInItem.setImage(zoomInIcon);
+        } else {
+            zoomInItem.setText("+");
+        }
+        zoomInItem.addListener(SWT.Selection, e -> zoom(ZOOM_STEP));
+    }
+
+    /** Changes the cell size by {@code delta}, clamped, and re-flows the gallery. */
+    private void zoom(int delta) {
+        int newSize = Math.max(MIN_CELL, Math.min(maxCell, cellSize + delta));
+        if (newSize != cellSize && gallery != null && !gallery.isDisposed()) {
+            cellSize = newSize;
+            groupRenderer.setItemSize(cellSize, cellSize + LABEL_EXTRA);
+            // re-applying the group renderer forces Nebula to recompute the
+            // column count and scrollbars for the new cell size
+            gallery.setGroupRenderer(groupRenderer);
+            gallery.redraw();
+        }
+        updateZoomButtons();
+    }
+
+    private void updateZoomButtons() {
+        if (zoomInItem != null && !zoomInItem.isDisposed()) {
+            zoomInItem.setEnabled(cellSize < maxCell);
+        }
+        if (zoomOutItem != null && !zoomOutItem.isDisposed()) {
+            zoomOutItem.setEnabled(cellSize > MIN_CELL);
+        }
+    }
+
+    /**
+     * Loads a 16px toolbar icon from this bundle's {@code icons/} folder,
+     * scaled per monitor zoom from the 32px source (HiDPI-crisp, alpha kept).
+     */
+    private Image loadToolIcon(Composite owner, String name) {
+        try (InputStream is = GalleryPart.class.getResourceAsStream("/icons/" + name + ".png")) {
+            if (is == null) {
+                return null;
+            }
+            ImageData source = new ImageData(is);
+            ImageDataProvider provider = zoom -> {
+                int size = Math.max(1, Math.round(TOOLBAR_ICON_SIZE * zoom / 100f));
+                return SwtImages.scaledTo(source, size, size);
+            };
+            return new Image(owner.getDisplay(), provider);
+        } catch (Exception e) {
+            LOGGER.debug("Could not load gallery tool icon '{}'", name, e);
+            return null;
         }
     }
 
@@ -306,5 +418,13 @@ public class GalleryPart {
         galleryEpoch++;
         shutdownDecoder();
         disposeAllImages();
+        disposeIcon(zoomInIcon);
+        disposeIcon(zoomOutIcon);
+    }
+
+    private static void disposeIcon(Image icon) {
+        if (icon != null && !icon.isDisposed()) {
+            icon.dispose();
+        }
     }
 }
