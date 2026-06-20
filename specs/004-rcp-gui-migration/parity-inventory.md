@@ -86,7 +86,7 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| VW-01 | Texto extraído com realce e navegação entre ocorrências (atalhos Q/W = anterior/próxima) | `TextViewer`, `App.java:891/898` | pendente | SWTBot (T020) |
+| VW-01 | Texto extraído com realce e navegação entre ocorrências (atalhos Q/W = anterior/próxima) | `TextViewer`, `App.java:891/898` | parcial — exibição ✅ (`RcpTextViewer`/T071, `cb5256457`); realce + Q/W `pendente` | SWTBot (T020); exibição verificada manual (`.bashrc`, `F:\test_yara_java21`) |
 | VW-02 | Hex com busca | `HexSearcherImpl` | pendente | manual |
 | VW-03 | Imagens (zoom/rotação/cópia) | viewers impl | pendente | manual |
 | VW-04 | Áudio/vídeo (player embutido) | viewers impl (JavaFX/MPlayer) | pendente | manual |
@@ -242,7 +242,11 @@ T058):
 - **TA-01..04**: exibição das tabelas auxiliares cap em 1000 linhas neste
   incremento (título mostra o total real); queries idênticas às legadas.
 - **VW-xx**: viewers registrados neste incremento: Metadata, Image, Tiff,
-  Html, Email (com attachment searcher), IcePDF. Texto-com-realce, hex,
+  Html, Email (com attachment searcher), IcePDF. **Texto** (exibição do
+  texto extraído) adicionado depois via `RcpTextViewer` na aba "Texto" do
+  `ContentViewerPart` (T071, `cb5256457`) — App-free (`StandardParser`+
+  `ParsingReader`), pois o `TextViewer` legado é acoplado ao singleton
+  `App`; **realce de ocorrências + Q/W ainda `pendente`**. Hex,
   LibreOffice, áudio/vídeo e CAD permanecem `pendente` (próxima iteração
   US1).
 - **T064 nota de método**: a perna "contexto OSGi real" da ida é exercitada
