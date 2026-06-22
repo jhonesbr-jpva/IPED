@@ -79,10 +79,10 @@ public class LifeCycle {
         Messages.exportEngineLocalizationDir();
 
         // Wire the bundled ImageMagick for the bridged image viewer/gallery
-        // BEFORE the content viewers initialize (ContentViewerPart builds the
-        // ExternalImageConverter on the "content-viewers-init" thread at
-        // startup, before any case opens, and the converter freezes its command
-        // line on first construction).
+        // BEFORE the content viewers initialize (the preview viewer part builds
+        // the ExternalImageConverter on its init thread at startup, before any
+        // case opens, and the converter freezes its command line on first
+        // construction).
         configureExternalImageConverter();
 
         // T050 (US6, FR-022): install drop-in third-party extensions BEFORE
@@ -150,7 +150,10 @@ public class LifeCycle {
         MODEL_LABEL_KEYS.put("iped.rcp.views.part.searchbar", "App.Search");
         MODEL_LABEL_KEYS.put("iped.rcp.views.part.results", "App.Table");
         MODEL_LABEL_KEYS.put("iped.rcp.views.part.gallery", "App.Gallery");
-        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.content", "RcpParts.Viewer");
+        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.preview", "RcpParts.Preview");
+        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.text", "ContentViewer.TabText");
+        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.metadata", "App.Metadata");
+        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.hex", "RcpParts.Hex");
         MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.map", "App.Map");
         MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.graph", "App.Links");
         MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.timeline", "RcpParts.Timeline");

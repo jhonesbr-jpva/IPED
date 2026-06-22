@@ -90,6 +90,9 @@ public class GalleryPart {
     @Inject
     private MPart part;
 
+    @Inject
+    private org.eclipse.e4.ui.model.application.MApplication application;
+
     private Gallery gallery;
     private NoGroupRenderer groupRenderer;
     private GalleryThumbProvider thumbProvider;
@@ -338,7 +341,13 @@ public class GalleryPart {
             }
         }
         ItemId active = selected.isEmpty() ? null : selected.get(0);
-        selectionService.setSelection(new SelectionContext(active, selected, part.getElementId()));
+        SelectionContext context = new SelectionContext(active, selected, part.getElementId());
+        selectionService.setSelection(context);
+        // Mirror into the application context, like ResultsTablePart: the
+        // UiEventsAddon active-part aggregator is focus-dependent, so the
+        // content viewers (which consume the SELECTION_KEY context value) miss
+        // gallery selections unless the shared key is set directly.
+        application.getContext().set(UiEventTopics.SELECTION_KEY, context);
     }
 
     /** New active result (search/filter/sort): rebuild the virtual gallery. */

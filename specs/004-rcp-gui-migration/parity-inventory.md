@@ -86,15 +86,15 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| VW-01 | Texto extraído com realce e navegação entre ocorrências (atalhos Q/W = anterior/próxima) | `TextViewer`, `App.java:891/898` | parcial — exibição ✅ (`RcpTextViewer`/T071, `cb5256457`); realce + Q/W `pendente` | SWTBot (T020); exibição verificada manual (`.bashrc`, `F:\test_yara_java21`) |
-| VW-02 | Hex com busca | `HexSearcherImpl` | pendente | manual |
+| VW-01 | Texto extraído com realce e navegação entre ocorrências (atalhos Q/W = anterior/próxima) | `TextViewer`, `App.java:891/898` | parcial — exibição ✅ (`RcpTextViewer`, aba **Texto** de topo no T083); realce + Q/W `pendente` | SWTBot (T020); exibição verificada manual (`.bashrc`, `F:\test_yara_java21`) |
+| VW-02 | Hex com busca | `HexSearcherImpl` | **paridade** — exibição + busca (`HexViewerPart`+`RcpHexSearcher`, T083) | manual (usuário, Windows) |
 | VW-03 | Imagens (zoom/rotação/cópia) | viewers impl | pendente | manual |
 | VW-04 | Áudio/vídeo (player embutido) | viewers impl (JavaFX/MPlayer) | pendente | manual |
 | VW-05 | HTML/e-mail (renderização segura, anexos clicáveis) | `HtmlLinkViewer` (JFXPanel) | pendente | manual |
 | VW-06 | Documentos Office (LibreOffice embutido) | NOA/nativeview | pendente | manual |
 | VW-07 | PDF | IcePDF/PDFBox viewer | pendente | manual |
 | VW-08 | CAD e demais formatos especiais | CaffViewer etc. | pendente | manual |
-| VW-09 | Troca automática de viewer por tipo; aba de metadados do viewer | `ViewerController`/`MultiViewer` | pendente | SWTBot |
+| VW-09 | Troca automática de viewer por tipo; aba de metadados do viewer | `ViewerController`/`MultiViewer` | parcial — aba **Metadados** standalone ✅ (`MetadataViewerPart`, T083); 4 abas de topo (Pré-vis/Texto/Metadados/Hex) substituem os 4 dockables legados. **Auto-switch de aba por tipo removido de propósito** (renderiza a aba visível, como os dockables legados) | SWTBot; manual (usuário, Windows) |
 | VW-10 | Degradação graciosa com ferramenta externa ausente | `ViewerController` | pendente | manual |
 
 ## 9. Views especializadas (FR-012)
@@ -243,12 +243,15 @@ T058):
   incremento (título mostra o total real); queries idênticas às legadas.
 - **VW-xx**: viewers registrados neste incremento: Metadata, Image, Tiff,
   Html, Email (com attachment searcher), IcePDF. **Texto** (exibição do
-  texto extraído) adicionado depois via `RcpTextViewer` na aba "Texto" do
-  `ContentViewerPart` (T071, `cb5256457`) — App-free (`StandardParser`+
-  `ParsingReader`), pois o `TextViewer` legado é acoplado ao singleton
-  `App`; **realce de ocorrências + Q/W ainda `pendente`**. Hex,
-  LibreOffice, áudio/vídeo e CAD permanecem `pendente` (próxima iteração
-  US1).
+  texto extraído) adicionado depois via `RcpTextViewer` — App-free
+  (`StandardParser`+`ParsingReader`), pois o `TextViewer` legado é acoplado
+  ao singleton `App`; **realce de ocorrências + Q/W ainda `pendente`**.
+  **Reestruturado no T083 (2026-06-22)**: o `ContentViewerPart` único (abas
+  Swing internas) foi **substituído por 4 parts e4 de topo** — Pré-visualização
+  (`MultiViewer` só de formato), Texto (`RcpTextViewer`), Metadados
+  (`MetadataViewer` standalone) e **Hex** (`HexViewerPlus`+`RcpHexSearcher`
+  App-free, VW-02 ✅) — cada um com seu `SwtAwtBridgeHost` (provisório, rumo a
+  SWT nativo). LibreOffice, áudio/vídeo e CAD permanecem `pendente`.
 - **T064 nota de método**: a perna "contexto OSGi real" da ida é exercitada
   pelo passo de bookmark do T014 dentro do produto lançado pelo harness
   tycho-surefire; o round-trip cross-classpath usa JVM filha plana (mesmo

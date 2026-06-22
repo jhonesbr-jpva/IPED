@@ -3,6 +3,7 @@ package iped.rcp.app;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,8 +60,10 @@ public final class WorkspaceLocationResolver {
      * Version 2: main menu + commands/keybindings (T044/T046).
      * Version 3: top toolbar with New/Open Case items.
      * Version 4: toolbar items switched to icons (iconURI).
+     * Version 5: content viewer split into separate Preview/Text/Metadata/Hex
+     * top-level parts (replaces the single combined Viewer part).
      */
-    public static final String LAYOUT_VERSION = "4";
+    public static final String LAYOUT_VERSION = "5";
 
     /** Outcome of {@link #validateOrResetState(Path)}. */
     public enum StateCheck {
@@ -317,10 +320,21 @@ public final class WorkspaceLocationResolver {
     }
 
     private static File areaFile(Location location) {
-        if (location.getURL() == null || !"file".equals(location.getURL().getProtocol())) {
+        URL url = location.getURL();
+        if (url == null || !"file".equals(url.getProtocol())) {
+            // No-case (menu-driven) boot: the instance Location is not locked yet
+            // at @PostContextCreate, so getURL() is null. Fall back to the
+            // configured default (osgi.instance.area.default, @user.home already
+            // resolved) so the layout-version reset (validateDefaultArea) also
+            // runs for the default workspace — otherwise an incompatible
+            // Application.e4xmi change leaves the stale workbench.xmi in place and
+            // a removed part fails to load (blank tab).
+            url = location.getDefault();
+        }
+        if (url == null || !"file".equals(url.getProtocol())) {
             return null;
         }
-        String path = location.getURL().getPath();
+        String path = url.getPath();
         if (path.length() > 2 && path.charAt(0) == '/' && path.charAt(2) == ':') {
             path = path.substring(1); // file:/C:/... on Windows
         }

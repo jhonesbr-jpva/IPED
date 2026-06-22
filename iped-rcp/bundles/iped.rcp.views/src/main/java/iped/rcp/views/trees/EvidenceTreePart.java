@@ -72,6 +72,9 @@ public class EvidenceTreePart {
     @Inject
     private MPart part;
 
+    @Inject
+    private org.eclipse.e4.ui.model.application.MApplication application;
+
     private TreeViewer viewer;
     private Button recursiveToggle;
     private EvidenceTreeModel model;
@@ -193,7 +196,13 @@ public class EvidenceTreePart {
             IItemId itemId = session.getSource().getItemId(node.docId);
             if (itemId != null) {
                 ItemId apiId = new ItemId(itemId.getSourceId(), itemId.getId());
-                selectionService.setSelection(new SelectionContext(apiId, List.of(apiId), part.getElementId()));
+                SelectionContext context = new SelectionContext(apiId, List.of(apiId), part.getElementId());
+                selectionService.setSelection(context);
+                // Mirror into the application context (like ResultsTablePart): the
+                // UiEventsAddon active-part aggregator is focus-dependent, so the
+                // content viewers miss tree selections unless the shared
+                // SELECTION_KEY is set directly.
+                application.getContext().set(UiEventTopics.SELECTION_KEY, context);
             }
         } catch (RuntimeException e) {
             // tree node without a resolvable item: viewers just keep state

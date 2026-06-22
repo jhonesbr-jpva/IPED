@@ -105,7 +105,12 @@
                              here (single copy / single native sqlite load) and
                              are wired into iped.rcp.sleuthkit via its
                              DynamicImport-Package:*. -->
-                        <Export-Package>iped.*;x-internal:=true,org.slf4j;x-internal:=true,org.apache.lucene.*;x-internal:=true,org.apache.tika.*;x-internal:=true,bibliothek.*;x-internal:=true,org.sqlite;x-internal:=true,com.google.common.*;x-internal:=true,com.google.gson.*;x-internal:=true,com.mchange.v2.c3p0;x-internal:=true,com.zaxxer.sparsebits;x-internal:=true,org.apache.commons.lang3;x-internal:=true,org.joda.time;x-internal:=true,org.postgresql.util;x-internal:=true</Export-Package>
+                        <!-- org.exbin.deltahex.*: the DeltaHex CodeArea/painter
+                             types appear in the HexViewerPlus.HexSearcher
+                             interface signature, so the App-free RCP searcher
+                             (RcpHexSearcher) that the bridged Hex viewer part
+                             needs must see them at compile time. -->
+                        <Export-Package>iped.*;x-internal:=true,org.slf4j;x-internal:=true,org.apache.lucene.*;x-internal:=true,org.apache.tika.*;x-internal:=true,bibliothek.*;x-internal:=true,org.exbin.deltahex.*;x-internal:=true,org.sqlite;x-internal:=true,com.google.common.*;x-internal:=true,com.google.gson.*;x-internal:=true,com.mchange.v2.c3p0;x-internal:=true,com.zaxxer.sparsebits;x-internal:=true,org.apache.commons.lang3;x-internal:=true,org.joda.time;x-internal:=true,org.postgresql.util;x-internal:=true</Export-Package>
                         <!-- Self-contained: never wire engine internals to other
                              bundles; JDK packages come from the boot delegation. -->
                         <Import-Package>!*</Import-Package>

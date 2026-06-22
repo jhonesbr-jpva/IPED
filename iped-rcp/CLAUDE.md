@@ -125,8 +125,14 @@ Operações longas usam a **Jobs API do e4** (`org.eclipse.core.jobs`) fora da U
 
 Hospeda o stack `iped-viewers` **sem reescrevê-lo**.
 - **`bridge/SwtAwtBridgeHost`** (research R4): **um** `Composite` `SWT_AWT` por part, criado uma vez e **nunca reparentado** (reparenting é a maior fonte de glitches de z-order no GTK). Sandwich pesado `Frame > Panel > JRootPane`; forwarding de foco SWT→AWT; `sun.awt.xembedserver=true` no GTK. Construtor na **UI thread SWT**; conteúdo Swing sempre tocado na **EDT** internamente.
-- **`part/ContentViewerPart`** (T020/FR-011): hospeda o `MultiViewer` (seleção por MIME) dentro do bridge. Espelha as abas do `ViewerController` legado.
-- `part/RcpTextViewer` (novo), `part/RcpAttachmentSearcher`, `bridge/UiThreads`.
+- **Quatro parts de topo, um viewer cada** (FR-011) — restauram a estrutura do `ViewerController` legado, onde Hex/Texto/Metadados/Pré-visualização eram **dockables independentes** (não sub-abas de um viewer único). Cada part tem seu **próprio `SwtAwtBridgeHost`** (decisão provisória: isola cada viewer para a futura migração bridge→SWT nativo, part a part):
+  - `part/PreviewViewerPart` — `MultiViewer` (seleção por MIME: imagem, TIFF, HTML, e-mail, PDF). **Sem** o `MetadataViewer` como fallback (era o bug "Visualização = metadados"); para tipos sem viewer de formato a pré-visualização fica vazia, como no dock legado. Toolbar prev/next-hit.
+  - `part/TextViewerPart` — `RcpTextViewer` (texto extraído, App-free).
+  - `part/MetadataViewerPart` — `MetadataViewer` standalone (abas Basic/Advanced/Custom do item). Distinto do painel de **facetas** `MetadataPanelPart` (lado direito, agregação por valor).
+  - `part/HexViewerPart` — `HexViewerPlus` + `part/RcpHexSearcher` (busca hex App-free, KMP portado do `HexSearcherImpl` sem o `ProgressDialog`/`App`).
+- **`part/AbstractBridgedViewerPart`** — base comum: o bridge, a assinatura de seleção (`SELECTION_KEY`), e o **render lazy gated por visibilidade** (só carrega o viewer da aba visível — disciplina do `ViewerController` legado; visibilidade via `IPartListener`, flag volátil lida fora da UI thread). Replica a seleção pendente quando o part é criado tardiamente (parts e4 são lazy).
+- `part/RcpAttachmentSearcher`, `bridge/UiThreads`.
+- ⚠️ Cada novo part está em [Application.e4xmi](bundles/iped.rcp.app/Application.e4xmi) (stack central) com label localizado em `LifeCycle.MODEL_LABEL_KEYS`; o `LAYOUT_VERSION` foi bumpado (→5) para o `workbench.xmi` persistido resetar e exibir as 4 abas novas. O wrapper `iped.rcp.libs` passou a exportar `org.exbin.deltahex.*` (tipos da assinatura de `HexViewerPlus.HexSearcher`).
 
 ## 9. Views especializadas — `iped.rcp.specialized`
 

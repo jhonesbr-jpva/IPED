@@ -35,7 +35,7 @@ import iped.viewers.api.AbstractViewer;
  * keeps the legacy {@code TextParser} from running outside the old UI
  * ({@code App.get().getTextViewer()}, {@code getAutoParser()}, {@code hitsDock}
  * …). That coupling is the reason the text viewer was deferred in the RCP
- * migration (see {@link ContentViewerPart} javadoc).
+ * migration (see {@link TextViewerPart} javadoc).
  *
  * <p>
  * Text is extracted with the engine's {@link StandardParser} +
