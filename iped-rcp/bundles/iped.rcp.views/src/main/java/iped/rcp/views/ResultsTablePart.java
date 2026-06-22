@@ -1,6 +1,7 @@
 package iped.rcp.views;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,20 +20,29 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageDataProvider;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.data.IItemId;
+import iped.engine.Version;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.localization.CategoryLocalization;
+import iped.engine.search.TimelineResults.TimeItemId;
 import iped.properties.BasicProps;
 import iped.rcp.api.ItemId;
 import iped.rcp.api.SelectionContext;
@@ -46,6 +56,7 @@ import org.eclipse.jface.wizard.WizardDialog;
 
 import iped.rcp.core.filters.FilterStateService;
 import iped.rcp.views.bookmarks.BookmarkManagerDialog;
+import iped.rcp.views.gallery.SwtImages;
 import iped.rcp.views.export.ExportActions;
 import iped.rcp.views.report.ReportWizard;
 import iped.rcp.views.similarity.SimilarityActions;
@@ -100,12 +111,19 @@ public class ResultsTablePart {
     private boolean sortAscending = true;
     private volatile long renderedGeneration = -1;
 
+    private ToolItem timelineToggle;
+    private Image timelineIconOff;
+    private Image timelineIconOn;
+
     @PostConstruct
     public void createComposite(Composite parent) {
-        parent.setLayout(new FillLayout());
+        parent.setLayout(new GridLayout(1, false));
         columns = new ResultColumns();
 
+        createToolBar(parent);
+
         table = new Table(parent, SWT.VIRTUAL | SWT.MULTI | SWT.FULL_SELECTION | SWT.CHECK | SWT.BORDER);
+        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
         table.setData(SearchBarPart.SWTBOT_KEY, TABLE_WIDGET_ID);
@@ -120,6 +138,85 @@ public class ResultsTablePart {
         ResultSet current = searchService.getCurrent();
         if (current != null) {
             onResultsChanged(current.generation());
+        }
+    }
+
+    /**
+     * Table toolbar with the timeline view toggle (legacy {@code App}
+     * {@code timelineButton} / {@code TimelineListener}): flips the active
+     * result set into one row per timestamp/event (the timeStamp/timeEvent
+     * columns, visible by default, then show the per-row value). Same legacy
+     * art as the Swing UI ({@code time}/{@code timeon}).
+     */
+    private void createToolBar(Composite parent) {
+        ToolBar toolBar = new ToolBar(parent, SWT.FLAT | SWT.HORIZONTAL);
+        toolBar.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+        timelineIconOff = loadIcon(toolBar.getDisplay(), "time");
+        timelineIconOn = loadIcon(toolBar.getDisplay(), "timeon");
+
+        timelineToggle = new ToolItem(toolBar, SWT.CHECK);
+        timelineToggle.setToolTipText(Messages.getString("App.ToggleTimelineView"));
+        timelineToggle.setSelection(searchService.isTimelineView());
+        updateTimelineIcon();
+        timelineToggle.addListener(SWT.Selection, event -> toggleTimelineView());
+
+        toolBar.addListener(SWT.Dispose, event -> {
+            disposeIcon(timelineIconOff);
+            disposeIcon(timelineIconOn);
+        });
+    }
+
+    /** Toggles the timeline table view off the UI thread (re-runs the query). */
+    private void toggleTimelineView() {
+        updateTimelineIcon();
+        boolean enabled = timelineToggle.getSelection();
+        Job job = Job.create(Messages.getString("App.ToggleTimelineView"), (IProgressMonitor monitor) -> {
+            try {
+                searchService.setTimelineView(enabled);
+                return Status.OK_STATUS;
+            } catch (RuntimeException e) {
+                LOGGER.error("Toggling the timeline table view failed", e);
+                return Status.error(e.getMessage(), e);
+            }
+        });
+        job.setUser(true);
+        job.schedule();
+    }
+
+    private void updateTimelineIcon() {
+        Image icon = timelineToggle.getSelection() ? timelineIconOn : timelineIconOff;
+        if (icon != null) {
+            timelineToggle.setImage(icon);
+        }
+    }
+
+    /**
+     * Loads a legacy iped-app toolbar icon ({@code iped/app/ui/<name>.png}) as
+     * an SWT image scaled per monitor zoom. The art is embedded in the
+     * {@code iped.rcp.libs} wrapper, so it is reached through a wrapper class
+     * loader ({@link Version}) - same technique as {@code CategoryIcons}.
+     */
+    private Image loadIcon(Display display, String name) {
+        try (InputStream is = Version.class.getResourceAsStream("/iped/app/ui/" + name + ".png")) {
+            if (is == null) {
+                return null;
+            }
+            ImageData source = new ImageData(is);
+            ImageDataProvider provider = zoom -> {
+                int size = Math.max(1, Math.round(16 * zoom / 100f));
+                return SwtImages.scaledTo(source, size, size);
+            };
+            return new Image(display, provider);
+        } catch (Exception e) {
+            LOGGER.debug("Could not load toolbar icon '{}'", name, e);
+            return null;
+        }
+    }
+
+    private static void disposeIcon(Image image) {
+        if (image != null && !image.isDisposed()) {
+            image.dispose();
         }
     }
 
@@ -176,6 +273,21 @@ public class ResultsTablePart {
 
     private String valueOf(ResultSet current, int row, IItemId itemId, Document doc, String field) {
         try {
+            // Timeline table view: a TimeItemId row carries one specific
+            // timestamp/event of the item, so those two columns show that value
+            // (not the item's full list rendered from the stored doc below).
+            if (itemId instanceof TimeItemId timeItem) {
+                try {
+                    if (BasicProps.TIMESTAMP.equals(field)) {
+                        return timeItem.getTimeStampValue();
+                    }
+                    if (BasicProps.TIME_EVENT.equals(field)) {
+                        return timeItem.getTimeEventValue();
+                    }
+                } catch (IOException e) {
+                    return "";
+                }
+            }
             if (ResultColumns.SCORE.equals(field)) {
                 return String.valueOf(current.result().getScore(row));
             }

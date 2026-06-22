@@ -21,6 +21,7 @@ import iped.engine.data.IPEDMultiSource;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.MultiSearchResult;
 import iped.engine.search.QueryBuilder;
+import iped.engine.search.TimelineResults;
 import iped.exception.ParseException;
 import iped.exception.QueryNodeException;
 import iped.rcp.api.ISearchService;
@@ -55,6 +56,15 @@ public class SearchService implements ISearchService {
     private final AtomicLong generation = new AtomicLong();
     private volatile ResultSet current;
     private volatile String lastQueryText;
+
+    /**
+     * Timeline table view (legacy {@code TimelineListener}): when on, the
+     * active result set is expanded to one row per timestamp/event of each item
+     * ({@link TimelineResults#expandTimestamps}). It is a view mode of the
+     * active result only, so it is applied in {@link #runSearch} (not in the
+     * {@link ISearchService} count/search API used by third parties).
+     */
+    private volatile boolean timelineView;
 
     @Reference
     private ICaseSessionManager sessionManager;
@@ -143,10 +153,48 @@ public class SearchService implements ISearchService {
     public ResultSet runSearch(String queryText) {
         MultiSearchResult result = doSearch(queryText);
         lastQueryText = queryText == null ? "" : queryText;
+        if (timelineView) {
+            result = expandTimeline(result);
+        }
         ResultSet next = new ResultSet(lastQueryText, result, generation.incrementAndGet(), null, true);
         current = next;
         publishResultsChanged(next);
         return next;
+    }
+
+    /** Whether the timeline table view is active. */
+    public boolean isTimelineView() {
+        return timelineView;
+    }
+
+    /**
+     * Toggles the timeline table view and re-runs the active query so the
+     * result set is (un)expanded. No-op when the flag does not change.
+     */
+    public ResultSet setTimelineView(boolean enabled) {
+        if (timelineView == enabled) {
+            return current;
+        }
+        timelineView = enabled;
+        return refresh();
+    }
+
+    /**
+     * Expands each item of the result into one row per timestamp/event
+     * (legacy {@code TimelineResults}). Cases without indexed time events have
+     * no expansion data — fall back to the original result (logged) instead of
+     * failing the listing.
+     */
+    private MultiSearchResult expandTimeline(MultiSearchResult result) {
+        try {
+            IPEDMultiSource source = activeSource();
+            MultiSearchResult expanded = new TimelineResults(source).expandTimestamps(result);
+            expanded.setIPEDSource(source);
+            return expanded;
+        } catch (Exception e) {
+            LOGGER.error("Could not expand the timeline table view; showing the plain result", e);
+            return result;
+        }
     }
 
     /**
@@ -190,6 +238,7 @@ public class SearchService implements ISearchService {
     /** Clears the active result set (case closed). */
     public void clear() {
         current = null;
+        timelineView = false;
     }
 
     private MultiSearchResult doSearch(String queryText) {
