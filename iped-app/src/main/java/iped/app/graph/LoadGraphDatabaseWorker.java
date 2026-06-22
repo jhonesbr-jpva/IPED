@@ -22,6 +22,7 @@ import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
 import iped.engine.graph.GraphTaskConfig;
+import iped.engine.graph.Neo4jChildLauncher;
 import iped.utils.IOUtil;
 import iped.viewers.api.CancelableWorker;
 import iped.viewers.util.ProgressDialog;
@@ -44,6 +45,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
             return null;
         }
         List<IPEDSource> cases = App.get().appCase.getAtomicSources();
+        ensureNeo4jLibDir(cases);
         if (cases.size() == 1) {
             loaded = initGraphService(new File(cases.get(0).getModuleDir(), GraphTask.DB_HOME_DIR));
         } else {
@@ -66,6 +68,34 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
         }
         AppGraphAnalytics.LOGGER.info("Init graph database took {}s", (System.currentTimeMillis() - t) / 1000);
         return null;
+    }
+
+    /**
+     * Points the out-of-process Neo4j child JVMs (Bolt server and, for multicase, the bulk
+     * import) at the case's {@code iped/lib/neo4j/} stack via {@link Neo4jChildLauncher#NEO4J_LIB_DIR_PROPERTY}.
+     *
+     * <p>
+     * In the legacy Swing deployment the engine jar lives in {@code <case>/iped/lib/}, so
+     * {@link Neo4jChildLauncher#getNeo4jLibDir()} already finds {@code lib/neo4j/} as a sibling
+     * and this is a no-op (the property resolves to the same directory). In the RCP/OSGi
+     * deployment the engine classes load from the Equinox bundle cache instead, where that
+     * sibling does not exist — without this the child JVM would launch with a bogus classpath
+     * and never report a Bolt port ("Could not start neo4j graph server").
+     * </p>
+     */
+    private void ensureNeo4jLibDir(List<IPEDSource> cases) {
+        if (System.getProperty(Neo4jChildLauncher.NEO4J_LIB_DIR_PROPERTY) != null || cases.isEmpty()) {
+            return;
+        }
+        File libNeo4j = new File(cases.get(0).getModuleDir(), "lib/" + Neo4jChildLauncher.NEO4J_LIB_DIR);
+        if (libNeo4j.isDirectory()) {
+            System.setProperty(Neo4jChildLauncher.NEO4J_LIB_DIR_PROPERTY, libNeo4j.getAbsolutePath());
+            AppGraphAnalytics.LOGGER.info("Using neo4j lib dir for out-of-process graph server: {}",
+                    libNeo4j.getAbsolutePath());
+        } else {
+            AppGraphAnalytics.LOGGER.warn("Neo4j lib dir not found at {}; graph server may fail to start.",
+                    libNeo4j.getAbsolutePath());
+        }
     }
 
     private void createMultiCaseGraph(List<IPEDSource> cases, File multiCaseGraphPath) {

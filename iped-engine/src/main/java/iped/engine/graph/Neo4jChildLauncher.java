@@ -27,6 +27,16 @@ public class Neo4jChildLauncher {
     /** Sub-directory of the runtime {@code lib/} folder holding the isolated Neo4j stack. */
     public static final String NEO4J_LIB_DIR = "neo4j";
 
+    /**
+     * System property that overrides the {@code lib/neo4j/} location. Set by hosts where the
+     * engine classes are NOT loaded from a jar sitting next to {@code lib/neo4j/} — e.g. the
+     * RCP UI, whose engine classes load from the Equinox bundle cache (so the jar-relative
+     * resolution below points at a directory with no {@code neo4j/} sibling, the child JVM
+     * starts with a bogus classpath and never reports a Bolt port). When unset, the dir is
+     * resolved relative to the engine jar (CLI/legacy release layout).
+     */
+    public static final String NEO4J_LIB_DIR_PROPERTY = "iped.neo4j.lib.dir";
+
     // The embedded Neo4j 5 engine needs reflective access to a few JDK internals on Java 17+.
     private static final String[] ADD_OPENS = {
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
@@ -40,10 +50,15 @@ public class Neo4jChildLauncher {
     }
 
     /**
-     * Locates {@code lib/neo4j/} relative to the jar this class is loaded from (the
-     * iped-engine jar lives in the runtime {@code lib/} folder).
+     * Locates {@code lib/neo4j/}. Honors the {@link #NEO4J_LIB_DIR_PROPERTY} override first
+     * (set by the RCP UI, see that constant); otherwise resolves it relative to the jar this
+     * class is loaded from (the iped-engine jar lives in the runtime {@code lib/} folder).
      */
     public static File getNeo4jLibDir() throws IOException {
+        String override = System.getProperty(NEO4J_LIB_DIR_PROPERTY);
+        if (override != null && !override.isBlank()) {
+            return new File(override);
+        }
         try {
             URL url = URLUtil.getURL(Neo4jChildLauncher.class);
             File jarDir = new File(url.toURI()).getParentFile();
