@@ -745,6 +745,22 @@ public class IpedChartsPanel extends JPanel implements ResultSetViewer, TableMod
         return ordToEventName[ord];
     }
 
+    /**
+     * Synchronously populates the time-event name tables (ordToEventName,
+     * eventNameToOrd, timeEventColumnNamesList) when they have not been built
+     * yet. The legacy flow fills them asynchronously on the first results table
+     * change ({@link #tableChanged}); the timeline cache build calls this as a
+     * safety net for hosts where the build can start before that async
+     * population has run (e.g. the RCP bridge kicks both off in the same burst,
+     * whereas the Swing App had populated them long before the tab was opened).
+     * Idempotent and serialized by {@code populateEventNames}'s own lock.
+     */
+    public void ensureEventNamesPopulated() {
+        if (ordToEventName == null) {
+            populateEventNames.run();
+        }
+    }
+
     @Override
     public void tableChanged(TableModelEvent e) {
         if ((e instanceof RowSorterTableDataChange)) {

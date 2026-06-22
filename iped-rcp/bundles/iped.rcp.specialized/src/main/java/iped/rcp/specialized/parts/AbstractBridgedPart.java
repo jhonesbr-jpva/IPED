@@ -65,6 +65,9 @@ public abstract class AbstractBridgedPart {
     /** Last selection seen before the bridge existed (replayed on install). */
     private SelectionContext lastSeenSelection;
 
+    /** Guards the one-time construction of the bridged legacy content. */
+    private volatile boolean legacyContentBuilt;
+
     @PostConstruct
     public final void createComposite(Composite parent) {
         parent.setLayout(new FillLayout());
@@ -81,11 +84,34 @@ public abstract class AbstractBridgedPart {
         }
         bridgeHost = new SwtAwtBridgeHost(host);
 
-        CaseSession session = sessionManager.getSession();
-        if (session == null) {
-            LOGGER.warn("No case session open; {} stays empty", getClass().getSimpleName());
+        // Build the legacy content as soon as a READY case session exists. The
+        // part can be created before a case is open (it was the active tab at
+        // startup) or while the case is still opening - getSession() returns
+        // null until READY and e4 never re-creates the part, so building only
+        // here would leave the part blank forever. onCaseOpened() retries when
+        // the session reaches READY. (The embedded frame is created above, but
+        // SwtAwtBridgeHost.setContent forces a repaint so content attached
+        // after the frame was first shown still paints - see that method.)
+        buildLegacyContentIfReady();
+    }
+
+    /**
+     * Builds the bridged Swing/JavaFX content once, as soon as a READY case
+     * session is available. Safe to call repeatedly (from {@code @PostConstruct}
+     * and from the case lifecycle handlers); only the first call that finds a
+     * non-null session actually builds. Runs on the SWT UI thread; the Swing
+     * construction is marshalled to the EDT.
+     */
+    private void buildLegacyContentIfReady() {
+        if (legacyContentBuilt || bridgeHost == null) {
             return;
         }
+        CaseSession session = sessionManager.getSession();
+        if (session == null) {
+            LOGGER.debug("{} deferred: case session not READY yet", getClass().getSimpleName());
+            return;
+        }
+        legacyContentBuilt = true;
         SwingUtilities.invokeLater(() -> {
             try {
                 // must precede any bridged view class load (CachePersistance
@@ -93,6 +119,7 @@ public abstract class AbstractBridgedPart {
                 LegacyApp.bind(session);
                 createLegacyContent();
             } catch (Throwable e) {
+                legacyContentBuilt = false; // allow a retry on a later event
                 LOGGER.error("Error creating bridged content of {}", getClass().getSimpleName(), e);
             }
         });
@@ -122,6 +149,17 @@ public abstract class AbstractBridgedPart {
         if (bridge != null) {
             bridge.applyWorkbenchSelection(selection);
         }
+    }
+
+    /**
+     * Case became READY - possibly after this part was already created during
+     * the case opening (slow load), when getSession() still returned null.
+     * Build the deferred bridged content now.
+     */
+    @Inject
+    @org.eclipse.e4.core.di.annotations.Optional
+    public void onCaseOpened(@UIEventTopic(UiEventTopics.CASE_OPENED) Object payload) {
+        buildLegacyContentIfReady();
     }
 
     /** Case lifecycle: empty the mirror state on close. */

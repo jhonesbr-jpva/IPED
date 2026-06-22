@@ -68,6 +68,15 @@ public class IndexTimeStampCache implements TimeStampCache {
             if (periodClassesToCache.size() == 0) {
                 periodClassesToCache.add(ipedChartsPanel.getTimePeriodClass());
             }
+
+            // Both the build path (deriving the per-event loaders) and the
+            // disk-load path (mapping event ordinals back to names via
+            // IpedChartsPanel.getEventName) need the time-event name tables.
+            // They are normally filled asynchronously on the first results
+            // table change; ensure they are ready here so a host that starts
+            // the cache build in the same burst (RCP bridge) does not race it.
+            ipedChartsPanel.ensureEventNamesPopulated();
+
             for (Class periodClasses : periodClassesToCache) {
                 CachePersistance cp = CachePersistance.getInstance();
                 try {
@@ -89,7 +98,7 @@ public class IndexTimeStampCache implements TimeStampCache {
                 String[] cachedEventNames = ipedChartsPanel.getOrdToEventName();
 
                 int ord = 0;
-                while (ord < cachedEventNames.length) {
+                while (cachedEventNames != null && ord < cachedEventNames.length) {
                     String eventType = cachedEventNames[ord];
                     if (eventType != null && !eventType.isEmpty()) {
                         cacheLoaders.add(new EventTimestampCache(ipedChartsPanel, resultsProvider, this, cachedEventNames[ord], ord));
@@ -105,7 +114,17 @@ public class IndexTimeStampCache implements TimeStampCache {
 
                 try {
                     synchronized (monitor) {
-                        monitor.wait();
+                        // Guarded wait against a lost wake-up: the loaders run in
+                        // the pool thread above and notifyAll() in their finally
+                        // block when running reaches 0. They can finish BEFORE this
+                        // thread enters the wait (fast/small cases), and the loader
+                        // list can even be empty (running already 0). A bare
+                        // monitor.wait() would then block forever, never releasing
+                        // timeStampCacheSemaphore, so getBestDataset()/refreshChart()
+                        // hang and the chart stays blank. Loop on the counter.
+                        while (running.get() > 0) {
+                            monitor.wait();
+                        }
 
                         if (Manager.getInstance() != null && Manager.getInstance().isProcessingFinished()) {
                         }

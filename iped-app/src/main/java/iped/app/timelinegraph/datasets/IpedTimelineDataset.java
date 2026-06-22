@@ -236,10 +236,14 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
         @Override
         public void run() {
             try {
-                App app = App.get();
-                Set<String> selectedBookmarks = app.getSelectedBookmarks();
-                IPEDMultiSource appcase = (IPEDMultiSource) app.getIPEDSource();
-                
+                // NOTE: this method used to start by reading App.get().getSelectedBookmarks()
+                // and App.get().getIPEDSource() into locals that were never used. Those calls
+                // dereference Swing UI state (bookmarksListener) that only exists once
+                // App.createGUI() has run. When the chart is hosted by the RCP bridge the App
+                // singleton is bare (only appCase/casesPathFile are bound), so the unused
+                // getSelectedBookmarks() call threw a NPE here, aborting every populate task
+                // before any addValue() and leaving the chart empty. The dead reads were
+                // removed; everything this task needs comes from result/ipedChartsPanel.
                 for (int i = 0; i < threadCtsEnd; i++) {
                     CacheTimePeriodEntry ct = threadLocalCts[i];
                     for (CacheEventEntry ce : ct.getEvents()) {

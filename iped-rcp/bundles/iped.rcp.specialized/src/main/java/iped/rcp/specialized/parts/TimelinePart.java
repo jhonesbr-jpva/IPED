@@ -3,6 +3,8 @@ package iped.rcp.specialized.parts;
 import java.awt.event.HierarchyEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.SwingUtilities;
+
 import org.apache.lucene.search.Query;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
@@ -65,10 +67,11 @@ public class TimelinePart extends AbstractBridgedPart {
                 dirty.set(true);
             }
         });
-        chart.addHierarchyListener(event -> {
-            if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) == 0 || !chart.isShowing()) {
-                return;
-            }
+
+        // First render: build the chart and kick off the time-cache creation
+        // (guarded so it happens once); later invocations only re-render when
+        // results changed while the tab was hidden.
+        Runnable firstRender = () -> {
             if (cacheStarted.compareAndSet(false, true)) {
                 chart.refreshChart();
                 new Thread(() -> chart.getIpedTimelineDatasetManager().startCacheCreation(), "timeline-cache-init")
@@ -77,12 +80,30 @@ public class TimelinePart extends AbstractBridgedPart {
             } else if (dirty.getAndSet(false)) {
                 chart.refreshChart();
             }
+        };
+        chart.addHierarchyListener(event -> {
+            if ((event.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) == 0 || !chart.isShowing()) {
+                return;
+            }
+            firstRender.run();
         });
 
         bridgeHost.setContent(chart);
         // the part renders lazily: replay the active result so the chart's
         // fresh listeners see it (covers results that predate this part)
         bridge.refreshMirror();
+
+        // Trigger the first render explicitly instead of trusting the AWT
+        // SHOWING_CHANGED hierarchy event above: chart.isShowing() is
+        // unreliable for an SWT_AWT-embedded frame (it can stay false even
+        // when the e4 part is visible), so on a fresh workbench model the
+        // hierarchy event never fires with isShowing()==true and the chart
+        // stays blank (the map view hides the same problem because its
+        // JavaFX WebView paints eagerly). e4 creates this part lazily on tab
+        // selection, so it is already being shown here. Queue on the EDT so it
+        // runs after setContent attached the chart and refreshMirror populated
+        // the mirror model; the hierarchy listener remains for re-shows.
+        SwingUtilities.invokeLater(firstRender);
     }
 
     /**

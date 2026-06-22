@@ -209,6 +209,8 @@ O launcher **standalone** `ui/iped-ui.exe` (entrada promovida de criação de ca
 | Reescrever viewer/view especializada | **Não** — bridgeie via `SwtAwtBridgeHost` (FR-028). Reescrita só dispara no cut-over, conforme inventário. |
 | Reparentar o `Composite` embutido do bridge | Glitches de z-order/foco no GTK. Crie uma vez, nunca reparente. |
 | Manipular widget SWT fora da UI thread | `SWTException` ("Invalid thread access"). Sempre `Display.asyncExec`. |
+| Construir o conteúdo bridgeado só na criação do part (`getSession()` na hora) | O part pode nascer **antes do caso ficar READY** (aba ativa no startup, ou load lento) — `getSession()` é null até READY e o e4 **não recria** o part → fica em branco pra sempre. `AbstractBridgedPart` constrói via `buildLegacyContentIfReady()` e **reconstrói no `@UIEventTopic(CASE_OPENED)`** (T079). |
+| Anexar conteúdo a um frame SWT_AWT já mostrado | O frame embutido só repinta em **resize SWT** → conteúdo anexado tarde fica invisível até o usuário redimensionar. `SwtAwtBridgeHost.setContent` força repaint (`forceSwtRepaint`, bounce de 1px) após anexar (T080). |
 | Adicionar dependência direta de pacote do engine | Em vez disso, exporte o pacote no wrapper `iped.rcp.libs` (`x-internal`). |
 | Cachear `CaseSession.getSource()` entre eventos | Em near-live o source é trocado; releia pela sessão a cada `case/RELOADED`/`results/CHANGED`. |
 | Mudar `iped.rcp.api` | API provisória, mas trate cada mudança no contrato; só ela é compilável por terceiros. |

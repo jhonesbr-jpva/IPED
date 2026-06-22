@@ -86,7 +86,43 @@ public final class SwtAwtBridgeHost {
             pane.getContentPane().add(content, BorderLayout.CENTER);
             pane.revalidate();
             pane.repaint();
+            // The embedded SWT_AWT frame only repaints on SWT resize events:
+            // content attached after the frame was first shown (e.g. a part
+            // that became visible before its data existed, then got its content
+            // when the case opened) stays invisible until the user resizes the
+            // shell. Scheduled here, AFTER the content was attached on the EDT,
+            // so the ordering is deterministic.
+            forceSwtRepaint();
         });
+    }
+
+    /**
+     * Forces the SWT side to deliver a resize so the embedded AWT frame
+     * repaints its current content - the programmatic equivalent of the user
+     * resizing the shell. A 1px size bounce delivers two real resize deltas and
+     * settles back to the layout size with no lasting visual change. Called off
+     * the SWT thread (from the EDT); hops to the SWT thread itself.
+     */
+    private void forceSwtRepaint() {
+        Composite c = embedded;
+        if (c == null) {
+            return;
+        }
+        try {
+            c.getDisplay().asyncExec(() -> {
+                if (c.isDisposed()) {
+                    return;
+                }
+                org.eclipse.swt.graphics.Point size = c.getSize();
+                if (size.x > 1 && size.y > 1) {
+                    c.setSize(size.x, size.y - 1);
+                    c.setSize(size.x, size.y);
+                }
+                c.redraw();
+            });
+        } catch (org.eclipse.swt.SWTException disposed) {
+            // composite/display already gone - nothing to repaint
+        }
     }
 
     /** The SWT side of the bridge, for layouting inside the part. */
