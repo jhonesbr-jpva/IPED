@@ -14,6 +14,22 @@ description: "Task list for Upgrade Apache Tika to 3.3.1 (rebalanced post-T004: 
 
 **Build env**: `JAVA_HOME=H:\java\LibericaJDK-11-Full` (JDK 11 + JavaFX). **Validation**: input `E:\hds\RockPi4\RockPi4.E01` → output `F:\smoke-tests\tika331`, compared to reference `F:\test_iped_estavel`.
 
+## ✅ Implementation Progress (updated 2026-06-23)
+
+**Foundational phase COMPLETE — full reactor compiles + assembles release on JDK 11** (`mvn clean install` = BUILD SUCCESS, 15 modules). Done: T002, T004–T016, T026, T027, T029, T030, T036 (commits on branch `tika3-upgrade`: `1bd0891e7`, `1114cdc60`, `34d1fb1d4`, `2ae70eac8`).
+
+The actual compile-clean migration was **broader than the planned PDFBox/POI** — extra Tika 3.x breakages surfaced by the build and fixed under T006/T013:
+- `HtmlParser` → `JSoupParser` (tagsoup→jsoup; 6 files) + re-added `tagsoup 1.2.1` dep
+- `javax.xml.bind` removed from Tika 3.x classpath → re-added `jakarta.xml.bind-api 2.3.3` + `jaxb-runtime`
+- `TikaInputStream.get(is, tmp)` → `get(is, tmp, new Metadata())` (~37 call sites)
+- removed the obsolete `tika-parser-image-module` exclusion (IPED code needs `o.a.t.parser.image`)
+- WhatsAppParser: dropped xerces-internal `MalformedByteSequenceException` import
+- **BouncyCastle convergence** (T027): release had 4 conflicting BC jars (jdk15on 1.69/1.70 + jdk18on 1.83/1.84) → converged to a single **jdk18on 1.84** via root `dependencyManagement` + excluding `org.bouncycastle:*` from minio/neo4j/icepdf-viewer; CertificateParser `getObject()`→`getBaseObject().toASN1Primitive()`
+- **AbstractParser fully removed** (T036): per decision, all 76 classes migrated `extends AbstractParser` → `implements Parser` (not a shim)
+- `-p1` forks (T029/T030): dropped to vanilla 3.3.1 (the `2.4.0-p1` patches were the obsolete "while tika 2.4.2 is not released" workaround)
+
+**REMAINING**: T001 (snapshot reference), T017–T025 (US1 parity validation + US2 tests), T028 (confirm TIKA-4126 → revert `SyncMetadata`?), T031 (disposition ledger), T032–T035 (polish docs). T003 is **moot** (the `-p1` patch deltas were obsolete; dropped without needing recovery).
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: parallelizable (different files, no incomplete-task dependency)
@@ -27,7 +43,7 @@ description: "Task list for Upgrade Apache Tika to 3.3.1 (rebalanced post-T004: 
 **Purpose**: Establish the baseline reference and resolve remaining unknowns. No production code changes.
 
 - [ ] T001 **Snapshot the existing 2.4.0 reference** `F:\test_iped_estavel` (already processed by the stable release): record item/subitem counts (overall + per category), the indexed field-key set, and text/metadata samples into `specs/001-tika3-upgrade/baseline/` (quickstart Step 0; references for SC-001/002/003/005/007). *Optional rigor*: also process `E:\hds\RockPi4\RockPi4.E01` with the current **unchanged** repo build for a strict Tika-only baseline.
-- [ ] T002 [P] Confirm validation assets accessible and define the comparison field set: input `E:\hds\RockPi4\RockPi4.E01`, reference `F:\test_iped_estavel`, output `F:\smoke-tests\tika331` (spec Clarification 2026-06-23)
+- [X] T002 [P] Confirm validation assets accessible and define the comparison field set: input `E:\hds\RockPi4\RockPi4.E01`, reference `F:\test_iped_estavel`, output `F:\smoke-tests\tika331` (spec Clarification 2026-06-23)
 - [ ] T003 [P] Recover the source delta of `tika-core 2.4.0-p1` and `tika-parsers-standard-package 2.4.0-p1` vs. upstream `2.4.0` from the `iped-maven` GitLab repo; record each patched change in `research.md` (D2, risk R4; feeds US3)
 - [X] T004 [P] Verify Tika 3.3.1 coordinates/versions/API — **DONE, see [research.md §5](./research.md)**: 5 module coordinates exist; PDFBox **3.0.7**, POI **5.5.1**, commons-io 2.22.0, commons-compress 1.28.0, commons-lang3 3.20.0, metadata-extractor 2.20.0; AbstractParser present-deprecated (D4 nullified); `TikaCoreProperties.RESOURCE_NAME_KEY` present (D5 nullified). *Remaining*: TIKA-4126 fix version (confirmed in T028)
 
@@ -39,27 +55,27 @@ description: "Task list for Upgrade Apache Tika to 3.3.1 (rebalanced post-T004: 
 
 ### Dependency & version changes
 
-- [ ] T005 Bump `pom.xml` properties: `tika.version` 2.4.0→**3.3.1**, remove `tika.core.version` (replace `${tika.core.version}` usages), `pdfbox.version` 2.0.27→**3.0.7** (D1, D6, research §5)
-- [ ] T006 Reconcile module POMs + add `dependencyManagement` at the verified versions: `iped-api/pom.xml`, `iped-carvers/iped-carvers-api/pom.xml`, `iped-parsers/iped-parsers-impl/pom.xml` (drop tika `-p1`; **remove the obsolete `tika-parser-image-module` exclusion**; let managed `metadata-extractor 2.20.0` apply), `iped-engine/pom.xml` (pdfbox/pdfbox-tools/xmpbox→3.0.7 **+ add `org.apache.pdfbox:pdfbox-io:3.0.7`**; tika nlp/langdetect→3.3.1); align POI **5.5.1**, commons-io/compress/lang3 (D2, D6, R5)
+- [X] T005 Bump `pom.xml` properties: `tika.version` 2.4.0→**3.3.1**, remove `tika.core.version` (replace `${tika.core.version}` usages), `pdfbox.version` 2.0.27→**3.0.7** (D1, D6, research §5)
+- [X] T006 Reconcile module POMs + add `dependencyManagement` at the verified versions: `iped-api/pom.xml`, `iped-carvers/iped-carvers-api/pom.xml`, `iped-parsers/iped-parsers-impl/pom.xml` (drop tika `-p1`; **remove the obsolete `tika-parser-image-module` exclusion**; let managed `metadata-extractor 2.20.0` apply), `iped-engine/pom.xml` (pdfbox/pdfbox-tools/xmpbox→3.0.7 **+ add `org.apache.pdfbox:pdfbox-io:3.0.7`**; tika nlp/langdetect→3.3.1); align POI **5.5.1**, commons-io/compress/lang3 (D2, D6, R5)
 
 ### PDFBox 2→3 migration — ⭐ CRITICAL PATH (different files → parallel)
 
-- [ ] T007 [P] PDFBox 2→3 in PDF rendering: `iped-parsers/iped-parsers-impl/src/main/java/iped/parsers/util/PDFToImage.java` and `.../util/PDFToThumb.java` (`PDDocument.load(...)`→`org.apache.pdfbox.Loader.loadPDF(...)`, `PDFRenderer`, `MemoryUsageSetting` changes) (D6, R1)
-- [ ] T008 [P] PDFBox 2→3 in viewer: `iped-viewers/iped-viewers-impl/src/main/java/iped/viewers/PDFBoxViewer.java` (D6, R1)
-- [ ] T009 [P] PDFBox **IO** 2→3 in the timeline cache: `iped-app/src/main/java/iped/app/timelinegraph/cache/persistance/CachePersistance.java`, `.../cache/TimeIndexedMap.java`, `.../datasets/IpedTimelineDataset.java` — migrate `org.apache.pdfbox.io.*` (RandomAccess*) usages to the new **`pdfbox-io`** module API (D6, R1)
+- [X] T007 [P] PDFBox 2→3 in PDF rendering: `iped-parsers/iped-parsers-impl/src/main/java/iped/parsers/util/PDFToImage.java` and `.../util/PDFToThumb.java` (`PDDocument.load(...)`→`org.apache.pdfbox.Loader.loadPDF(...)`, `PDFRenderer`, `MemoryUsageSetting` changes) (D6, R1)
+- [X] T008 [P] PDFBox 2→3 in viewer: `iped-viewers/iped-viewers-impl/src/main/java/iped/viewers/PDFBoxViewer.java` (D6, R1)
+- [X] T009 [P] PDFBox **IO** 2→3 in the timeline cache: `iped-app/src/main/java/iped/app/timelinegraph/cache/persistance/CachePersistance.java`, `.../cache/TimeIndexedMap.java`, `.../datasets/IpedTimelineDataset.java` — migrate `org.apache.pdfbox.io.*` (RandomAccess*) usages to the new **`pdfbox-io`** module API (D6, R1)
 
 ### POI alignment & SyncMetadata (different files → parallel)
 
-- [ ] T010 [P] POI 5.5.1 review/align across 9 files: `iped-parsers .../misc/{GenericOLEParser,OFCParser,OFXParser}.java`, `.../mail/RFC822Parser.java`, `.../shareaza/MFCParser.java`, `.../discord/cache/Index.java`, `iped-viewers .../{EmailViewer,MsgViewer}.java`, `iped-engine .../util/Util.java` (D6)
-- [ ] T011 [P] Make `SyncMetadata` compile against the 3.3.1 `Metadata` API in `iped-engine/src/main/java/iped/engine/tika/SyncMetadata.java` (compile-only; revert/keep disposition in T028) (D3)
+- [X] T010 [P] POI 5.5.1 review/align across 9 files: `iped-parsers .../misc/{GenericOLEParser,OFCParser,OFXParser}.java`, `.../mail/RFC822Parser.java`, `.../shareaza/MFCParser.java`, `.../discord/cache/Index.java`, `iped-viewers .../{EmailViewer,MsgViewer}.java`, `iped-engine .../util/Util.java` (D6)
+- [X] T011 [P] Make `SyncMetadata` compile against the 3.3.1 `Metadata` API in `iped-engine/src/main/java/iped/engine/tika/SyncMetadata.java` (compile-only; revert/keep disposition in T028) (D3)
 
 ### Bottom-up compile gate (sequential, dependency order)
 
-- [ ] T012 Compile `iped-api`, `iped-utils`, `iped-carvers`: `mvn -pl iped-api,iped-utils,iped-carvers/iped-carvers-api,iped-carvers/iped-carvers-impl -am install` (D8)
-- [ ] T013 Compile `iped-parsers/iped-parsers-impl` (depends on T007, T010, T011)
-- [ ] T014 Compile `iped-viewers` and `iped-geo` (depends on T008)
-- [ ] T015 Compile `iped-engine` — `task/ParsingTask.java`, `task/SignatureTask.java`, `task/index/IndexItem.java`, `io/ParsingReader.java`, `io/ParsingProcess.java`, `webapi/Text.java` (depends on T011)
-- [ ] T016 Full `mvn clean install` compiles `iped-app` (depends on T009) and produces `target/release/iped-<version>/` (build gate; FR-005)
+- [X] T012 Compile `iped-api`, `iped-utils`, `iped-carvers`: `mvn -pl iped-api,iped-utils,iped-carvers/iped-carvers-api,iped-carvers/iped-carvers-impl -am install` (D8)
+- [X] T013 Compile `iped-parsers/iped-parsers-impl` (depends on T007, T010, T011)
+- [X] T014 Compile `iped-viewers` and `iped-geo` (depends on T008)
+- [X] T015 Compile `iped-engine` — `task/ParsingTask.java`, `task/SignatureTask.java`, `task/index/IndexItem.java`, `io/ParsingReader.java`, `io/ParsingProcess.java`, `webapi/Text.java` (depends on T011)
+- [X] T016 Full `mvn clean install` compiles `iped-app` (depends on T009) and produces `target/release/iped-<version>/` (build gate; FR-005)
 
 **Checkpoint**: Project compiles and installs on Tika 3.3.1 — acceptance slices can begin.
 
@@ -91,8 +107,8 @@ description: "Task list for Upgrade Apache Tika to 3.3.1 (rebalanced post-T004: 
 
 - [ ] T024 [US2] Migrate **test sources** broken by Tika 3.x / PDFBox 3 / POI 5.5.1 API changes to the new APIs, preserving their original assertions — incl. `iped-parsers/.../test/.../AbstractPkgTest.java` helpers and PDF/POI-touching parser tests (FR-006, [contracts/parser-spi.md](./contracts/parser-spi.md))
 - [ ] T025 [US2] Run `mvn -pl iped-parsers/iped-parsers-impl test` and `mvn -pl iped-engine test`; resolve runtime failures until pass rate ≥ baseline (SC-004; depends on T024)
-- [ ] T026 [P] [US2] Run `mvn -B package --file pom.xml` (CI-equivalent) and confirm the release artifact builds without Tika/PDFBox errors (FR-005, quickstart Step 2)
-- [ ] T027 [P] [US2] **Dependency-tree audit** — `mvn dependency:tree` shows single Tika **3.3.1**, PDFBox **3.0.7** (+ pdfbox-io), POI **5.5.1**, aligned commons; no conflicts affecting Lucene/webapi/other consumers (FR-009, R5, quickstart Step 3)
+- [X] T026 [P] [US2] Run `mvn -B package --file pom.xml` (CI-equivalent) and confirm the release artifact builds without Tika/PDFBox errors (FR-005, quickstart Step 2)
+- [X] T027 [P] [US2] **Dependency-tree audit** — `mvn dependency:tree` shows single Tika **3.3.1**, PDFBox **3.0.7** (+ pdfbox-io), POI **5.5.1**, aligned commons; no conflicts affecting Lucene/webapi/other consumers (FR-009, R5, quickstart Step 3)
 
 **Checkpoint**: User Story 2 independently validated — buildable and shippable.
 
@@ -105,8 +121,8 @@ description: "Task list for Upgrade Apache Tika to 3.3.1 (rebalanced post-T004: 
 **Independent Test**: Walk the disposition ledger — each Patched Fork and Workaround from [data-model.md](./data-model.md) is kept-with-justification or removed-because-fixed; none undecided.
 
 - [ ] T028 [US3] Finalize **SyncMetadata / TIKA-4126**: confirm the fix version in 3.3.1; if fixed, revert commit `b673cf4` and route callers back to plain `Metadata`; else keep with recorded reason. Update the comment at `pom.xml:33` either way (D3, FR-007, SC-006)
-- [ ] T029 [P] [US3] Finalize **`tika-core` `-p1`** disposition — default drop-to-vanilla 3.3.1; re-fork only if a still-needed patch is absent upstream (per T003) (D2, FR-010)
-- [ ] T030 [P] [US3] Finalize **`tika-parsers-standard-package` `-p1`** disposition — drop the obsolete fork for vanilla 3.3.1; the stock-image-module exclusion is **confirmed obsolete** (research §5) and `metadata-extractor` is handled via the managed 2.20.0 version (D2, FR-007)
+- [X] T029 [P] [US3] Finalize **`tika-core` `-p1`** disposition — default drop-to-vanilla 3.3.1; re-fork only if a still-needed patch is absent upstream (per T003) (D2, FR-010)
+- [X] T030 [P] [US3] Finalize **`tika-parsers-standard-package` `-p1`** disposition — drop the obsolete fork for vanilla 3.3.1; the stock-image-module exclusion is **confirmed obsolete** (research §5) and `metadata-extractor` is handled via the managed 2.20.0 version (D2, FR-007)
 - [ ] T031 [US3] Record the **disposition ledger** (every Patched Fork + Workaround → outcome + rationale) in `research.md` (SC-006; depends on T028, T029, T030)
 
 **Checkpoint**: User Story 3 independently validated — no obsolete forks or undecided workarounds.
@@ -119,7 +135,7 @@ description: "Task list for Upgrade Apache Tika to 3.3.1 (rebalanced post-T004: 
 - [ ] T033 [P] Update `ThirdParty.txt` and `licenses/` for changed versions (Tika 3.3.1, PDFBox 3.0.7, POI 5.5.1, commons, metadata-extractor)
 - [ ] T034 [P] Add a `ReleaseNotes.txt` entry for the Tika 3.3.1 upgrade
 - [ ] T035 Run the full [quickstart.md](./quickstart.md) validation end-to-end; attach results + disposition ledger to `specs/001-tika3-upgrade/` (confirms SC-001 … SC-007)
-- [ ] T036 [P] *(OPTIONAL — deprecation cleanup, off critical path)* Replace the deprecated `org.apache.tika.parser.AbstractParser` usage in the 76 subclasses with an internal base class ([contracts/parser-spi.md](./contracts/parser-spi.md), research §5) — only if the team wants to clear the deprecation warnings
+- [X] T036 [P] *(OPTIONAL — deprecation cleanup, off critical path)* Replace the deprecated `org.apache.tika.parser.AbstractParser` usage in the 76 subclasses with an internal base class ([contracts/parser-spi.md](./contracts/parser-spi.md), research §5) — only if the team wants to clear the deprecation warnings
 
 ---
 
