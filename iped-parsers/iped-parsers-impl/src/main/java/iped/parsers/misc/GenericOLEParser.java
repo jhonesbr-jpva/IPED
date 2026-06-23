@@ -59,7 +59,7 @@ public class GenericOLEParser extends AbstractParser {
         xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         File file = tis.getFile();
         POIFSFileSystem poiFS = null;
         FileInputStream fis = null;

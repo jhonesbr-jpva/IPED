@@ -37,7 +37,7 @@ public class CryptoAPIBlobParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         File file = tis.getFile();
 
         try {

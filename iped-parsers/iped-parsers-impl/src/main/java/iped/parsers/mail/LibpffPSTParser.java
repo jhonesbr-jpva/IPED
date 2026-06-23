@@ -154,7 +154,7 @@ public class LibpffPSTParser extends AbstractParser {
         File tmpFile = File.createTempFile("iped", ".tmp"); //$NON-NLS-1$ //$NON-NLS-2$
         Process p = null;
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
 
             String extractionMode = "all"; //$NON-NLS-1$

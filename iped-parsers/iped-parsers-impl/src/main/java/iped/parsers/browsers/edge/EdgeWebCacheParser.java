@@ -127,7 +127,7 @@ public class EdgeWebCacheParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
         File webcacheFile = tmp.createTemporaryFile();
         File evidenceFile = null;
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
         try {
 

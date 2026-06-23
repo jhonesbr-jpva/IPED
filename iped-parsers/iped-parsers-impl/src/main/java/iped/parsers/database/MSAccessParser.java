@@ -85,7 +85,7 @@ public class MSAccessParser extends AbstractParser {
         builder.setReadOnly(true);
 
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
             builder.setFile(file);
             database = builder.open();

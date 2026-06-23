@@ -362,7 +362,7 @@ public class OFCParser extends AbstractParser {
         try {
 
             tmp = new TemporaryResources();
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
 
             FileInputStream inputStream = new FileInputStream(file);

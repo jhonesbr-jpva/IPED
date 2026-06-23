@@ -100,7 +100,7 @@ public class IndexDatParser extends AbstractParser {
         Process p = null;
         Thread readThread = null;
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
 
             String[] cmd = { TOOL_PATH + TOOL_NAME, "-m", "all", file.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$

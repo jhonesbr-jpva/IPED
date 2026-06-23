@@ -30,9 +30,8 @@
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
-        <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
-        <tika.core.version>2.4.0-p1</tika.core.version>
-        <pdfbox.version>2.0.27</pdfbox.version>
+        <tika.version>3.3.1</tika.version><!-- TIKA-4126: verify fixed in 3.3.1, then revert SyncMetadata workaround (commit b673cf4) — see specs/001-tika3-upgrade task T028 -->
+        <pdfbox.version>3.0.7</pdfbox.version>
         <lucene.version>9.2.0</lucene.version>
         <sleuthkit.version>4.15.0.p1</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>

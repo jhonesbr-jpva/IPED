@@ -159,7 +159,7 @@ public class ThreemaParser extends SQLite3DBParser {
                     filePath = itemInfo.getPath();
                 }
 
-                tis = TikaInputStream.get(stream, tmp);
+                tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
                 File tempDbFile = tis.getFile();
                 ThreemaAccount account = getUserAccount(searcher);
 

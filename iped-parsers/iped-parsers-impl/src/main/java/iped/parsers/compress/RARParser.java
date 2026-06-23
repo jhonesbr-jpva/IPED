@@ -82,7 +82,7 @@ public class RARParser extends AbstractParser {
         boolean entryEncrypted = false;
         try {
             TreeMap<String, FileHeader> folderMap = new TreeMap<String, FileHeader>();
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             rar = new Archive(tis.getFile());
             if (rar.isEncrypted())
                 throw new EncryptedDocumentException();

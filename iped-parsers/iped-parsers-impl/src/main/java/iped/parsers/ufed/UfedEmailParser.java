@@ -29,7 +29,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlMapper;
-import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.parser.html.JSoupParser;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.apache.tika.sax.xpath.Matcher;
@@ -104,7 +104,7 @@ public class UfedEmailParser extends AbstractParser {
             }
             if (email == null) {
                 // view is already generated — proceed to parse with HtmlParser
-                HtmlParser parser = new HtmlParser();
+                JSoupParser parser = new JSoupParser();
                 parser.parse(stream, handler, metadata, context);
                 return;
             }
@@ -325,7 +325,7 @@ public class UfedEmailParser extends AbstractParser {
         ParseContext context = new ParseContext();
         context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
 
-        HtmlParser parser = new HtmlParser();
+        JSoupParser parser = new JSoupParser();
         parser.parse(new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), bodyHandler, new Metadata(), context);
     }
 }

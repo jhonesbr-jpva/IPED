@@ -191,7 +191,7 @@ public class Win10MailParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         File storeVolFile = null;
-        TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp);
+        TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
         params.extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));

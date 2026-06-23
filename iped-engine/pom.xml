@@ -219,6 +219,12 @@
   			</exclusions>
 		</dependency>
 		<dependency>
+  			<!-- PDFBox 3 split out the IO classes (org.apache.pdfbox.io.*) used by iped-app timeline cache -->
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox-io</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
+		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox-tools</artifactId>
   			<version>${pdfbox.version}</version>
@@ -237,7 +243,7 @@
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
-  			<version>3.0.4</version>
+  			<version>3.0.5</version>
 		</dependency>
         <dependency>
    			<groupId>com.zaxxer</groupId>
@@ -308,8 +314,8 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
-            <version>1.27.1</version>
+            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this; aligned to Tika 3.3.1's 1.28.0 -->
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>

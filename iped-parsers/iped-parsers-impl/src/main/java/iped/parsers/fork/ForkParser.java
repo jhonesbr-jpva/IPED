@@ -354,7 +354,7 @@ public class ForkParser extends AbstractParser {
         try {
             // must create temp file because of parsers that read directly from stream when
             // creating subitems (eg. rfc822parser)
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             tis.getFile();
 
             client = acquireClient();

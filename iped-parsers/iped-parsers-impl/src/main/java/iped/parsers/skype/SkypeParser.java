@@ -97,7 +97,7 @@ public class SkypeParser extends AbstractParser {
         if (itemInfo != null)
             filePath = itemInfo.getPath();
 
-        final TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        final TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         try {
             // call here instead of catch clause because calls, videos and other info are
             // not parsed currently

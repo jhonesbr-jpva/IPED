@@ -98,7 +98,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
         try (TemporaryResources tmp = new TemporaryResources()){
 
             if (!(stream instanceof TikaInputStream)) {
-                stream = TikaInputStream.get(stream, tmp);
+                stream = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             }
 
             // Checks if the db schema contains the tables Activity, Activity_PackageId and

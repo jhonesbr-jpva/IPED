@@ -356,7 +356,7 @@ public class OCRParser extends AbstractParser implements AutoCloseable {
         File output = null, tmpOutput = null;
         String outFileName = null;
         try {
-            TikaInputStream tikaStream = TikaInputStream.get(stream, tmp);
+            TikaInputStream tikaStream = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File input = tikaStream.getFile();
             long size = tikaStream.getLength();
             if (metadata.get(Metadata.CONTENT_LENGTH) != null)

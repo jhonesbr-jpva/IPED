@@ -19,7 +19,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.parser.html.JSoupParser;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +125,7 @@ public class UfedMessageParser extends AbstractParser {
             }
             if (message == null) {
                 // view is already generated — proceed to parse with HtmlParser
-                HtmlParser parser = new HtmlParser();
+                JSoupParser parser = new JSoupParser();
                 parser.parse(stream, handler, metadata, context);
                 return;
             }

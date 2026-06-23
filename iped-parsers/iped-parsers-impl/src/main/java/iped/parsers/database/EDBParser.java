@@ -95,7 +95,7 @@ public class EDBParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
         File file = null;
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             file = tis.getFile();
 
             // indexa strings brutas como garantia, caso expansão seja incompleta

@@ -143,7 +143,7 @@ public class DiscordParser extends AbstractParser {
         String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTID + ":" + item.getParentId() + " AND NOT " + BasicProps.LENGTH + ":0 AND "
                 + CacheIndexParser.IS_CACHE_INDEX_ENTRY.replace(":", "\\:") + ":true";
 
-        try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources())) {
+        try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources(), new org.apache.tika.metadata.Metadata())) {
 
             InputStream jsonStream = getDecompressedStream(is);
 

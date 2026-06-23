@@ -151,7 +151,7 @@ public class OutlookPSTParser extends AbstractParser {
         PSTFile pstFile = null;
         boolean libpffCalled = false;
         try {
-            tis = TikaInputStream.get(stream, tmp);
+            tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             tmpFile = tis.getFile();
 
             pstFile = new PSTFile(tmpFile);
