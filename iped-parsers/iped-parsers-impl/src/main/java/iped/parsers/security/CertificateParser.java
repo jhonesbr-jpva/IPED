@@ -29,7 +29,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -41,7 +41,7 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-public class CertificateParser extends AbstractParser {
+public class CertificateParser implements Parser {
     /**
 	 * 
 	 */

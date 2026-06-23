@@ -57,7 +57,7 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -82,7 +82,7 @@ import iped.search.IItemSearcher;
  * @author jnioche@digitalpebble.com
  * @author Nassif (better attachment handling and name decoding)
  */
-public class RFC822Parser extends AbstractParser {
+public class RFC822Parser implements Parser {
 
     /** Serial version UID */
     private static final long serialVersionUID = -5504243905998074168L;

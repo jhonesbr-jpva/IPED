@@ -21,7 +21,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -42,7 +42,7 @@ import iped.properties.ExtraProperties;
  * 
  */
 
-public class EmuleCollectionParser extends AbstractParser {
+public class EmuleCollectionParser implements Parser {
     public static final String EMULE_COLLECTION_MIME_TYPE = "application/x-emule-collection"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_COLLECTION_MIME_TYPE));
     private static final long MAX_FILE_SIZE = 100 * 1024 * 1024;

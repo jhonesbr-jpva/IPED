@@ -33,7 +33,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ import iped.parsers.util.Messages;
  * @author Gabriel
  *
  */
-public class IncrediMailParser extends AbstractParser {
+public class IncrediMailParser implements Parser {
     private static Logger LOGGER = LoggerFactory.getLogger(IncrediMailParser.class);
 
     /** Serial version UID */

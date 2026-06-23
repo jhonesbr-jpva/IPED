@@ -22,7 +22,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -44,7 +44,7 @@ import iped.utils.LocalizedFormat;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class TorrentFileParser extends AbstractParser {
+public class TorrentFileParser implements Parser {
 
     private static final String TORRENT_CREATION_DATE = ExtraProperties.P2P_META_PREFIX + "torrentCreationDate";
     public static final String TORRENT_INFO_HASH = ExtraProperties.P2P_META_PREFIX + "torrentInfoHash";

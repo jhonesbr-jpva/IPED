@@ -12,14 +12,14 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped.parsers.security.capi.CapiBlob;
 
-public class CryptoAPIBlobParser extends AbstractParser {
+public class CryptoAPIBlobParser implements Parser {
 
     private static final long serialVersionUID = 1L;
 	public static final MediaType CAPI_MIME = MediaType.application("crypto-api-file");

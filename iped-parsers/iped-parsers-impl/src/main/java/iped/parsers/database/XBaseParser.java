@@ -28,7 +28,7 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -39,7 +39,7 @@ import com.linuxense.javadbf.DBFReader;
 /**
  * Parser para arquivos xBase (DBF)
  */
-public class XBaseParser extends AbstractParser {
+public class XBaseParser implements Parser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-dbf")); //$NON-NLS-1$
     public static final String DBF_MIME_TYPE = "application/x-dbf"; //$NON-NLS-1$

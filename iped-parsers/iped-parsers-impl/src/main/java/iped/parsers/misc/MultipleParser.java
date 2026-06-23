@@ -18,7 +18,6 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.EmbeddedContentHandler;
@@ -39,7 +38,7 @@ import iped.utils.IOUtil;
  * @author Nassif
  *
  */
-public class MultipleParser extends AbstractParser {
+public class MultipleParser implements Parser {
 
     /**
      * 

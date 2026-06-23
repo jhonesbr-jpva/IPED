@@ -26,7 +26,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.opengis.feature.simple.SimpleFeature;
@@ -42,7 +42,7 @@ import iped.geo.parsers.kmlstore.Folder;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
-public class GeofileParser extends AbstractParser {
+public class GeofileParser implements Parser {
 
     /**
      * 

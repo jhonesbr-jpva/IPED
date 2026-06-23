@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -17,7 +17,7 @@ import org.xml.sax.SAXException;
 import iped.parsers.usnjrnl.Util;
 import iped.parsers.util.Messages;
 
-public class PreferencesDatParser extends AbstractParser {
+public class PreferencesDatParser implements Parser {
 
     public static final String EMULE_PREFERENCES_MIME_TYPE = "application/x-emule-preferences-dat"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections

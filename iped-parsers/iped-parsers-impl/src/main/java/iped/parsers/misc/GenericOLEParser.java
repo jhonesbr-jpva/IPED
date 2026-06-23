@@ -23,7 +23,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -32,7 +32,7 @@ import org.xml.sax.SAXException;
 import iped.parsers.standard.RawStringParser;
 import iped.utils.IOUtil;
 
-public class GenericOLEParser extends AbstractParser {
+public class GenericOLEParser implements Parser {
 
     /**
      * 

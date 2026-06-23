@@ -39,7 +39,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -64,7 +64,7 @@ import iped.utils.DateUtil;
  * 
  * @author Gabriel
  */
-public class LNKShortcutParser extends AbstractParser {
+public class LNKShortcutParser implements Parser {
 
     private static final long serialVersionUID = -3156133141331973368L;
 

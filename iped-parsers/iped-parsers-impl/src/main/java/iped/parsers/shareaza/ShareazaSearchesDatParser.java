@@ -28,7 +28,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -39,7 +39,7 @@ import org.xml.sax.SAXException;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
-public class ShareazaSearchesDatParser extends AbstractParser {
+public class ShareazaSearchesDatParser implements Parser {
 
     private static final long serialVersionUID = -6775874100144141162L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections

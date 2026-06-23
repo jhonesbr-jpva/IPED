@@ -17,7 +17,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.JSoupParser;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -49,7 +49,7 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.EmptyInputStream;
 
-public class UfedMessageParser extends AbstractParser {
+public class UfedMessageParser implements Parser {
 
     private static final long serialVersionUID = -4738095481615972119L;
 

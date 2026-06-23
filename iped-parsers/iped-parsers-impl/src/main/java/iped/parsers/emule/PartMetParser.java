@@ -19,7 +19,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -43,7 +43,7 @@ import iped.utils.LocalizedFormat;
  * 
  * @author Wladimir
  */
-public class PartMetParser extends AbstractParser {
+public class PartMetParser implements Parser {
     private static final long serialVersionUID = 6100522577461358577L;
 
     public static final String EMULE_PART_MET_MIME_TYPE = "application/x-emule-part-met";

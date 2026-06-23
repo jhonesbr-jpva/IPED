@@ -17,7 +17,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -49,7 +49,7 @@ import iped.utils.EmptyInputStream;
  * 
  * @author Paulo César Herrmann Wanner <herrmann.pchw@pf.gov.br>
  */
-public class SafariPlistParser extends AbstractParser {
+public class SafariPlistParser implements Parser {
 
     /**
      * 

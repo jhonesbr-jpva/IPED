@@ -37,7 +37,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -60,7 +60,7 @@ import iped.utils.LocalizedFormat;
  * 
  * @author Wladimir
  */
-public class KnownMetParser extends AbstractParser {
+public class KnownMetParser implements Parser {
     private static final long serialVersionUID = 5039027273156031902L;
 
     public static final String EDONKEY = "edonkey";

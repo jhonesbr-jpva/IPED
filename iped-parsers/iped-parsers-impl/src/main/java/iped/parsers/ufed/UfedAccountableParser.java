@@ -17,7 +17,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.JSoupParser;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -43,7 +43,7 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 
-public class UfedAccountableParser extends AbstractParser {
+public class UfedAccountableParser implements Parser {
 
     private static final long serialVersionUID = -4738095481615972119L;
 

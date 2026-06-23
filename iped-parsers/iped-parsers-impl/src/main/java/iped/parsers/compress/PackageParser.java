@@ -62,7 +62,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -81,7 +81,7 @@ import iped.properties.ExtraProperties;
  * @author Nassif (better handling of encrypted zips and processing of XPS and
  *         generic OOXML)
  */
-public class PackageParser extends AbstractParser {
+public class PackageParser implements Parser {
 
     /** Serial version UID */
     private static final long serialVersionUID = -5331043266963888708L;

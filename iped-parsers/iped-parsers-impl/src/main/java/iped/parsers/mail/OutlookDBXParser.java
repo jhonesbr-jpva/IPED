@@ -11,7 +11,6 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
@@ -21,7 +20,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
 
-public class OutlookDBXParser extends AbstractParser {
+public class OutlookDBXParser implements Parser {
 
     private static final long serialVersionUID = 1L;
 

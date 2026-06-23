@@ -44,7 +44,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.JSoupParser;
@@ -63,7 +63,7 @@ import iped.utils.IOUtil;
  * Parser that uses an external program (like catdoc or pdf2txt) to extract text
  * content and metadata from a given document.
  */
-public class ExternalParser extends AbstractParser {
+public class ExternalParser implements Parser {
 
     private static Logger LOGGER;
 

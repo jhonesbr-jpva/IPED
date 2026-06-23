@@ -26,7 +26,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ import iped.utils.ImageUtil;
  * @author PCF Patrick Dalla Bernardina
  *
  */
-public class DiscordParser extends AbstractParser {
+public class DiscordParser implements Parser {
 
     // TODO
 

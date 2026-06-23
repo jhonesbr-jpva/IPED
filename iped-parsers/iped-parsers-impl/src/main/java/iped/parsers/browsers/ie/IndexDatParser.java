@@ -29,7 +29,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ import iped.utils.IOUtil;
  * @author Nassif
  *
  */
-public class IndexDatParser extends AbstractParser {
+public class IndexDatParser implements Parser {
 
     /**
      * 

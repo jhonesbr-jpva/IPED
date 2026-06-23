@@ -33,7 +33,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -81,7 +81,7 @@ import iped.utils.IOUtil;
  * 
  **/
 
-public class OFXParser extends AbstractParser {
+public class OFXParser implements Parser {
 
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-ofx-v1", "application/x-ofx-v2");

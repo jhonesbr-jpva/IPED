@@ -14,7 +14,7 @@ import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -27,7 +27,7 @@ import iped.parsers.util.MetadataUtil;
  * https://torproject.gitlab.io/torspec/control-spec.html#circuit-status-changed)
  */
 
-public class TorTcParser extends AbstractParser {
+public class TorTcParser implements Parser {
 
     /**
      * 

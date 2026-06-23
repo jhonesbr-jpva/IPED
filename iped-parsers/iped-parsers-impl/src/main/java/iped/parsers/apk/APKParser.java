@@ -29,7 +29,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -47,7 +47,7 @@ import net.dongliu.apk.parser.bean.Icon;
 import net.dongliu.apk.parser.bean.IconFace;
 import net.dongliu.apk.parser.bean.UseFeature;
 
-public class APKParser extends AbstractParser {
+public class APKParser implements Parser {
     private static final long serialVersionUID = 8308661247390527209L;
     private static final MediaType apkMimeType = MediaType.application("vnd.android.package-archive");
     public static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(apkMimeType);
