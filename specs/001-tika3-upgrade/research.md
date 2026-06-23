@@ -57,12 +57,14 @@ This document resolves the open technical unknowns for migrating IPED from Apach
 - **Decision**: Plan for migrating all **76** `extends AbstractParser` classes. In Tika 3.x the deprecated `org.apache.tika.parser.AbstractParser` is removed; parsers implement `org.apache.tika.parser.Parser` directly (providing `getSupportedTypes` + `parse`) and drop the empty no-arg `parse(...)` overload that `AbstractParser` supplied. Introduce a thin internal base class (e.g., `iped.parsers.util.AbstractParser` shim) so the 76 subclasses change only their `import`, minimizing churn and keeping behavior identical. **⚠ VERIFY** the exact removed/renamed member set at 3.3.1.
 - **Rationale**: A one-line import swap across 76 files via a local shim is lower-risk and more reviewable than editing each class body, and preserves the existing `serialVersionUID`/behavior.
 - **Alternatives considered**: Edit each subclass to implement `Parser` directly — rejected; 76× larger diff, higher regression surface.
+- **🔁 UPDATE (T004, verified 2026-06-23)**: `org.apache.tika.parser.AbstractParser` is **STILL PRESENT in tika-core 3.3.1** (marked `@Deprecated`, methods intact). The 76 subclasses **compile unchanged**. The shim/migration is therefore **OPTIONAL deprecation cleanup, not required** for the upgrade — T007/T008 are downgraded to optional. See §5.
 
 ### D5 — Metadata constants & Tika IO relocations
 
 - **Decision**: Mechanical migration of the ~515 references. Expected mappings to confirm: `org.apache.tika.metadata.TikaMetadataKeys` → `TikaCoreProperties`; `Metadata.RESOURCE_NAME_KEY` → `TikaCoreProperties.RESOURCE_NAME_KEY`; `org.apache.tika.io.IOUtils` → `org.apache.commons.io.IOUtils` (Tika's bundled copy removed). Concentrate effort in `MetadataUtil.java` (54 refs). **⚠ VERIFY** each constant's new home in 3.3.1.
 - **Rationale**: These are find-and-replace class relocations, not behavioral changes; risk is missing one, which the compiler will catch.
 - **Alternatives considered**: None — these are forced by upstream removal of deprecated symbols.
+- **🔁 UPDATE (T004, verified 2026-06-23)**: For IPED specifically this is **near-empty**. IPED references `RESOURCE_NAME_KEY` exclusively as **`TikaCoreProperties.RESOURCE_NAME_KEY` (128×)**, which **still exists** in 3.3.1. `TikaMetadataKeys` and `org.apache.tika.io.IOUtils` have **0 IPED usages** (and `io.IOUtils` is still present anyway). So **no metadata/IO symbol migration is needed** — T009 is essentially a no-op. See §5.
 
 ### D6 — Transitive/shared dependency alignment (implements clarified "align up")
 
@@ -70,6 +72,7 @@ This document resolves the open technical unknowns for migrating IPED from Apach
 - **Rationale**: Clarification session chose "align up" to avoid `NoSuchMethodError`/`LinkageError` from running Tika 3.x against older transitive libs (spec Clarifications 2026-06-23).
 - **Alternatives considered**: Hold IPED's pins and force-downgrade Tika's deps — rejected by clarification (runtime-incompatibility risk).
 - **Note**: PDFBox 3 migration may be large enough to track as its own work-stream inside this feature.
+- **🔁 UPDATE (T004, verified 2026-06-23)**: Concrete versions resolved from the Tika 3.3.1 tree — **PDFBox 3.0.7** (pdfbox/fontbox/pdfbox-io/pdfbox-tools/xmpbox), jbig2-imageio 3.0.5; **POI 5.5.1**; commons-io **2.22.0**, commons-compress **1.28.0**, commons-lang3 **3.20.0**, commons-codec 1.22.0, commons-collections4 4.5.0; metadata-extractor **2.20.0**. The stock **`tika-parser-image-module:3.3.1` is a normal transitive** of the standard package now → the IPED "exclude stock image module" workaround is **obsolete** (validates D2/Story 3). With D4/D5 nullified, **PDFBox 2→3 is the dominant real migration cost** of this upgrade. See §5.
 
 ### D7 — Lucene field / case backward-compatibility guard
 
@@ -102,3 +105,40 @@ This document resolves the open technical unknowns for migrating IPED from Apach
 ## 4. Resolved unknowns summary
 
 All Technical Context unknowns are resolved to a **Decision** above. Residual **⚠ VERIFY** items are confirmations against the published 3.3.1 API performed during implementation; none block planning, and each has a worst-case effort already budgeted in the plan. No `NEEDS CLARIFICATION` remains.
+
+---
+
+## 5. T004 verification results (executed 2026-06-23)
+
+Resolved against Maven Central using a throwaway probe POM (`dependency:tree`) and `javap`/`unzip -l` on the downloaded `tika-core-3.3.1.jar`. **These results materially shrink the API-migration scope and refocus the work on PDFBox.**
+
+### 5.1 Artifact coordinates — all exist at 3.3.1 ✅
+`tika-core`, `tika-parsers-standard-package`, `tika-parser-sqlite3-module`, `tika-parser-nlp-module`, `tika-langdetect-optimaize` all resolve at `3.3.1` (BUILD SUCCESS). The standard package transitively includes `tika-parser-image-module:3.3.1` and ~25 other parser modules.
+
+### 5.2 Transitive shared-dependency versions (the align-up targets) ✅
+| Library | IPED 2.4.0 pin | Tika 3.3.1 brings |
+|---|---|---|
+| PDFBox (pdfbox/fontbox/pdfbox-io/tools/xmpbox) | 2.0.27 | **3.0.7** |
+| jbig2-imageio | 3.0.4 | 3.0.5 |
+| Apache POI (poi/poi-ooxml/scratchpad/ooxml-full) | — | **5.5.1** |
+| commons-io | (transitive) | **2.22.0** |
+| commons-compress | 1.27.1 | **1.28.0** |
+| commons-lang3 | — | **3.20.0** |
+| metadata-extractor (drewnoakes) | (excluded in `-p1`) | **2.20.0** |
+
+### 5.3 API reality — three plan assumptions corrected 🔁
+| Symbol | Plan assumed | Verified in tika-core 3.3.1 | IPED usage | Verdict |
+|---|---|---|---|---|
+| `org.apache.tika.parser.AbstractParser` | removed (76-file migration) | **present, `@Deprecated`**, methods intact | 76 subclasses | **Compiles unchanged.** Shim optional cleanup only — **D4 nullified** |
+| `org.apache.tika.metadata.TikaMetadataKeys` | relocated | absent | **0 files** | No impact |
+| `org.apache.tika.io.IOUtils` | moved to commons-io | **still present** | **0 files** | No impact |
+| `TikaCoreProperties.RESOURCE_NAME_KEY` | (relocation risk) | **present** | **128 refs** | **No change needed** — IPED already on the modern form. **D5 nullified** |
+
+### 5.4 Net effect on scope
+- **D4 (76 files)** and **D5 (~102 files)** are **no longer migration work** for compile-correctness — at most optional deprecation cleanup (`AbstractParser`).
+- The **dominant real work is PDFBox 2.0.27 → 3.0.7** (breaking API used directly by `PDFTextParser`, PDFBox-based viewers, and any PDF carver) and POI → 5.5.1 alignment, plus behavioral-parity validation on the benchmark.
+- The `-p1` `tika-parsers-standard-package` image-module exclusion is **confirmed obsolete** (Story 3 / D2).
+- **Still to confirm (not yet done in T004)**: the TIKA-4126 fix version (needed for the `SyncMetadata` disposition, T029) and whether any `Metadata` method overridden by `SyncMetadata` changed signature (T012).
+
+### 5.5 Recommended plan adjustment
+Re-balance tasks: demote T007/T008 (shim/76-file) to optional, treat T009 as a no-op, and elevate **T011 (PDFBox 2→3)** to the critical-path workstream. This is a candidate for a quick `/speckit-plan` refresh before heavy implementation.

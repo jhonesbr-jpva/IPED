@@ -11,20 +11,15 @@ IPED maps Tika `Metadata` properties into Lucene index fields (`IndexItem`/`Basi
 3. **Old cases readable**: A case processed on the 2.4.0 build opens, searches, and displays correctly on the 3.3.1 build (SC-005).
 4. **Property → key mapping preserved**: Where Tika renames a metadata property/constant, IPED maps the new property to the **existing** field key (a guard), rather than letting the index field follow Tika's new name.
 
-## Change introduced by Tika 3.x (and the contract-preserving migration)
+## Status of metadata symbols at 3.3.1 (🔁 verified T004, 2026-06-23)
 
-Relocated/removed metadata symbols used by ~102 IPED files (~515 refs; `MetadataUtil.java` = 54). Expected, **⚠ VERIFY** at 3.3.1:
+The symbol-relocation concern is **moot for IPED**: IPED already references `TikaCoreProperties.RESOURCE_NAME_KEY` (128×), which is **present** in tika-core 3.3.1; `org.apache.tika.metadata.TikaMetadataKeys` and `org.apache.tika.io.IOUtils` have **0 IPED usages** (and `io.IOUtils` is still present anyway). So there is **no metadata-symbol re-import work**.
 
-| Tika 2.4 symbol (IPED uses) | Expected Tika 3.x home |
-|---|---|
-| `org.apache.tika.metadata.TikaMetadataKeys.*` | `org.apache.tika.metadata.TikaCoreProperties.*` |
-| `Metadata.RESOURCE_NAME_KEY` | `TikaCoreProperties.RESOURCE_NAME_KEY` |
-| `org.apache.tika.io.IOUtils` | `org.apache.commons.io.IOUtils` |
-| other `TikaCoreProperties` constants | confirm names unchanged |
+**The live invariant is the field-key stability guard (D7)** — independent of symbol locations. Even with stable symbols, a Tika 3.x **parser** can emit a metadata **property value** differently than 2.4 did; if such a property currently feeds a stable Lucene field, IPED must normalize it so the **field key the index sees is unchanged**:
 
-**Migration (research D5 + D7)**:
-- Re-point imports/usages to the new symbols (mechanical; compiler-checked).
-- For any metadata property whose **string value** changes upstream and currently feeds a stable Lucene field, add an explicit normalization in `MetadataUtil`/`IndexItem` so the **field key the index sees is unchanged**.
+**Migration (research D7)**:
+- For any metadata property whose emitted value/name changes upstream and currently feeds a stable Lucene field, add an explicit normalization in `MetadataUtil`/`IndexItem` so the **field key is unchanged**.
+- Detect such cases by diffing the indexed field-key set baseline-vs-upgraded on the benchmark (acceptance test below).
 
 ### Contract test (acceptance)
 

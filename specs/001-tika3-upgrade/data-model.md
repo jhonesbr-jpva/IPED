@@ -61,16 +61,17 @@ A cohort of source files sharing one breaking-change cause, migrated together.
 
 **Validation**: FR-003 (custom parsers keep working), FR-006 (tests migrated preserve intent), SC-002 (parity).
 
-**Instances**:
+**Instances** (🔁 rebalanced post-T004 — see [research.md §5](./research.md)):
 
-| Unit | Cause | Size | Strategy (research) |
-|---|---|---|---|
-| `AbstractParser-subclasses` | `AbstractParser` removed | 76 files | local shim base class (D4) |
-| `metadata-IO-symbols` | `TikaMetadataKeys`/`RESOURCE_NAME_KEY`/`tika.io.IOUtils` relocated | ~102 files (~515 refs) | mechanical re-import (D5) |
-| `iped-api-tika-types` | `Metadata`/`MediaType`/`Property` package/shape shifts | 4 public types | unavoidable edit (Complexity Tracking) |
-| `pdfbox-direct-api` | PDFBox 2→3 | `PDFTextParser`, viewers, carvers | API migration (D6) |
-| `sync-metadata` | TIKA-4126 / `Metadata` signature change | 1 file | revert-or-migrate (D3) |
-| `pom-dependency-graph` | version + transitive alignment | 5 POMs | align-up + `dependencyManagement` (D6) |
+| Unit | Cause | Size | Strategy | Status |
+|---|---|---|---|---|
+| **`pdfbox-direct-api`** | PDFBox 2.0.27→3.0.7 (breaking) | **6 files**: `iped-parsers .../util/PDFToImage.java`, `.../util/PDFToThumb.java`, `iped-viewers .../PDFBoxViewer.java`, `iped-app .../timelinegraph/cache/persistance/CachePersistance.java`, `.../cache/TimeIndexedMap.java`, `.../datasets/IpedTimelineDataset.java` | `Loader.loadPDF`, `PDFRenderer`, + new `pdfbox-io` (`org.apache.pdfbox.io.*`) for the timeline cache (D6) | **CRITICAL PATH** |
+| `poi-direct-api` | POI→5.5.1 | 9 files (parsers `GenericOLEParser`/`OFCParser`/`OFXParser`/`RFC822Parser`/`MFCParser`/`discord cache Index`, viewers `EmailViewer`/`MsgViewer`, engine `Util`) | compile-check + align (D6) | secondary |
+| `pom-dependency-graph` | version + transitive alignment | 5 POMs | align-up + `dependencyManagement` at the T004 versions (D6) | required |
+| `sync-metadata` | TIKA-4126 / `Metadata` signature | 1 file | compile-check, then revert-or-keep (D3) | 1 file |
+| `iped-api-tika-types` | re-exports `Metadata`/`MediaType`/`Property` | 4 public types | **verified compile on 3.3.1** → likely no edit | low |
+| ~~`AbstractParser-subclasses`~~ | ~~removed~~ → **present (deprecated)** | 76 files | **compile unchanged** — optional deprecation cleanup | **NULLIFIED** |
+| ~~`metadata-IO-symbols`~~ | symbols **still present / unused** | — | `TikaCoreProperties.RESOURCE_NAME_KEY` present; `TikaMetadataKeys`/`io.IOUtils` unused | **NULLIFIED** |
 
 ---
 
@@ -89,6 +90,19 @@ A non-Tika library Tika builds on that IPED also pins/uses directly.
 **Lifecycle**: `pinned-old` → `target-identified` → `bumped` → `iped-callers-migrated` → `tree-conflict-free` (`mvn dependency:tree`).
 
 **Validation**: FR-009, clarified "align up" decision, R1/R5 mitigation.
+
+**Instances** (verified T004 — exact targets, no longer floating):
+
+| Library | IPED 2.4.0 | Tika 3.3.1 target | Direct IPED use? |
+|---|---|---|---|
+| PDFBox (+ fontbox/xmpbox/pdfbox-tools) | 2.0.27 | **3.0.7** | yes (6 files) |
+| `pdfbox-io` | — (n/a in 2.x) | **3.0.7** (new module) | yes (timeline cache) |
+| jbig2-imageio | 3.0.4 | 3.0.5 | no |
+| Apache POI | (transitive) | **5.5.1** | yes (9 files) |
+| commons-io | (transitive) | 2.22.0 | indirect |
+| commons-compress | 1.27.1 | 1.28.0 | yes |
+| commons-lang3 | (transitive) | 3.20.0 | indirect |
+| metadata-extractor | excluded in `-p1` | 2.20.0 | via image module |
 
 ---
 

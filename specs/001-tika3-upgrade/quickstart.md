@@ -6,29 +6,38 @@ A runnable validation guide proving the upgrade meets its success criteria. Impl
 
 ## Prerequisites
 
-- JDK 11 with JavaFX (Liberica Full JDK 11), `JAVA_HOME` set.
-- Maven 3.6+.
+- **JDK 11 with JavaFX** = Liberica Full JDK 11 at **`H:\java\LibericaJDK-11-Full`**. Set it for every build:
+  - PowerShell: `$env:JAVA_HOME = 'H:\java\LibericaJDK-11-Full'`
+  - Git Bash: `export JAVA_HOME='/h/java/LibericaJDK-11-Full'`
+  - (The default shell JDK is 18/25 with no JavaFX — builds of `iped-viewers`/`iped-geo`/`iped-app` will fail without overriding `JAVA_HOME`.)
+- Maven 3.6+ (`H:\java\apache-maven-3.9.16`).
 - Native tools per CI (`.github/workflows/maven.yml`) for the full test suite: `tesseract-ocr`, `imagemagick`, `pff-tools`, `libesedb-utils`, `python3` + `jep==4.0.3`, etc. A compile-and-unit-test pass does not require all of them.
-- The **curated multi-format benchmark case** (clarification 2026-06-23): documents, email, archives, images, SQLite/chat apps, registry, PDF, office. Assembled (non-sensitive) so it can be shared and re-run.
+- **Benchmark case**: **`F:\test_iped_estavel`** (the "stable" reference case) — covers the high-traffic categories for parity (SC-002) and performance (SC-007).
 
-## Step 0 — Capture the 2.4.0 baseline (on `master`/pre-change)
+## Step 0 — Establish the 2.4.0 baseline reference
+
+The baseline already exists — no need to reprocess for a reference:
+
+- **Input evidence**: `E:\hds\RockPi4\RockPi4.E01` (EnCase E01, ~8.5 GB).
+- **Reference case (processed by the stable released IPED)**: `F:\test_iped_estavel` (an IPED case: `iped/index`, `data`, `bookmarks.iped`, `htmlreport`, `sleuth.db`).
 
 ```bash
-# 1. Build current state + run tests, capture results
-mvn -B clean install 2>&1 | tee baseline-build.log
-
-# 2. Process the benchmark case and snapshot outputs for later diff
-#    (item/subitem counts, extracted text, indexed metadata, field-key set, timing, peak memory)
-#    Save under: specs/001-tika3-upgrade/baseline/
+# Snapshot the reference's measurable facts for later diffing:
+#   - item/subitem counts (overall + per category)   - indexed field-key set
+#   - extracted-text / metadata samples               - (timing/memory: from its IPED-SearchApp.log if available)
+# Save under: specs/001-tika3-upgrade/baseline/
 ```
 
-Record: total items/subitems, per-format counts, the **indexed field-key set**, wall-clock processing time, and peak memory. These are the references for SC-001/002/003/005/007.
+> **Rigor note**: `F:\test_iped_estavel` was produced by a stable *release*, not this repo's exact 2.4.0-SNAPSHOT. It is a sound **smoke-test** reference. For a strict *Tika-only* diff, optionally also process the **same** `RockPi4.E01` with the current **unchanged** repo build (JDK 11) and snapshot that as the true apples-to-apples baseline.
+
+Record: total items/subitems, per-format counts, the **indexed field-key set**. These are the references for SC-001/002/003/005/007.
 
 ## Step 1 — Apply the upgrade & build bottom-up (D8)
 
 ```bash
-# Version bumps in pom.xml (tika 2.4.0→3.3.1, drop tika.core.version, pdfbox→3.x) per research D1/D6,
-# then compile module-by-module along the dependency order:
+export JAVA_HOME='/h/java/LibericaJDK-11-Full'
+# Version bumps in pom.xml (tika 2.4.0→3.3.1, drop tika.core.version, pdfbox→3.0.7 + add pdfbox-io,
+# poi→5.5.1) per research D1/D6/§5, then compile module-by-module along the dependency order:
 mvn -pl iped-api -am clean install
 mvn -pl iped-utils -am install
 mvn -pl iped-carvers/iped-carvers-api -am install
@@ -62,20 +71,28 @@ mvn dependency:tree | grep -Ei "pdfbox|poi|commons-(io|compress|lang3)|tika"
 
 ## Step 4 — Format-coverage & extraction parity (SC-001, SC-002)
 
-Process the benchmark case on the upgraded build; diff against the Step 0 snapshot:
+Process the **input evidence** with the upgraded (3.3.1) build into a fresh output dir, then diff against the reference:
 
-- **SC-001**: detected/parsed format set ⊇ baseline — **zero** formats regress to unsupported.
-- **SC-002**: ≥99% of items have equivalent extracted text & metadata; triage and justify the <1%.
-- **SC-003**: processing error/failure count ≤ baseline.
+```bash
+export JAVA_HOME='/h/java/LibericaJDK-11-Full'
+# from the upgraded target/release/iped-<version>/:
+#   iped.exe -d E:\hds\RockPi4\RockPi4.E01 -o F:\smoke-tests\tika331
+```
+
+Diff `F:\smoke-tests\tika331` against the reference `F:\test_iped_estavel`:
+
+- **SC-001**: detected/parsed format set ⊇ reference — **zero** formats regress to unsupported.
+- **SC-002**: top-level item counts exact, subitem counts within ±1%, ≥99% of items equivalent text & metadata; triage and justify the <1%.
+- **SC-003**: processing error/failure count ≤ reference.
 
 ## Step 5 — Case backward-compatibility (FR-004, SC-005)
 
 ```bash
-# Open the BASELINE case (processed on 2.4.0) in the UPGRADED analysis UI:
-#   iped.app.bootstrap.BootstrapUI  -> point at specs/001-tika3-upgrade/baseline/<case>
+# Open the REFERENCE case (made by the stable release) in the UPGRADED analysis UI:
+#   iped.app.bootstrap.BootstrapUI  -> point at F:\test_iped_estavel
 ```
 
-**Expected**: the old case opens, searches, and displays correctly; the indexed field-key set matches the baseline ([contracts/metadata-field-mapping.md](./contracts/metadata-field-mapping.md)).
+**Expected**: the old case opens, searches, and displays correctly; the indexed field-key set matches ([contracts/metadata-field-mapping.md](./contracts/metadata-field-mapping.md)).
 
 ## Step 6 — Performance budget (SC-007)
 

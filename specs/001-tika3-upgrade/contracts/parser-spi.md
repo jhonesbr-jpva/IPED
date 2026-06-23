@@ -14,29 +14,21 @@ IPED extends Tika by implementing the `org.apache.tika.parser.Parser` SPI and re
 3. **Embedded extraction**: Subitem generation via `EmbeddedDocumentExtractor.parseEmbedded(...)` keeps producing the same child items (CLAUDE.md §12.8).
 4. **Behavior**: For a given input, the emitted `ContentHandler` text and `Metadata` keys/values are equivalent within the parity tolerance (SC-002).
 
-## Change introduced by Tika 3.x (and the contract-preserving migration)
+## Status of the change at Tika 3.3.1 (🔁 verified T004, 2026-06-23)
 
-`org.apache.tika.parser.AbstractParser` is removed upstream (76 IPED subclasses depend on it — **⚠ VERIFY** exact removal at 3.3.1).
+`org.apache.tika.parser.AbstractParser` is **NOT removed** — it is **present in tika-core 3.3.1, marked `@Deprecated`**, still `implements Parser` with the convenience `parse(InputStream, ContentHandler, Metadata)` method intact (confirmed via `javap`). Therefore the **76 IPED subclasses compile unchanged** on 3.3.1; the contract above already holds with no migration.
 
-**Migration (research D4)** — introduce one internal shim and swap imports only:
+**Implication**: The internal-shim migration (research D4) is **OPTIONAL cleanup** — undertaken only if/when IPED chooses to stop depending on the deprecated class — and is **not on the upgrade's critical path**. If pursued, the behavior-neutral shim + import-only swap is the approach:
 
 ```java
-// iped-parsers-impl: iped/parsers/util/AbstractParser.java  (NEW, internal)
+// OPTIONAL — iped-parsers-impl: iped/parsers/util/AbstractParser.java
 package iped.parsers.util;
-
 import java.io.Serializable;
 import org.apache.tika.parser.Parser;
-
-/** Compatibility base replacing Tika's removed org.apache.tika.parser.AbstractParser.
- *  Behavior-neutral: supplies only what the removed base supplied. */
 public abstract class AbstractParser implements Parser, Serializable {
     private static final long serialVersionUID = 1L;
-    // No parse() default here: every IPED subclass already overrides the 4-arg parse().
 }
 ```
-
-Each of the 76 subclasses changes **only** its import:
-
 ```diff
 - import org.apache.tika.parser.AbstractParser;
 + import iped.parsers.util.AbstractParser;
