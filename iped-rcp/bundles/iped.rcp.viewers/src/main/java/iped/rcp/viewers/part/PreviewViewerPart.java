@@ -1,5 +1,7 @@
 package iped.rcp.viewers.part;
 
+import java.util.Set;
+
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
@@ -75,10 +77,10 @@ public class PreviewViewerPart extends AbstractBridgedViewerPart {
     }
 
     @Override
-    protected void loadIntoViewer(IItem item, IPEDSource source, String contentType) {
+    protected void loadIntoViewer(IItem item, IPEDSource source, String contentType, Set<String> highlightTerms) {
         MultiViewer viewer = multiViewer;
         if (viewer != null) {
-            viewer.loadFile(item, contentType, null);
+            viewer.loadFile(item, contentType, highlightTerms);
         }
     }
 

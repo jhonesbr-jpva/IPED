@@ -1,5 +1,7 @@
 package iped.rcp.viewers.part;
 
+import java.util.Set;
+
 import javax.swing.JComponent;
 
 import iped.data.IItem;
@@ -41,10 +43,10 @@ public class MetadataViewerPart extends AbstractBridgedViewerPart {
     }
 
     @Override
-    protected void loadIntoViewer(IItem item, IPEDSource source, String contentType) {
+    protected void loadIntoViewer(IItem item, IPEDSource source, String contentType, Set<String> highlightTerms) {
         MetadataViewer viewer = metadataViewer;
         if (viewer != null) {
-            viewer.loadFile(item, contentType, null);
+            viewer.loadFile(item, contentType, highlightTerms);
         }
     }
 

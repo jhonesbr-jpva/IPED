@@ -1,6 +1,7 @@
 package iped.rcp.viewers.part;
 
 import java.awt.Frame;
+import java.util.Set;
 
 import javax.swing.JComponent;
 
@@ -36,10 +37,10 @@ public class HexViewerPart extends AbstractBridgedViewerPart {
     }
 
     @Override
-    protected void loadIntoViewer(IItem item, IPEDSource source, String contentType) {
+    protected void loadIntoViewer(IItem item, IPEDSource source, String contentType, Set<String> highlightTerms) {
         HexViewerPlus viewer = hexViewer;
         if (viewer != null) {
-            viewer.loadFile(item, contentType, null);
+            viewer.loadFile(item, contentType, highlightTerms);
         }
     }
 

@@ -2,7 +2,9 @@ package iped.rcp.core.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.search.Query;
@@ -239,6 +241,25 @@ public class SearchService implements ISearchService {
     public void clear() {
         current = null;
         timelineView = false;
+    }
+
+    /**
+     * Highlight terms (leaf terms of the current query) for the content viewers
+     * — the legacy {@code App.getHighlightTerms()}, derived from the query via
+     * {@link QueryBuilder#getQueryStrings(String)}. Empty when there is no
+     * query, no open session, or the query cannot be parsed. Never throws.
+     */
+    public Set<String> getHighlightTerms() {
+        String text = lastQueryText;
+        if (text == null || text.isBlank()) {
+            return Collections.emptySet();
+        }
+        try {
+            return new QueryBuilder(activeSource()).getQueryStrings(text);
+        } catch (Exception e) {
+            LOGGER.debug("Could not derive highlight terms from query '{}'", text, e);
+            return Collections.emptySet();
+        }
     }
 
     private MultiSearchResult doSearch(String queryText) {

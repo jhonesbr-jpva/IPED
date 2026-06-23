@@ -62,8 +62,9 @@ public final class WorkspaceLocationResolver {
      * Version 4: toolbar items switched to icons (iconURI).
      * Version 5: content viewer split into separate Preview/Text/Metadata/Hex
      * top-level parts (replaces the single combined Viewer part).
+     * Version 6: "Hits" (text occurrences) part added to the bottom stack.
      */
-    public static final String LAYOUT_VERSION = "5";
+    public static final String LAYOUT_VERSION = "6";
 
     /** Outcome of {@link #validateOrResetState(Path)}. */
     public enum StateCheck {
@@ -145,17 +146,61 @@ public final class WorkspaceLocationResolver {
      *         resolved (boot proceeds untouched)
      */
     public static StateCheck validateDefaultArea(IEclipseContext context) {
-        Location location = (Location) context.get("instanceLocation");
-        if (location == null) {
-            return null;
-        }
-        File area = areaFile(location);
+        File area = resolveDefaultArea(context);
         if (area == null) {
+            LOGGER.warn("Default workspace area could not be resolved; layout reset skipped");
             return null;
         }
         StateCheck check = validateOrResetState(area.toPath());
         LOGGER.info("Default workspace area: {} (state: {})", area, check);
         return check;
+    }
+
+    /**
+     * Resolves the default instance-area folder for the no-case boot. The
+     * instance {@link Location} is unreliable this early (its {@code getURL()}
+     * and {@code getDefault()} are both null until the area is locked), so the
+     * primary source is the {@code osgi.instance.area.default} system property
+     * set by the product launcher ({@code @user.home/.iped/ui-workspaces/default}),
+     * with the Location and the resolved {@code osgi.instance.area} as fallbacks.
+     */
+    private static File resolveDefaultArea(IEclipseContext context) {
+        Location location = context == null ? null : (Location) context.get("instanceLocation");
+        if (location != null) {
+            File fromLocation = areaFile(location);
+            if (fromLocation != null) {
+                return fromLocation;
+            }
+        }
+        File fromDefaultProp = areaFromAreaString(System.getProperty("osgi.instance.area.default"));
+        if (fromDefaultProp != null) {
+            return fromDefaultProp;
+        }
+        return areaFromAreaString(System.getProperty("osgi.instance.area"));
+    }
+
+    /**
+     * Parses an Equinox area string into a folder: strips a {@code file:} scheme,
+     * expands the {@code @user.home}/{@code @user.dir} tokens, and de-slashes a
+     * Windows {@code /C:/...} path. Returns {@code null} for blank input.
+     */
+    private static File areaFromAreaString(String area) {
+        if (area == null || area.isBlank()) {
+            return null;
+        }
+        String path = area.trim();
+        if (path.startsWith("file:")) {
+            path = path.substring("file:".length());
+        }
+        if (path.startsWith("@user.home")) {
+            path = System.getProperty("user.home") + path.substring("@user.home".length());
+        } else if (path.startsWith("@user.dir")) {
+            path = System.getProperty("user.dir") + path.substring("@user.dir".length());
+        }
+        if (path.length() > 2 && path.charAt(0) == '/' && path.charAt(2) == ':') {
+            path = path.substring(1); // file:/C:/... on Windows
+        }
+        return new File(path);
     }
 
     /**

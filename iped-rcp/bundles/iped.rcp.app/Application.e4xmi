@@ -72,6 +72,7 @@
             </children>
             <children xsi:type="basic:PartStack" xmi:id="_stackBottom" elementId="iped.rcp.app.partstack.bottom" containerData="3400" selectedElement="_partAuxTables">
               <children xsi:type="basic:Part" xmi:id="_partAuxTables" elementId="iped.rcp.views.part.auxtables" label="Related Items" closeable="false" contributionURI="bundleclass://iped.rcp.views/iped.rcp.views.AuxTablesPart"/>
+              <children xsi:type="basic:Part" xmi:id="_partTextHits" elementId="iped.rcp.viewers.part.hits" label="Hits" closeable="false" contributionURI="bundleclass://iped.rcp.viewers/iped.rcp.viewers.part.HitsViewerPart"/>
             </children>
           </children>
           <children xsi:type="basic:PartStack" xmi:id="_stackRight" elementId="iped.rcp.app.partstack.right" containerData="2500" selectedElement="_partMetadata">

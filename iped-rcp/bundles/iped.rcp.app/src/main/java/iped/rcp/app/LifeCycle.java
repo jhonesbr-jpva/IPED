@@ -154,6 +154,7 @@ public class LifeCycle {
         MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.text", "ContentViewer.TabText");
         MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.metadata", "App.Metadata");
         MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.hex", "RcpParts.Hex");
+        MODEL_LABEL_KEYS.put("iped.rcp.viewers.part.hits", "App.Hits");
         MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.map", "App.Map");
         MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.graph", "App.Links");
         MODEL_LABEL_KEYS.put("iped.rcp.specialized.part.timeline", "RcpParts.Timeline");

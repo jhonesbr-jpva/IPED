@@ -20,12 +20,15 @@ import org.eclipse.swt.widgets.Composite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
+
 import iped.data.IItem;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.rcp.api.SelectionContext;
 import iped.rcp.api.UiEventTopics;
 import iped.rcp.core.items.ItemAccessService;
+import iped.rcp.core.search.SearchService;
 import iped.rcp.core.session.CaseSession;
 import iped.rcp.core.session.ICaseSessionManager;
 import iped.rcp.viewers.bridge.SwtAwtBridgeHost;
@@ -67,6 +70,10 @@ public abstract class AbstractBridgedViewerPart {
     @Inject
     private ItemAccessService itemAccess;
 
+    /** Source of the query highlight terms (legacy {@code App.getHighlightTerms()}). */
+    @Inject
+    private SearchService searchService;
+
     @Inject
     private MPart part;
 
@@ -87,6 +94,7 @@ public abstract class AbstractBridgedViewerPart {
     private volatile IItem currentItem;
     private volatile IPEDSource currentSource;
     private volatile String currentContentType;
+    private volatile Set<String> currentHighlightTerms;
     /**
      * Latest selection seen, kept even before the viewer exists: the e4 DI calls
      * {@link #onSelectionChanged} once during injection — before {@code @PostConstruct}
@@ -171,6 +179,7 @@ public abstract class AbstractBridgedViewerPart {
             currentItem = null;
             currentSource = null;
             currentContentType = null;
+            currentHighlightTerms = null;
             maybeRender(stamp);
             return;
         }
@@ -190,6 +199,9 @@ public abstract class AbstractBridgedViewerPart {
                 currentItem = item;
                 currentSource = source;
                 currentContentType = contentType;
+                // Query highlight terms are the same for the whole result set;
+                // derive them off the UI thread here (parses the query).
+                currentHighlightTerms = searchService == null ? null : searchService.getHighlightTerms();
                 maybeRender(stamp);
             } catch (RuntimeException e) {
                 LOGGER.warn("Error resolving selection for viewer part {}", elementId(), e);
@@ -219,6 +231,7 @@ public abstract class AbstractBridgedViewerPart {
         IItem item = currentItem;
         IPEDSource source = currentSource;
         String contentType = currentContentType;
+        Set<String> highlightTerms = currentHighlightTerms;
         SwingUtilities.invokeLater(() -> {
             if (stamp != loadStamp.get()) {
                 return;
@@ -227,7 +240,7 @@ public abstract class AbstractBridgedViewerPart {
                 if (item == null) {
                     clearViewer();
                 } else {
-                    loadIntoViewer(item, source, contentType);
+                    loadIntoViewer(item, source, contentType, highlightTerms);
                 }
             } catch (RuntimeException e) {
                 LOGGER.warn("Error rendering item in viewer part {}", elementId(), e);
@@ -299,8 +312,13 @@ public abstract class AbstractBridgedViewerPart {
     /** Heavy viewer initialization. Runs off both UI threads. */
     protected abstract void initViewer();
 
-    /** Loads the item into the viewer. Runs on the EDT. */
-    protected abstract void loadIntoViewer(IItem item, IPEDSource source, String contentType);
+    /**
+     * Loads the item into the viewer. Runs on the EDT.
+     *
+     * @param highlightTerms query terms to highlight (may be {@code null}/empty)
+     */
+    protected abstract void loadIntoViewer(IItem item, IPEDSource source, String contentType,
+            Set<String> highlightTerms);
 
     /** Clears the viewer (no selection). Runs on the EDT. */
     protected abstract void clearViewer();

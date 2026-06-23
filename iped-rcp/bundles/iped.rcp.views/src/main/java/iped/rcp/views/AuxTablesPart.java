@@ -13,7 +13,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.ui.di.UISynchronize;
+import org.eclipse.e4.ui.model.application.MApplication;
 import org.eclipse.e4.ui.model.application.ui.basic.MPart;
+import org.eclipse.e4.ui.workbench.modeling.ESelectionService;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -68,6 +70,12 @@ public class AuxTablesPart {
     @Inject
     private MPart part;
 
+    @Inject
+    private ESelectionService selectionService;
+
+    @Inject
+    private MApplication application;
+
     private CTabFolder folder;
     private final List<AuxTab> tabs = new ArrayList<>();
     private final AtomicLong refreshStamp = new AtomicLong();
@@ -104,7 +112,7 @@ public class AuxTablesPart {
         long stamp = refreshStamp.incrementAndGet();
         if (active == null) {
             for (AuxTab tab : tabs) {
-                tab.show(stamp, "", List.of(), 0);
+                tab.show(stamp, "", List.of(), List.of(), 0);
             }
             return;
         }
@@ -131,20 +139,22 @@ public class AuxTablesPart {
             }
             Query query = tab.queryFactory.create(doc);
             if (query == null) {
-                tab.show(stamp, "", List.of(), 0);
+                tab.show(stamp, "", List.of(), List.of(), 0);
                 continue;
             }
             IPEDSearcher searcher = new IPEDSearcher(source, query);
             MultiSearchResult result = searcher.multiSearch();
             List<String[]> rows = new ArrayList<>(Math.min(result.getLength(), MAX_ROWS));
+            List<ItemId> ids = new ArrayList<>(rows.size());
             Set<String> fieldsToLoad = new HashSet<>(Set.of(BasicProps.NAME, BasicProps.PATH));
             for (int i = 0; i < result.getLength() && i < MAX_ROWS; i++) {
                 IItemId itemId = result.getItem(i);
+                ids.add(new ItemId(itemId.getSourceId(), itemId.getId()));
                 Document rowDoc = source.getReader().document(source.getLuceneId(itemId), fieldsToLoad);
                 rows.add(new String[] { LocalizedFormat.format(i + 1), rowDoc.get(BasicProps.NAME),
                         rowDoc.get(BasicProps.PATH) });
             }
-            tab.show(stamp, LocalizedFormat.format(result.getLength()), rows, result.getLength());
+            tab.show(stamp, LocalizedFormat.format(result.getLength()), rows, ids, result.getLength());
         }
     }
 
@@ -178,6 +188,30 @@ public class AuxTablesPart {
         return sessionManager.getSession().getSource();
     }
 
+    /**
+     * Publishes the selected related item so the content viewers update, like
+     * {@code ResultsTablePart}/{@code GalleryPart}. Mirrors into the application
+     * context directly (the {@code UiEventsAddon} active-part aggregator is
+     * focus-dependent); the own-origin echo guard in {@link #onSelectionChanged}
+     * stops the aux tables from refreshing themselves into a loop.
+     */
+    private void publishSelection(Table table) {
+        TableItem[] selection = table.getSelection();
+        List<ItemId> selected = new ArrayList<>(selection.length);
+        for (TableItem item : selection) {
+            if (item.getData() instanceof ItemId id) {
+                selected.add(id);
+            }
+        }
+        if (selected.isEmpty()) {
+            return;
+        }
+        ItemId active = selected.get(0);
+        SelectionContext context = new SelectionContext(active, selected, part.getElementId());
+        selectionService.setSelection(context);
+        application.getContext().set(UiEventTopics.SELECTION_KEY, context);
+    }
+
     /** One tab: localized title + query factory + result table. */
     private final class AuxTab {
 
@@ -204,21 +238,28 @@ public class AuxTablesPart {
             TableColumn path = new TableColumn(table, SWT.LEFT);
             path.setText(ResultColumns.labelOf(BasicProps.PATH));
             path.setWidth(500);
+            // Selecting a related item drives the content viewers, like the
+            // results table (legacy: the aux tables share the viewer).
+            table.addListener(SWT.Selection, e -> publishSelection(table));
             tabItem.setControl(table);
         }
 
-        void show(long stamp, String countLabel, List<String[]> rows, int total) {
+        void show(long stamp, String countLabel, List<String[]> rows, List<ItemId> ids, int total) {
             uiSync.asyncExec(() -> {
                 if (table.isDisposed() || stamp != refreshStamp.get()) {
                     return;
                 }
                 table.setRedraw(false);
                 table.removeAll();
-                for (String[] row : rows) {
+                for (int i = 0; i < rows.size(); i++) {
+                    String[] row = rows.get(i);
                     TableItem item = new TableItem(table, SWT.NONE);
                     item.setText(row[0] == null ? "" : row[0]);
                     item.setText(1, row[1] == null ? "" : row[1]);
                     item.setText(2, row[2] == null ? "" : row[2]);
+                    if (i < ids.size()) {
+                        item.setData(ids.get(i)); // ItemId for selection publishing
+                    }
                 }
                 table.setRedraw(true);
                 tabItem.setText(title(total > 0 ? countLabel : ""));

@@ -86,7 +86,7 @@ feature), versão `4.4.0-SNAPSHOT`. **Congelado em 2026-06-10.**
 
 | ID | Comportamento | Referência UI atual | Status | Evidência |
 |---|---|---|---|---|
-| VW-01 | Texto extraído com realce e navegação entre ocorrências (atalhos Q/W = anterior/próxima) | `TextViewer`, `App.java:891/898` | parcial — exibição ✅ (`RcpTextViewer`, aba **Texto** de topo no T083); realce + Q/W `pendente` | SWTBot (T020); exibição verificada manual (`.bashrc`, `F:\test_yara_java21`) |
+| VW-01 | Texto extraído com realce e navegação entre ocorrências (atalhos Q/W = anterior/próxima) + lista de ocorrências (`App.Hits`) | `TextViewer`, `App.java:891/898`, `HitsTable`/`hitsDock` | **paridade** — exibição (`RcpTextViewer`, T083) + **realce** dos termos da busca (amarelo/laranja) + navegação prev/next (botões `< >`, T087) + **aba Ocorrências** clicável (`HitsViewerPart`, T088). Pendente: realce Lucene-fragment fiel (match literal por ora) e trim de linhas em branco | SWTBot (T020); verificado manual pelo usuário (Windows) |
 | VW-02 | Hex com busca | `HexSearcherImpl` | **paridade** — exibição + busca (`HexViewerPart`+`RcpHexSearcher`, T083) | manual (usuário, Windows) |
 | VW-03 | Imagens (zoom/rotação/cópia) | viewers impl | pendente | manual |
 | VW-04 | Áudio/vídeo (player embutido) | viewers impl (JavaFX/MPlayer) | pendente | manual |
@@ -241,11 +241,16 @@ T058):
   estado-de-workspace × configuração do data-model.
 - **TA-01..04**: exibição das tabelas auxiliares cap em 1000 linhas neste
   incremento (título mostra o total real); queries idênticas às legadas.
+  **T086 (2026-06-22)**: selecionar uma linha (subitem/duplicata/pai/ref)
+  agora dirige os viewers (publica `SelectionContext` no app-context, igual à
+  Tabela) — `ItemId` guardado por linha.
 - **VW-xx**: viewers registrados neste incremento: Metadata, Image, Tiff,
   Html, Email (com attachment searcher), IcePDF. **Texto** (exibição do
   texto extraído) adicionado depois via `RcpTextViewer` — App-free
   (`StandardParser`+`ParsingReader`), pois o `TextViewer` legado é acoplado
-  ao singleton `App`; **realce de ocorrências + Q/W ainda `pendente`**.
+  ao singleton `App`. **T087/T088**: realce dos termos da busca
+  (amarelo/laranja) + navegação prev/next + a **aba Ocorrências**
+  (`HitsViewerPart`, hits clicáveis no rodapé) — VW-01 em paridade.
   **Reestruturado no T083 (2026-06-22)**: o `ContentViewerPart` único (abas
   Swing internas) foi **substituído por 4 parts e4 de topo** — Pré-visualização
   (`MultiViewer` só de formato), Texto (`RcpTextViewer`), Metadados
