@@ -179,6 +179,13 @@
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>8.3.8</version>
+            <exclusions>
+                <!-- minio drags in the legacy BouncyCastle jdk15on line; use the global jdk18on 1.84 instead -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
@@ -281,6 +288,11 @@
             <artifactId>neo4j</artifactId>
             <version>4.4.4</version>
             <exclusions>
+                <!-- Neo4j brings the legacy BouncyCastle jdk15on 1.69 line; use the global jdk18on 1.84 instead -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-nop</artifactId>
@@ -297,8 +309,8 @@
         </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.70</version>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.84</version>
 		</dependency>
 		<dependency>
             <groupId>de.ruedigermoeller</groupId>

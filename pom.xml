@@ -71,6 +71,19 @@
         </repository>
     </repositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- Converge BouncyCastle onto a single jdk18on 1.84 line (the one Tika 3.3.1 ships).
+                 The legacy jdk15on 1.69/1.70 line is excluded at its sources (minio, icepdf) to
+                 avoid a split-package conflict (both define org.bouncycastle.*). -->
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcmail-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcjmail-jdk18on</artifactId><version>1.84</version></dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

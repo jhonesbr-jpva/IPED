@@ -101,6 +101,13 @@
             <artifactId>icepdf-viewer</artifactId>
             <version>${icepdf.version}</version>
             <type>jar</type>
+            <exclusions>
+                <!-- icepdf drags in legacy BouncyCastle jdk15on; use the global jdk18on 1.84 instead -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.bbottema</groupId>
