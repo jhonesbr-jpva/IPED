@@ -278,3 +278,9 @@ A árvore de releases está em `ReleaseNotes.txt` (180 KB) — referência detal
 | **CSAM** | Child Sexual Abuse Material. |
 | **DIE** | "Detector of Indecent Exposure" — RandomForest local de nudez. |
 | **NER** | Named Entity Recognition (Stanford CoreNLP). |
+
+<!-- SPECKIT START -->
+Active feature: **Upgrade Apache Tika to 3.3.1** (`tika3-upgrade`).
+For technologies, project structure, decisions, and validation steps, read the current plan:
+`specs/001-tika3-upgrade/plan.md` (and `research.md`, `data-model.md`, `contracts/`, `quickstart.md`).
+<!-- SPECKIT END -->
