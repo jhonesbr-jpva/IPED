@@ -147,8 +147,13 @@
         </profile>
         <profile>
             <id>rcp-product-linux</id>
+            <!-- Linux-specific (os.name == "Linux"), NOT family=unix: macOS is
+                 also the unix family in Maven, so a family=unix activation would
+                 wrongly fire on a Mac build and clobber rcp.product.platform with
+                 linux/gtk. The dedicated rcp-product-macos profile below handles
+                 macOS. CI (Ubuntu) and Windows behaviour is unchanged. -->
             <activation>
-                <os><family>unix</family></os>
+                <os><name>Linux</name></os>
             </activation>
             <properties>
                 <rcp.product.platform>linux/gtk/x86_64</rcp.product.platform>
@@ -174,6 +179,58 @@
                                         <chmod perm="755">
                                             <fileset dir="${rcp.release.ui.dir}">
                                                 <include name="iped-ui"/>
+                                            </fileset>
+                                        </chmod>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- macOS Apple Silicon ("M" family). The p2-director materializes the
+             product as an .app bundle under
+             target/products/iped.rcp.product/macosx/cocoa/aarch64/; this profile
+             folds it into the release ui/ when building ON a Mac. Like Linux, the
+             macOS run uses the SYSTEM Java 21 (the release jre/ is the Windows
+             JRE), so there is NO -vm pin in the launcher ini. Ant <copy> drops the
+             executable bit, so the native launcher inside the .app is re-armed
+             below.
+             Cross-building on Windows/Linux still produces the macOS .app under
+             target/products/ (every configured environment is materialized) — it
+             just is not folded into ui/ on those hosts. NOTE: codesigning /
+             notarization and the macOS-native helper tools (Sleuthkit JNI,
+             ImageMagick, Tesseract) and a macOS JRE are a separate
+             release-packaging step, out of scope for the RCP product target. -->
+        <profile>
+            <id>rcp-product-macos</id>
+            <activation>
+                <os><family>mac</family></os>
+            </activation>
+            <properties>
+                <rcp.product.platform>macosx/cocoa/aarch64</rcp.product.platform>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>chmod-macos-launcher</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <!-- native launcher lives inside the
+                                             copied IPED Analysis.app bundle -->
+                                        <chmod perm="755">
+                                            <fileset dir="${rcp.release.ui.dir}">
+                                                <include name="**/Contents/MacOS/*"/>
                                             </fileset>
                                         </chmod>
                                     </target>

@@ -156,8 +156,29 @@
                          Tycho bundles can Import-Package from the wrapper
                          (research R3). -->
                     <pomDependencies>consider</pomDependencies>
-                    <!-- Product environments (research R1): Windows x64 and
-                         Linux x64/GTK. macOS is out of scope (spec). -->
+                    <!-- Product environments (research R1): Windows x64,
+                         Linux x64/GTK and macOS Apple Silicon
+                         (cocoa.macosx.aarch64 — "M" family). The cocoa SWT
+                         fragment and the macOS native equinox launcher are
+                         pulled from the SAME pinned 2024-06 p2 repos already
+                         used for win32/gtk (org.eclipse.e4.rcp.feature.group +
+                         org.eclipse.equinox.executable.feature.group carry the
+                         per-platform fragments; includeAllPlatforms="false" in
+                         the .target filters them to exactly these environments).
+                         The wrapper bundles (iped.rcp.libs / iped.rcp.sleuthkit)
+                         are pure-Java with NO native fragments, so they
+                         materialize unchanged for aarch64.
+                         tycho-p2-director materialize-products builds a product
+                         for EVERY environment listed here regardless of the
+                         build OS, so the macOS .app
+                         (target/products/iped.rcp.product/macosx/cocoa/aarch64/
+                         IPED Analysis.app/) is produced even when cross-building
+                         on Windows/Linux. NOTE: the bundled native tools
+                         (Sleuthkit libtsk_jni, ImageMagick, Tesseract) and the
+                         embedded JRE are a separate release-packaging concern;
+                         this declaration only adds the RCP/Tycho product target
+                         and the macOS run uses the system Java 21 (like Linux —
+                         the release jre/ is the Windows JRE). -->
                     <environments>
                         <environment>
                             <os>win32</os>
@@ -168,6 +189,11 @@
                             <os>linux</os>
                             <ws>gtk</ws>
                             <arch>x86_64</arch>
+                        </environment>
+                        <environment>
+                            <os>macosx</os>
+                            <ws>cocoa</ws>
+                            <arch>aarch64</arch>
                         </environment>
                     </environments>
                 </configuration>
