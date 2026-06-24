@@ -73,6 +73,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Align the PDFBox companion + commons-lang3 to the versions Tika 3.3.1 / PDFBox 3.0.7 require.
+                 Maven's nearest-wins otherwise drags in the stale transitive versions:
+                 - fontbox 2.0.26 (pulled by icepdf-core 7.0.0) wins over pdfbox 3.0.7's fontbox 3.0.7,
+                   causing NoSuchMethodError TTFParser.parse(RandomAccessRead) against the pdfbox-io 3.x API;
+                 - commons-lang3 3.12.0 (pulled by commons-text 1.10.0) wins over the 3.20.0 that
+                   commons-compress 1.28.0 needs, causing NoClassDefFoundError o.a.c.lang3.SystemProperties. -->
+            <dependency><groupId>org.apache.pdfbox</groupId><artifactId>fontbox</artifactId><version>${pdfbox.version}</version></dependency>
+            <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.20.0</version></dependency>
             <!-- Converge BouncyCastle onto a single jdk18on 1.84 line (the one Tika 3.3.1 ships).
                  The legacy jdk15on 1.69/1.70 line is excluded at its sources (minio, icepdf) to
                  avoid a split-package conflict (both define org.bouncycastle.*). -->

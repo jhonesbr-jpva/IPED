@@ -86,7 +86,8 @@ public class OutlookDBXParser implements Parser {
         public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
                 throws SAXException, IOException {
 
-            if (metadata.get(Metadata.CONTENT_TYPE).equals("message/rfc822")) //$NON-NLS-1$
+            // Tika 3.x may not set Content-Type on the embedded metadata before parseEmbedded; null-safe compare.
+            if ("message/rfc822".equals(metadata.get(Metadata.CONTENT_TYPE))) //$NON-NLS-1$
                 metadata.set(StandardParser.INDEXER_CONTENT_TYPE, "message/rfc822"); //$NON-NLS-1$
 
             extractor.parseEmbedded(stream, handler, metadata, outputHtml);
