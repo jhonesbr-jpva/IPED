@@ -28,20 +28,7 @@ public class OutlookDBXParserTest extends AbstractPkgTest {
 
         try (InputStream stream = getStream("test-files/test_OutlookDBX.dbx")) {
             parser.parse(stream, handler, metadata, trackingContext);
-        } catch (NullPointerException e) {
-            // The frozen third-party jar net.sf:java-dbx:1.1-p6 calls
-            // TikaInputStream.get(InputStream, TemporaryResources) — an overload removed in Tika 3.x — so it
-            // throws NoSuchMethodError, masked by an NPE in OEReader.close (its finally block). DBX expansion
-            // (incl. the production java-dbx plugin) needs java-dbx rebuilt against Tika 3.x. Skip the known
-            // case (top frame in net.sf.oereader.OEReader); this auto-reactivates once java-dbx is rebuilt.
-            // See specs/001-tika3-upgrade disposition ledger.
-            StackTraceElement[] st = e.getStackTrace();
-            if (st.length > 0 && st[0].getClassName().startsWith("net.sf.oereader.")) {
-                return;
-            }
-            throw e;
-        }
-        assertEquals(28, tracker.subitemCount);
+            assertEquals(28, tracker.subitemCount);
             assertEquals(28, tracker.itensmd5.size());
             assertEquals(0, tracker.modifieddate.size());
             assertEquals(0, tracker.folderCount);
@@ -75,6 +62,8 @@ public class OutlookDBXParserTest extends AbstractPkgTest {
             assertEquals("DF01055F040B2D1D05586D0110D3AC25", tracker.itensmd5.get(25));
             assertEquals("A77AADBD2365CAF89AF9AF00610BD02F", tracker.itensmd5.get(26));
             assertEquals("58F528FF2A6C7BF215AE07C0AFB8FB53", tracker.itensmd5.get(27));
+
+        }
     }
 
 }
