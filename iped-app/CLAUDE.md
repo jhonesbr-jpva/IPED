@@ -276,7 +276,7 @@ Estatísticas sobre valores únicos por campo (counts, ranges, money).
 | `copy-libreoffice` | `libre-office:libreoffice` | `6.1.5-p3` | `${tools.dir}/libreoffice.zip` |
 | `copy-caffviewer` | `de.caff:caffviewer` | `3.13.07` | `${tools.dir}/caffviewer` |
 | `copy-stanfordCoreNLP` | `edu.stanford.nlp:stanford-corenlp` | `3.8.0` | `${plugin.dir}` |
-| `copy-java-dbx` | `net.sf:java-dbx` | `1.1-p6` | `${plugin.dir}` |
+| `copy-java-dbx` | `com.github.sepinf-inc:java-dbx` (JitPack) | `1.1-p7` | `${plugin.dir}` |
 | `copy-telegram-decoder` | `com.github.sepinf-inc.telegram-decoder:telegram-decoder-impl` | `1.0.14` | `${plugin.dir}` |
 | `copy-nsfw-model` | `yahoo:nsfw-keras` | `1.0.0` | `${release.dir}/models` |
 | `download-regripper` | RegRipper3.0 (via GitHub, `download-maven-plugin`) | `3.0-p3` | `${tools.dir}/regripper` |
@@ -448,7 +448,7 @@ Estenda `BookmarksController` ou adicione listeners em `BookmarksTreeListener`. 
 ## 12. Dependências externas (runtime)
 
 Cargo de plugins/tools que o release espera encontrar:
-- **Plugins** (`plugins/`): Stanford CoreNLP 3.8.0, java-dbx 1.1-p6, telegram-decoder-impl 1.0.14, qualquer drop-in do usuário (TSK jar customizado, PhotoDNA jar restrito, etc.). Carregados pelo `PluginConfig` (engine).
+- **Plugins** (`plugins/`): Stanford CoreNLP 3.8.0, java-dbx 1.1-p7 (JitPack `com.github.sepinf-inc`), telegram-decoder-impl 1.0.14, qualquer drop-in do usuário (TSK jar customizado, PhotoDNA jar restrito, etc.). Carregados pelo `PluginConfig` (engine).
 - **Tools** (`tools/`): RegRipper, ImageMagick, Tesseract, MPlayer, GraphViz, libpff/libesedb/libagdb/libmsiecf/evt*export/sccainfo/rifiuti2, Sleuthkit DLLs, CaffViewer, LibreOffice zip.
 - **Models** (`models/`): DIE (rfdie.dat), NSFW (Yahoo Keras h5), Vosk pt/en.
 - **JRE**: `jre/` (Windows) — Liberica 11.0.13 Full FX.
