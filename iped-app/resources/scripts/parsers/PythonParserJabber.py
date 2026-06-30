@@ -12,7 +12,7 @@ from org.apache.tika.metadata import Metadata, Message, TikaCoreProperties
 from org.apache.tika.exception import TikaException
 from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from org.apache.tika.sax import EmbeddedContentHandler
-from org.apache.tika.parser.html import HtmlParser
+from org.apache.tika.parser.html import JSoupParser
 from iped.properties import ExtraProperties
 from iped.properties import BasicProps
 from iped.parsers.standard import StandardParser
@@ -118,7 +118,7 @@ class PythonParserJabber:
             origFileName = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
             
             # extract text from html chat to be indexed, searched for regexes and so on...
-            HtmlParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
+            JSoupParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
 
             soup_list = [BeautifulSoup(x,"html.parser") for x in open(tmpFilePath,'rb').readlines()]
             body = soup_list[0].find("body")
