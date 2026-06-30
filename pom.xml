@@ -89,6 +89,17 @@
             <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId><version>1.84</version></dependency>
             <dependency><groupId>org.bouncycastle</groupId><artifactId>bcmail-jdk18on</artifactId><version>1.84</version></dependency>
             <dependency><groupId>org.bouncycastle</groupId><artifactId>bcjmail-jdk18on</artifactId><version>1.84</version></dependency>
+            <!-- Converge ASM onto 9.10 (the version Tika 3.3.1 ships and validates against).
+                 nashorn-core 15.4 (via iped-engine) drags in asm 7.3.1 at a nearer level, so
+                 Maven's nearest-wins makes 7.3.1 win over Tika's 9.10. ASM 7.3.1 then rejects
+                 Tika's ClassParser, which builds a ClassVisitor with api=ASM9 (589824), throwing
+                 IllegalArgumentException("Unsupported api 589824") on every .class/.jar item.
+                 ASM is backward compatible (9.10 still accepts the ASM4..ASM7 APIs Nashorn uses). -->
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-commons</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-tree</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-util</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-analysis</artifactId><version>9.10</version></dependency>
         </dependencies>
     </dependencyManagement>
 
