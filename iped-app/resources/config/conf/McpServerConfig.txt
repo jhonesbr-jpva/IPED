@@ -1,0 +1,187 @@
+########################################################################
+# MCP server configuration (iped-mcp)
+#
+# Exposes processed IPED cases to LLM agents over the MCP protocol.
+# Every externally configurable behaviour of the server lives here, never
+# in code constants.
+########################################################################
+
+########################################################################
+# Audit trail
+########################################################################
+
+# Write-ahead buffer on the workstation. Written and fsynced on every
+# operation, which is what protects the trail against an abnormal
+# termination in the middle of a session.
+# Empty means ${user.home}/.iped/mcp-audit
+auditArea =
+
+# Name of the audit subfolder created inside the case folder. The case
+# folder is the durable home of the trail: it is what gets archived and
+# handed over. This name is what the read-only invariant check excludes.
+auditFolderNameInCase = mcp-audit
+
+# How often, in seconds, the trail is synchronized from the workstation
+# buffer into the case folder during a session. It is also synchronized
+# on close. No manual action by the examiner is ever required.
+auditSyncIntervalSeconds = 60
+
+########################################################################
+# Access mode
+########################################################################
+
+# READ_ONLY (default) or READ_WRITE. Read-only refuses every curation
+# tool without touching the case. This value is deliberately outside the
+# agent's reach: no exposed tool can change it.
+accessMode = READ_ONLY
+
+########################################################################
+# Egress policy
+#
+# Inactive by default (scope decision D3). With it inactive, evidence
+# content reaches the language model provider. The operational safeguard
+# is running against a local model - see the OpenCode install guide.
+########################################################################
+
+egressPolicyActive = false
+
+# Content classes the agent may receive when the policy is active.
+# Any subset of: metadata, text, thumbnail, binary
+egressAllowedClasses = metadata, text, thumbnail, binary
+
+# Categories whose content is blocked when the policy is active.
+# Comma-separated, matched case-insensitively against item categories.
+egressRestrictedCategories =
+
+# Extra attribute values marking sensitivity assigned during processing.
+# Comma-separated; an item carrying any of them has its content blocked
+# when the policy is active.
+egressRestrictedSensitivity =
+
+########################################################################
+# Query volume ceilings
+#
+# The cost of a query must be proportional to the result, not to the
+# collection. These ceilings are what keep a broad query on a 10 M item
+# case from materializing the whole match set.
+########################################################################
+
+defaultPageSize = 50
+maxPageSize = 200
+
+# Ceiling for a single batch item lookup (iped_get_items).
+maxBatchSize = 200
+
+# Time budget for one query. On exhaustion the result comes back flagged
+# as partial rather than truncated silently.
+queryTimeoutMs = 30000
+
+# Much of a case's vocabulary is namespaced with colons - p2p:fileType,
+# ufed:UserID, dc:title. Inside a query expression that colon has to be
+# escaped (p2p\:fileType:"mp3") or the parser reads it as the separator
+# between field and value. Left false, the server never alters the
+# expression: it refuses the query and names the corrected spelling, and
+# what runs is always what was asked. Set true and an expression that
+# fails only for that reason is repaired against the case's real field
+# names and run, with the repair declared in the result as
+# query_normalized. Turn it on for weaker local models, which otherwise
+# spend the session looping on the escape.
+autoEscapeFieldNames = false
+
+########################################################################
+# Content volume ceilings
+#
+# Truncation is always signalled, and the real size is always reported.
+########################################################################
+
+maxTextBytes = 100000
+maxContentBytes = 262144
+maxThumbnailBytes = 262144
+
+# Characters of context around a match in a search result snippet.
+snippetLength = 300
+
+# A snippet costs a text extraction, because the indexed content field is
+# not stored. These three keep that cost bounded so a page still comes
+# back fast: items past the ceiling, past the per-item text budget, or
+# past the page time budget come back with the snippet declared absent
+# and the reason given, never silently blank.
+snippetMaxItemsPerPage = 25
+snippetMaxTextBytes = 20000
+snippetBudgetMs = 3000
+
+########################################################################
+# Compatibility and export
+########################################################################
+
+# Declared supported case version range. A case outside it is refused
+# with a diagnostic naming the supported range.
+supportedVersionPrefix = 4.
+
+# Folders the server may write output artifacts into. Separated by ";",
+# not by "," — a Windows path carries a comma often enough that splitting
+# on one would cut a declared root in half with no error to explain it.
+#
+# This is a list of what is PERMITTED. A destination that resolves
+# anywhere else is refused, and "resolves" means the place the write
+# really reaches: a directory junction inside a permitted folder that
+# points outside it is refused, because the check follows it.
+#
+# Left empty, a default folder under the account's home directory is
+# used and created on demand, so an installation that upgrades without
+# editing this file keeps working and is still confined.
+#
+# exportRoots = D:\pericia\trabalho;D:\pericia\laudos
+exportRoots =
+
+# Output artifacts must not be written into the case folder by default.
+#
+# This suppresses the case-folder refusal ONLY. It does not re-open the
+# rest of the filesystem: with it on, a destination outside exportRoots
+# is still refused.
+allowExportIntoCaseFolder = false
+
+########################################################################
+# Transport
+########################################################################
+
+# How clients reach the server: "stdio" or "socket".
+#
+# stdio is the default and opens NO network port at all. Leave it alone
+# unless the harness has to run on a different machine from the case.
+transport = stdio
+
+# Where the network transport listens. There is deliberately no default:
+# a server that picks an address for you may expose more than you meant.
+# Both must be declared for "socket" to start.
+#
+# Use a loopback address unless the harness is genuinely on another
+# machine. With a VM on this same host, a forwarded loopback port keeps
+# the traffic inside the machine.
+#
+# listenAddress = 127.0.0.1
+# listenPort = 8737
+listenAddress =
+listenPort = 0
+
+# WHERE the shared secret is, never WHAT it is.
+#
+# This file ships with the release and tends to end up under version
+# control, so the secret must not be written here. The server reads, in
+# order: the IPED_MCP_SHARED_SECRET environment variable, then the
+# contents of the file named below.
+#
+# With transport = socket and neither one resolving to a non-empty
+# value, the endpoint is NOT established and the reason is reported. A
+# transport without authentication is not a degraded transport.
+#
+# sharedSecretFile = D:\pericia\segredo-mcp.txt
+sharedSecretFile =
+
+# Ceiling on simultaneous sessions. The expected order of magnitude is
+# "two examiners", not "a hundred clients".
+maxConcurrentSessions = 4
+
+# An authenticated connection that issues no request is closed after
+# this long, so it does not hold a session slot indefinitely.
+sessionIdleTimeoutSeconds = 300

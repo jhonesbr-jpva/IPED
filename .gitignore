@@ -7,3 +7,7 @@ nbactions.xml
 /.idea/
 # Overrides locais do Claude Code (contem caminhos por maquina)
 .claude/settings.local.json
+
+# Wrappers de skill por harness, gerados pelo iped-mcp em tempo de build.
+# A fonte de verdade e iped-mcp/src/main/resources/skill.
+/iped-app/resources/skills/

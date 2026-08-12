@@ -15,6 +15,7 @@
         <module>iped-geo</module>
         <module>iped-engine</module>
         <module>iped-graph-server</module>
+        <module>iped-mcp</module>
         <module>iped-app</module>
     </modules>
     
