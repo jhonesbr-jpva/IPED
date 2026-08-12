@@ -47,10 +47,10 @@ IPED/
 | Linguagem | Java 21 LTS (Liberica/BellSoft Full JDK com JavaFX) |
 | Build | Maven 3+ (multi-módulo, parent pom em `pom.xml`) |
 | Indexação/busca | Apache Lucene 9.2.0 |
-| Parsing | Apache Tika 2.4.0(-p1) + parsers customizados |
+| Parsing | Apache Tika 3.3.1 + parsers customizados |
 | Imagens forenses | The Sleuthkit 4.12.0.p1 (JNI + processo isolado) |
 | UI | Swing + JavaFX (`JFXPanel`) + DockingFrames 1.1.2 |
-| PDF | Apache PDFBox 2.0.27, IcePDF 7.0.0 |
+| PDF | Apache PDFBox 3.0.7, IcePDF 7.0.0 |
 | SQLite | xerial-sqlite-jdbc 3.41.2.2, libfqlite 1.57.05 (undelete) |
 | Office | LibreOffice 7.2.2 via UNO bridge + NOA-Libre |
 | Graph | Neo4j 5.26.0 (engine full embarcado **out-of-process via Bolt**, isolado em `lib/neo4j/` pelo módulo `iped-graph-server`; o engine consome só `neo4j-graphdb-api` + `neo4j-java-driver`) |

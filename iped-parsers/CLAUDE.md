@@ -166,8 +166,8 @@ Base: `SQLite3DBParser` → `AbstractDBParser`.
 
 | Lib | Versão | Para que serve |
 |---|---|---|
-| `tika-core`, `tika-parsers-standard-package` | 2.4.0(-p1) | Framework de parsing |
-| `tika-parser-sqlite3-module` | 2.4.0 | SQLite via Tika |
+| `tika-core`, `tika-parsers-standard-package` | 3.3.1 | Framework de parsing |
+| `tika-parser-sqlite3-module` | 3.3.1 | SQLite via Tika |
 | `sqlite-jdbc` | 3.41.2.2 | SQLite JDBC driver |
 | `java-libpst` | 0.9.5-20210209-p1 | Outlook PST |
 | `bencode` | 1.4.1 | BitTorrent / .torrent |

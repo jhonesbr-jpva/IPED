@@ -263,7 +263,7 @@ Configure com `<carverScriptFile>MyFormat.js</carverScriptFile>`.
 <!-- iped-carvers-api -->
 <dependency> <groupId>iped</groupId>               <artifactId>iped-utils</artifactId>      <version>${project.version}</version></dependency>
 <dependency> <groupId>iped</groupId>               <artifactId>iped-api</artifactId>        <version>${project.version}</version></dependency>
-<dependency> <groupId>org.apache.tika</groupId>    <artifactId>tika-core</artifactId>        <version>2.4.0-p1</version>        </dependency>
+<dependency> <groupId>org.apache.tika</groupId>    <artifactId>tika-core</artifactId>        <version>3.3.1</version>        </dependency>
 <dependency> <groupId>com.dampcake</groupId>       <artifactId>bencode</artifactId>          <version>1.4.1</version>           </dependency>
 <dependency> <groupId>iped</groupId>               <artifactId>iped-ahocorasick</artifactId> <version>1.1</version>              </dependency>
 

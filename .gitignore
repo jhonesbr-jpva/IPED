@@ -5,3 +5,5 @@ nbactions.xml
 /.project
 .pydevproject
 /.idea/
+# Overrides locais do Claude Code (contem caminhos por maquina)
+.claude/settings.local.json

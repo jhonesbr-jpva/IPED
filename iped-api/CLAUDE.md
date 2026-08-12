@@ -80,7 +80,7 @@ Tipos MIME customizados do IPED + helpers para o registro Tika:
 
 ```xml
 <dependency> <groupId>org.apache.lucene</groupId>    <artifactId>lucene-core</artifactId>    <version>9.2.0</version>       </dependency>
-<dependency> <groupId>org.apache.tika</groupId>      <artifactId>tika-core</artifactId>      <version>2.4.0-p1</version>    </dependency>
+<dependency> <groupId>org.apache.tika</groupId>      <artifactId>tika-core</artifactId>      <version>3.3.1</version>    </dependency>
 ```
 Logging (`log4j`, `slf4j`), JUnit, Hamcrest vêm do parent `iped:iped-parent`.
 

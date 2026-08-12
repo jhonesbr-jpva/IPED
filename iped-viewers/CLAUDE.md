@@ -68,7 +68,7 @@ Outros contratos importantes em `iped-viewers-api`:
 | `MsgViewer` | `application/vnd.ms-outlook` (`MediaTypes.OUTLOOK_MSG`) | POI HSMF + RTF→HTML | Converte RTF, extrai anexos. |
 | `AudioViewer` | `audio/*` | JavaFX MediaView (HTML `<audio>`) | Mostra duração + transcrição (`ExtraProperties.TRANSCRIPT_ATTR`). |
 | [`IcePDFViewer`](iped-viewers-impl/src/main/java/iped/viewers/IcePDFViewer.java) | `application/pdf` | IcePDF 7.0.0 | Suporta formulários/anotações; busca integrada (`DocumentSearchController`). |
-| `PDFBoxViewer` | `application/pdf` (alternativa) | PDFBox 2.0.27 + Graphics2D | Mais leve. CMYK puro Java. |
+| `PDFBoxViewer` | `application/pdf` (alternativa) | PDFBox 3.0.7 + Graphics2D | Mais leve. CMYK puro Java. |
 | `ImageViewer` | `image/*` | ImageIO + TwelveMonkeys + JAI + `ExternalImageConverter` | Zoom, rotação, brilho, blur, grayscale, detecção de face (externo). |
 | `TiffViewer` | `image/tiff` | TwelveMonkeys imageio-tiff | Navegação multi-página + orientação. |
 | `LibreOfficeViewer` | DOCX/XLSX/PPT/ODF/RTF | LibreOffice UNO + NOA-Libre | Daemon LO out-of-process, busca via `XSearchable`, profile em `~/.iped/libreoffice6/profile`. |
