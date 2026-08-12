@@ -20,7 +20,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -30,7 +30,7 @@ import com.github.horrorho.ragingmoose.LZFSEInputStream;
 
 import iped.utils.IOUtil;
 
-public class LZFSEParser extends AbstractParser {
+public class LZFSEParser implements Parser {
 
     /**
      * 

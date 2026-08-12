@@ -556,7 +556,9 @@ public class MetadataUtil {
     }
 
     private static void normalizeMSGMetadata(Metadata metadata) {
-        if (!metadata.get(Metadata.CONTENT_TYPE).equals(MediaTypes.OUTLOOK_MSG.toString()))
+        // Tika 3.x may leave Content-Type unset on this path; a null type is certainly not an MSG.
+        String contentType = metadata.get(Metadata.CONTENT_TYPE);
+        if (contentType == null || !contentType.equals(MediaTypes.OUTLOOK_MSG.toString()))
             return;
 
         String subject = metadata.get(TikaCoreProperties.TITLE);

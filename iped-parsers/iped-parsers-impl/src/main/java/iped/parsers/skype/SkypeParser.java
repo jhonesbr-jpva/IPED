@@ -21,7 +21,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -43,7 +43,7 @@ import iped.utils.IOUtil;
  *
  * @author Patrick Dalla Bernardina patrick.pdb@pf.gov.br
  */
-public class SkypeParser extends AbstractParser {
+public class SkypeParser implements Parser {
 
     /**
      * 
@@ -97,7 +97,7 @@ public class SkypeParser extends AbstractParser {
         if (itemInfo != null)
             filePath = itemInfo.getPath();
 
-        final TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        final TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         try {
             // call here instead of catch clause because calls, videos and other info are
             // not parsed currently

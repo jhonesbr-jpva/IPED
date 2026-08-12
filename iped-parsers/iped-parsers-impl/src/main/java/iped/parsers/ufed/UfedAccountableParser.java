@@ -17,9 +17,9 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.parser.html.JSoupParser;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,7 @@ import iped.properties.MediaTypes;
 import iped.search.IItemSearcher;
 import iped.utils.DateUtil;
 
-public class UfedAccountableParser extends AbstractParser {
+public class UfedAccountableParser implements Parser {
 
     private static final long serialVersionUID = -4738095481615972119L;
 
@@ -75,7 +75,7 @@ public class UfedAccountableParser extends AbstractParser {
             }
             if (accountable == null) {
                 // view is already generated — proceed to parse with HtmlParser
-                HtmlParser parser = new HtmlParser();
+                JSoupParser parser = new JSoupParser();
                 parser.parse(stream, handler, metadata, context);
                 return;
             }

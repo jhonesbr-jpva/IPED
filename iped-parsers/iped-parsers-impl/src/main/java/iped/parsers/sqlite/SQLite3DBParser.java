@@ -78,7 +78,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         TemporaryResources tmp = new TemporaryResources();
         try {
             final File tempDB;
-            File tikaFile = TikaInputStream.get(stream, tmp).getFile();
+            File tikaFile = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata()).getFile();
             if (!IOUtil.isTemporaryFile(tikaFile)) {
                 File tempFile = Files.createTempFile("sqlite_tmp", ".db").toFile();
                 tmp.addResource(() -> {

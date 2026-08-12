@@ -11,7 +11,6 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -73,7 +72,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedTelegramParser extends AbstractParser {
+    protected static class EmbeddedTelegramParser implements Parser {
 
         protected List<String> title = new ArrayList<String>();
         protected List<String> username = new ArrayList<String>();
@@ -116,7 +115,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedTelegramUserParser extends AbstractParser {
+    protected static class EmbeddedTelegramUserParser implements Parser {
 
         protected List<String> title = new ArrayList<String>();
         protected List<String> username = new ArrayList<String>();

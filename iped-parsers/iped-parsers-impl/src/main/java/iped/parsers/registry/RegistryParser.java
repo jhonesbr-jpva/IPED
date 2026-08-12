@@ -15,7 +15,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -31,7 +31,7 @@ import iped.parsers.util.EmbeddedItem;
 import iped.parsers.util.EmbeddedParent;
 import iped.parsers.util.ItemInfo;
 
-public class RegistryParser extends AbstractParser {
+public class RegistryParser implements Parser {
 
     private static final long serialVersionUID = 1L;
 

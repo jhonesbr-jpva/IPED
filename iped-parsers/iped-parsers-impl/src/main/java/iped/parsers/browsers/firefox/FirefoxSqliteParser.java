@@ -87,7 +87,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
         File bookmarksFile = tmp.createTemporaryFile();
         File historyFile = tmp.createTemporaryFile();
         File downloadFile = tmp.createTemporaryFile();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
         try (Connection connection = getConnection(tis, metadata, context)) {
 

@@ -41,7 +41,7 @@
         <!-- Disabled, I "think" font parsers caused crashes a long time ago, anyway, we don't need them
         <parser class="org.apache.tika.parser.font.AdobeFontMetricParser"></parser>
         <parser class="org.apache.tika.parser.font.TrueTypeParser"></parser>-->
-        <parser class="org.apache.tika.parser.html.HtmlParser"></parser>
+        <parser class="org.apache.tika.parser.html.JSoupParser"></parser>
         <!--parser class="org.apache.tika.parser.hwp.HwpV5Parser"></parser-->
         <!--parser class="org.apache.tika.parser.image.BPGParser"></parser>
         <parser class="org.apache.tika.parser.image.ImageParser"></parser>

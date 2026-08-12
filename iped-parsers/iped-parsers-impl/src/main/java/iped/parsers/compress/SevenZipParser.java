@@ -29,7 +29,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
 
-public class SevenZipParser extends AbstractParser {
+public class SevenZipParser implements Parser {
 
     /**
      * 
@@ -134,7 +134,7 @@ public class SevenZipParser extends AbstractParser {
         RandomAccessFile randomAccessFile = null;
         IInArchive inArchive = null;
         try {
-            File file = TikaInputStream.get(stream, tmp).getFile();
+            File file = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata()).getFile();
 
             String mimetype = metadata.get(Metadata.CONTENT_TYPE);
             if (mimetype.contains(ISO9660) || mimetype.contains(UDF))

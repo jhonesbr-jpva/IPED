@@ -8,6 +8,7 @@ For more info about general parser api, see https://github.com/sepinf-inc/IPED/w
 from org.apache.tika.io import TemporaryResources
 from org.apache.tika.parser.csv import TextAndCSVParser
 from org.apache.tika.io import TikaInputStream
+from org.apache.tika.metadata import Metadata
 
 
 class PythonParserExample:
@@ -57,10 +58,11 @@ class PythonParserExample:
             using the following code to create a temp file with the contents:
             
             from org.apache.tika.io import TikaInputStream
-            tis = TikaInputStream.get(stream, tmpResources)
+            tis = TikaInputStream.get(stream, tmpResources, Metadata())
             tmpFilePath = tis.getFile().getAbsolutePath()
             '''
-            tis = TikaInputStream.get(stream, tmpResources)
+            # Tika 3.x removed TikaInputStream.get(InputStream, TemporaryResources); pass a Metadata too.
+            tis = TikaInputStream.get(stream, tmpResources, Metadata())
             txtParser.parse(tis, handler, metadata, context)
 
             # populate parsed metadata to be shown as new item properties 

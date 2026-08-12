@@ -27,7 +27,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.mp4.MP4Parser;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -40,7 +40,7 @@ import iped.parsers.util.MetadataUtil;
  * Extrai conteúdo vazio para vídeos sem parser específico, enquanto nao é
  * implementada extração de metadados para eles.
  */
-public class EmptyVideoParser extends AbstractParser {
+public class EmptyVideoParser implements Parser {
 
     private static final long serialVersionUID = 1L;
 

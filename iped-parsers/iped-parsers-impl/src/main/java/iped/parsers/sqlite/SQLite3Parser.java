@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
 import org.xml.sax.ContentHandler;
@@ -45,7 +45,7 @@ import org.xml.sax.SAXException;
  * BLOB as embedded documents.
  *
  */
-public class SQLite3Parser extends AbstractParser {
+public class SQLite3Parser implements Parser {
     /** Serial version UID */
     private static final long serialVersionUID = -752276948656079347L;
 

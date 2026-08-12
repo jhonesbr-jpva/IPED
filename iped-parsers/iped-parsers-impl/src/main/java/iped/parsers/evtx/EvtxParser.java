@@ -20,7 +20,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ import iped.utils.EmptyInputStream;
 /*
  * Parser that extract event records grouped by EventID  
  */
-public class EvtxParser extends AbstractParser {
+public class EvtxParser implements Parser {
     private static Logger LOGGER = LoggerFactory.getLogger(EvtxParser.class);
 
     private static final long serialVersionUID = 9091294620647570196L;

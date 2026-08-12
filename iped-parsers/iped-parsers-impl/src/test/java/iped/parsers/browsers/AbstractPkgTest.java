@@ -10,7 +10,6 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -76,7 +75,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedChromeParser extends AbstractParser {
+    public static class EmbeddedChromeParser implements Parser {
 
         public List<String> bookmarktitle = new ArrayList<String>();
         public List<String> bookmarkurl = new ArrayList<String>();
@@ -106,7 +105,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedSafariParserDwl extends AbstractParser {
+    public static class EmbeddedSafariParserDwl implements Parser {
 
         public List<String> downloadurl = new ArrayList<String>();
         public List<String> downloadlocalpath = new ArrayList<String>();
@@ -136,7 +135,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedSafariParserBkm extends AbstractParser {
+    public static class EmbeddedSafariParserBkm implements Parser {
 
         public List<String> bookmarktitle = new ArrayList<String>();
         public List<String> bookmarkurl = new ArrayList<String>();
@@ -158,7 +157,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedSafariParserHst extends AbstractParser {
+    public static class EmbeddedSafariParserHst implements Parser {
 
         public List<String> historytitle = new ArrayList<String>();
         public List<String> historyaccessed = new ArrayList<String>();
@@ -188,7 +187,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedSafariParser extends AbstractParser {
+    public static class EmbeddedSafariParser implements Parser {
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -201,7 +200,7 @@ public abstract class AbstractPkgTest extends TestCase {
     }
 
     @SuppressWarnings("serial")
-    public static class EmbeddedFirefoxParser extends AbstractParser {
+    public static class EmbeddedFirefoxParser implements Parser {
 
         public List<String> bookmarktitle = new ArrayList<String>();
         public List<String> bookmarkurl = new ArrayList<String>();

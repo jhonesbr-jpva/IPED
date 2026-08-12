@@ -32,7 +32,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -50,7 +50,7 @@ import iped.search.IItemSearcher;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-public class ShareazaLibraryDatParser extends AbstractParser {
+public class ShareazaLibraryDatParser implements Parser {
 
     private static final long serialVersionUID = -207806473837042332L;
     public static final String LIBRARY_DAT_MIME_TYPE = "application/x-shareaza-library-dat"; //$NON-NLS-1$

@@ -39,7 +39,7 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -96,7 +96,7 @@ import iped.utils.SimpleHTMLEncoder;
    *
    * @author Felipe Farias da Costa
  */
-public class Win10MailParser extends AbstractParser {
+public class Win10MailParser implements Parser {
 
     public static final MediaType WIN10_MAIL_DB = MediaType.application("x-win10-mail-db");
     public static final MediaType WIN10_MAIL_MSG = MediaType.parse("message/x-win10-mail-msg");
@@ -191,7 +191,7 @@ public class Win10MailParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         File storeVolFile = null;
-        TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp);
+        TikaInputStream storeVolTis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
         params.extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));

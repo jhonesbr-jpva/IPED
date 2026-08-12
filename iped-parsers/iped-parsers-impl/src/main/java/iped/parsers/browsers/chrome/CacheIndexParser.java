@@ -14,7 +14,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.IOUtil;
 
-public class CacheIndexParser extends AbstractParser {
+public class CacheIndexParser implements Parser {
 
     // TODO
     private static final long serialVersionUID = 1L;

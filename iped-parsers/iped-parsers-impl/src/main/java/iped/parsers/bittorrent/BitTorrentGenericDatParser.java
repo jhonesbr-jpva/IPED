@@ -18,7 +18,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -29,7 +29,7 @@ import iped.parsers.util.Messages;
 import iped.parsers.util.Util;
 import iped.utils.TimeConverter;
 
-public class BitTorrentGenericDatParser extends AbstractParser {
+public class BitTorrentGenericDatParser implements Parser {
     private static final long serialVersionUID = -5053923300569187504L;
     private static final String SETTINGS_DAT_MIME_TYPE = "application/x-bittorrent-settings-dat";
     private static final Set<MediaType> SUPPORTED_TYPES = Collections

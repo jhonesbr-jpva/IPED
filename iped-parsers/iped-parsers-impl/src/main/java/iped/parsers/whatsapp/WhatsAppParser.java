@@ -61,7 +61,6 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.apache.xerces.impl.io.MalformedByteSequenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -249,7 +248,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             mimetype = metadata.get(Metadata.CONTENT_TYPE);
         }
         try (TemporaryResources tmp = new TemporaryResources()) {
-            stream = TikaInputStream.get(stream, tmp);
+            stream = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
             if (mimetype.equals(WA_USER_PLIST.toString())) {
                 parseWhatsAppAccount(stream, context, handler, false);
@@ -276,7 +275,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         } catch (Exception e) {
             // log all whatsapp exceptions
-            if (e.getCause() != null && (e.getCause() instanceof MalformedByteSequenceException)) {
+            if (e.getCause() != null && e.getCause().getClass().getSimpleName().equals("MalformedByteSequenceException")) {
                 logger.warn("Possibly corrupted file: {} > {}", item, e.getMessage());
             } else {
                 logger.error("Error parsing WhatsApp: " + item, e);
@@ -400,7 +399,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         TemporaryResources tmp = new TemporaryResources();
 
         if (extractor.shouldParseEmbedded(metadata)) {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             try {
                 ItemInfo itemInfo = context.get(ItemInfo.class);
                 String filePath = null;
@@ -590,7 +589,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context, WAContactsDirectory contacts, WAAccount account)
             throws WAExtractorException, IOException, SQLException {
         try (TemporaryResources tmp = new TemporaryResources()) {
-            TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp);
+            TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp, new org.apache.tika.metadata.Metadata());
             File tempFile = tis.getFile();
 
             String filePath = null;
@@ -701,7 +700,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             boolean isAndroid = extFactory instanceof ExtractorAndroidFactory;
             WAAccount account = getUserAccount(searcher, DB.getPath(), isAndroid);
 
-            File tmpDB = TikaInputStream.get(stream, tmp).getFile();
+            File tmpDB = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata()).getFile();
 
             stream.skip(wcontext.getItem().getLength());
 
@@ -1283,7 +1282,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         TemporaryResources tmp = new TemporaryResources();
 
         if (extractor.shouldParseEmbedded(metadata)) {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File contactDbFile = tis.getFile();
             try {
                 WAContactsExtractor waExtractor = extFactory.createContactsExtractor(contactDbFile,

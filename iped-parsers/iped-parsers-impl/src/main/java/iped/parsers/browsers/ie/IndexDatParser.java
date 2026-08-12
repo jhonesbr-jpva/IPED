@@ -29,7 +29,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ import iped.utils.IOUtil;
  * @author Nassif
  *
  */
-public class IndexDatParser extends AbstractParser {
+public class IndexDatParser implements Parser {
 
     /**
      * 
@@ -100,7 +100,7 @@ public class IndexDatParser extends AbstractParser {
         Process p = null;
         Thread readThread = null;
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
 
             String[] cmd = { TOOL_PATH + TOOL_NAME, "-m", "all", file.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$

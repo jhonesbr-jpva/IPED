@@ -21,7 +21,7 @@ import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -48,7 +48,7 @@ import iped.parsers.whatsapp.Util;
 import iped.properties.ExtraProperties;
 import iped.utils.SimpleHTMLEncoder;
 
-public class VCardParser extends AbstractParser {
+public class VCardParser implements Parser {
 
     private static final long serialVersionUID = -7436203736342471550L;
 

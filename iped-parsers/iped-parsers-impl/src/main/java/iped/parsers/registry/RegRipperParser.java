@@ -26,7 +26,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
-public class RegRipperParser extends AbstractParser {
+public class RegRipperParser implements Parser {
 
     /**
      * 
@@ -124,7 +124,7 @@ public class RegRipperParser extends AbstractParser {
         
         TemporaryResources tmp = new TemporaryResources();
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
             File tempFile = tis.getFile();
 

@@ -10,7 +10,6 @@ import java.util.Set;
 import javax.xml.XMLConstants;
 
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.ccil.cowan.tagsoup.HTMLSchema;
 import org.ccil.cowan.tagsoup.Schema;

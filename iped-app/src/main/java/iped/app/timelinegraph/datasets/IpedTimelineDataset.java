@@ -23,7 +23,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
+import iped.utils.SeekableFileInputStream;
 import org.jfree.chart.event.PlotChangeEvent;
 import org.jfree.chart.util.Args;
 import org.jfree.chart.util.PublicCloneable;
@@ -380,7 +380,7 @@ public class IpedTimelineDataset extends AbstractIntervalXYDataset implements Cl
                     cacheWindowEndDate = new Date(ipedChartsPanel.getChartPanel().removeNextFromDatePart(endDate).getTime() - 1);
                 }
 
-                try (RandomAccessBufferedFileInputStream sfis = a.getTmpCacheSfis(className)) {
+                try (SeekableFileInputStream sfis = a.getTmpCacheSfis(className)) {
                     if (sfis != null) {
                         Iterator<CacheTimePeriodEntry> it = a.iterator(className, sfis, startDate, endDate);
                         while (it != null && it.hasNext()) {

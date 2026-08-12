@@ -50,7 +50,7 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.microsoft.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
@@ -86,7 +86,7 @@ import iped.utils.SimpleHTMLEncoder;
  * @author Nassif
  *
  */
-public class OutlookPSTParser extends AbstractParser {
+public class OutlookPSTParser implements Parser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(OutlookPSTParser.class);
     private static final long serialVersionUID = 5552796814190294332L;
@@ -151,7 +151,7 @@ public class OutlookPSTParser extends AbstractParser {
         PSTFile pstFile = null;
         boolean libpffCalled = false;
         try {
-            tis = TikaInputStream.get(stream, tmp);
+            tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             tmpFile = tis.getFile();
 
             pstFile = new PSTFile(tmpFile);

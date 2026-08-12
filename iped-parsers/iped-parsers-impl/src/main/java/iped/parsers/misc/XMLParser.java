@@ -28,7 +28,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlMapper;
-import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.parser.html.JSoupParser;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.apache.tika.parser.xml.DcXMLParser;
 import org.xml.sax.ContentHandler;
@@ -48,7 +48,7 @@ import iped.parsers.standard.RawStringParser;
 public class XMLParser extends DcXMLParser {
 
     private static final long serialVersionUID = 1L;
-    private HtmlParser htmlParser = new HtmlParser();
+    private JSoupParser htmlParser = new JSoupParser();
     private RawStringParser rawParser = new RawStringParser();
 
     @Override
@@ -58,7 +58,7 @@ public class XMLParser extends DcXMLParser {
         IStreamSource streamSource = context.get(IStreamSource.class);
         TemporaryResources tmp = new TemporaryResources();
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             Path path = null;
             if (tis.hasFile() || streamSource == null) {
                 path = tis.getPath();

@@ -45,7 +45,7 @@ public class MP4Detector implements Detector {
         }
 
         try (TemporaryResources tmp = new TemporaryResources()) {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
             byte[] prefix = new byte[12];
             int len = tis.peek(prefix);

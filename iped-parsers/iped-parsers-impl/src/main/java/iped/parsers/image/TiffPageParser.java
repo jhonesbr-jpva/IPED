@@ -13,7 +13,7 @@ import javax.imageio.stream.ImageInputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
 
 import iped.data.IItemReader;
 
-public class TiffPageParser extends AbstractParser {
+public class TiffPageParser implements Parser {
     private static final long serialVersionUID = 2340523222085300794L;
     public static final String propNumPages = "tiff:NumPages";
     public static final String propExifPageCount = "exif:PageCount";

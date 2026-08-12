@@ -185,6 +185,13 @@
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>8.3.8</version>
+            <exclusions>
+                <!-- minio drags in the legacy BouncyCastle jdk15on line; use the global jdk18on 1.84 instead -->
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
@@ -225,6 +232,12 @@
   			</exclusions>
 		</dependency>
 		<dependency>
+  			<!-- PDFBox 3 split out the IO classes (org.apache.pdfbox.io.*) used by iped-app timeline cache -->
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox-io</artifactId>
+  			<version>${pdfbox.version}</version>
+		</dependency>
+		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox-tools</artifactId>
   			<version>${pdfbox.version}</version>
@@ -243,7 +256,7 @@
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
-  			<version>3.0.4</version>
+  			<version>3.0.5</version>
 		</dependency>
         <dependency>
    			<groupId>com.zaxxer</groupId>
@@ -293,14 +306,14 @@
         </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.70</version>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.84</version>
 		</dependency>
 		<dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this -->
-            <version>1.27.1</version>
+            <!-- check https://github.com/sepinf-inc/IPED/issues/1068 when upgrading this; aligned to Tika 3.3.1's 1.28.0 -->
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>

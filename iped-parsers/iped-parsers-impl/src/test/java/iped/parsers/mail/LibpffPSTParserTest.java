@@ -120,7 +120,8 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
 
                 String messageSubjects = psttracker.messagesubject.toString();
                 String messageDates = psttracker.messagedate.toString();
-                String messageBodies = psttracker.messagebody.toString();
+                // Tika 3.x emits CRLF line breaks where 2.4 emitted LF; strip CR for the LF-based body checks.
+                String messageBodies = psttracker.messagebody.toString().replace("\r", "");
 
                 // real message
                 assertTrue(messageSubjects.contains("Re: [sepinf-inc/IPED] WIP Parsers tests (#481)"));
@@ -130,7 +131,7 @@ public class LibpffPSTParserTest extends AbstractPkgTest {
                                 + " my mistake. Thanks for the tip!! Good. I also confu(...)"));
                 assertTrue(messageDates.contains("2021-04-26"));
                 assertTrue(messageBodies.contains("Bom dia, Guilherme! A UnB assinou o TCE/PA? At.te,"
-                        + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta NAD/SELO/DITEC/(...)"));
+                        + " ELIZÃ�NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta NAD/SELO/DITEC/(...)"));
                 assertTrue(messageDates.contains("2021-03-29"));
 
                 // attachment

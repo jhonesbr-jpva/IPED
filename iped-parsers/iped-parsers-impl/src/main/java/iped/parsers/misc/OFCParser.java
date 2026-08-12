@@ -43,7 +43,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -61,7 +61,7 @@ import iped.properties.ExtraProperties;
  * 
  **/
 
-public class OFCParser extends AbstractParser {
+public class OFCParser implements Parser {
 
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-ofc");
@@ -362,7 +362,7 @@ public class OFCParser extends AbstractParser {
         try {
 
             tmp = new TemporaryResources();
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
 
             FileInputStream inputStream = new FileInputStream(file);

@@ -37,7 +37,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -48,7 +47,7 @@ import org.xml.sax.SAXException;
 import iped.io.URLUtil;
 import iped.utils.IOUtil;
 
-public class ForkParser extends AbstractParser {
+public class ForkParser implements Parser {
 
     /** Serial version UID */
     private static final long serialVersionUID = -4962742892274663950L;
@@ -354,7 +353,7 @@ public class ForkParser extends AbstractParser {
         try {
             // must create temp file because of parsers that read directly from stream when
             // creating subitems (eg. rfc822parser)
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             tis.getFile();
 
             client = acquireClient();

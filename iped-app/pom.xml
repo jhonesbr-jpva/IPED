@@ -493,7 +493,7 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>net.sf</groupId>
+                                    <groupId>com.github.sepinf-inc</groupId>
     								<artifactId>java-dbx</artifactId>
     								<version>${java.dbx.version}</version>
                                     <type>jar</type>

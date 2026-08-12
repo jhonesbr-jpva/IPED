@@ -26,7 +26,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ import iped.utils.ImageUtil;
  * @author PCF Patrick Dalla Bernardina
  *
  */
-public class DiscordParser extends AbstractParser {
+public class DiscordParser implements Parser {
 
     // TODO
 
@@ -143,7 +143,7 @@ public class DiscordParser extends AbstractParser {
         String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTID + ":" + item.getParentId() + " AND NOT " + BasicProps.LENGTH + ":0 AND "
                 + CacheIndexParser.IS_CACHE_INDEX_ENTRY.replace(":", "\\:") + ":true";
 
-        try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources())) {
+        try (InputStream is = TikaInputStream.get(indexFile, new TemporaryResources(), new org.apache.tika.metadata.Metadata())) {
 
             InputStream jsonStream = getDecompressedStream(is);
 

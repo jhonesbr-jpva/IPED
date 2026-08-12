@@ -27,7 +27,7 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -40,7 +40,7 @@ import iped.utils.RandomFilterInputStream;
  * tipos desconhecidos e drivefreespace. É utilizada uma heurística para
  * detectar codificações ISO-8859-1, UTF-8 e UTF-16 mescladas num mesmo arquivo.
  */
-public class RawStringParser extends AbstractParser {
+public class RawStringParser implements Parser {
 
     private static final long serialVersionUID = 1L;
     /**

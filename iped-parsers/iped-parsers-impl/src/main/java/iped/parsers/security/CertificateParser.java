@@ -29,7 +29,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -41,7 +41,7 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-public class CertificateParser extends AbstractParser {
+public class CertificateParser implements Parser {
     /**
 	 * 
 	 */
@@ -77,7 +77,7 @@ public class CertificateParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         File file = tis.getFile();
 
         try {
@@ -242,10 +242,10 @@ public class CertificateParser extends AbstractParser {
                     ASN1Sequence altNameSeq = getAltnameSequence(altNameBytes);
                     final ASN1TaggedObject obj = (ASN1TaggedObject) altNameSeq.getObjectAt(1);
                     if (obj != null) {
-                        ASN1Primitive prim = obj.getObject();
+                        ASN1Primitive prim = obj.getBaseObject().toASN1Primitive();
                         // can be tagged one more time
                         if (prim instanceof ASN1TaggedObject) {
-                            prim = ASN1TaggedObject.getInstance(((ASN1TaggedObject) prim)).getObject();
+                            prim = ASN1TaggedObject.getInstance(((ASN1TaggedObject) prim)).getBaseObject().toASN1Primitive();
                         }
 
                         if (prim instanceof ASN1OctetString) {

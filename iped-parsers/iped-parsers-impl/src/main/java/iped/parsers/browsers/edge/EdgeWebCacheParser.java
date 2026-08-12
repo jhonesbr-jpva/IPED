@@ -22,7 +22,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -46,7 +46,7 @@ import iped.properties.ExtraProperties;
 import iped.utils.EmptyInputStream;
 import iped.utils.TimeConverter;
 
-public class EdgeWebCacheParser extends AbstractParser {
+public class EdgeWebCacheParser implements Parser {
 
     /**
      * 
@@ -127,7 +127,7 @@ public class EdgeWebCacheParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
         File webcacheFile = tmp.createTemporaryFile();
         File evidenceFile = null;
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
 
         try {
 

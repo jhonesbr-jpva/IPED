@@ -130,7 +130,7 @@ public class EventTranscriptParser extends SQLite3DBParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 
         TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         File browserHistoryFile = tmp.createTemporaryFile();
         File inventoryAppsFile = tmp.createTemporaryFile();
         File appInteractivityFile = tmp.createTemporaryFile();

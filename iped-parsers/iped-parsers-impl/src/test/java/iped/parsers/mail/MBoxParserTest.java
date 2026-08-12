@@ -13,7 +13,6 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -42,7 +41,7 @@ public class MBoxParserTest extends AbstractPkgTest {
     }
 
     @SuppressWarnings("serial")
-    protected static class EmbeddedMboxParser extends AbstractParser {
+    protected static class EmbeddedMboxParser implements Parser {
         protected List<String> messagesubject = new ArrayList<String>();
         protected List<String> contenttype = new ArrayList<String>();
         protected List<String> contentmd5 = new ArrayList<String>();

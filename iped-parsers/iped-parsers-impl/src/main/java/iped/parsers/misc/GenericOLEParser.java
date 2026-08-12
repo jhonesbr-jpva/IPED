@@ -23,7 +23,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -32,7 +32,7 @@ import org.xml.sax.SAXException;
 import iped.parsers.standard.RawStringParser;
 import iped.utils.IOUtil;
 
-public class GenericOLEParser extends AbstractParser {
+public class GenericOLEParser implements Parser {
 
     /**
      * 
@@ -59,7 +59,7 @@ public class GenericOLEParser extends AbstractParser {
         xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
         File file = tis.getFile();
         POIFSFileSystem poiFS = null;
         FileInputStream fis = null;

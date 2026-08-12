@@ -11,7 +11,6 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
@@ -21,7 +20,7 @@ import org.xml.sax.SAXException;
 
 import iped.parsers.standard.StandardParser;
 
-public class OutlookDBXParser extends AbstractParser {
+public class OutlookDBXParser implements Parser {
 
     private static final long serialVersionUID = 1L;
 
@@ -87,7 +86,8 @@ public class OutlookDBXParser extends AbstractParser {
         public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
                 throws SAXException, IOException {
 
-            if (metadata.get(Metadata.CONTENT_TYPE).equals("message/rfc822")) //$NON-NLS-1$
+            // Tika 3.x may not set Content-Type on the embedded metadata before parseEmbedded; null-safe compare.
+            if ("message/rfc822".equals(metadata.get(Metadata.CONTENT_TYPE))) //$NON-NLS-1$
                 metadata.set(StandardParser.INDEXER_CONTENT_TYPE, "message/rfc822"); //$NON-NLS-1$
 
             extractor.parseEmbedded(stream, handler, metadata, outputHtml);

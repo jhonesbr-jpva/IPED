@@ -254,8 +254,11 @@ public class StandardParserTest extends TestCase {
             String hts = handler.toString();
 
             assertTrue(hts.contains("Freshman Resume"));
-            assertTrue(hts.contains("Education Massachusetts Institute of Technology (MIT) Cambridge, MA"));
-            assertTrue(hts.contains("UROP-Diabetes Management Project February 2016-Present"));
+            // Tika/PDFBox 3 renders the resume's inter-column gap as a tab+space where PDFBox 2 used a
+            // single space; normalize whitespace so the asserted words/order are checked regardless.
+            String htsWs = hts.replaceAll("\\s+", " ");
+            assertTrue(htsWs.contains("Education Massachusetts Institute of Technology (MIT) Cambridge, MA"));
+            assertTrue(htsWs.contains("UROP-Diabetes Management Project February 2016-Present"));
 
             assertTrue(hts.contains("Indexer-Content-Type: application/pdf"));
             assertTrue(hts.contains(PARSED_BY + ": " + PDFParser.class.getName()));
@@ -264,7 +267,8 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("pdf:access_permission:assemble_document: true"));
             assertTrue(hts.contains("pdf:access_permission:can_modify: true"));
             assertTrue(hts.contains("pdf:access_permission:can_print: true"));
-            assertTrue(hts.contains("pdf:access_permission:can_print_degraded: true"));
+            // Tika 3.x renamed the PDF permission key can_print_degraded -> can_print_faithful (same value).
+            assertTrue(hts.contains("pdf:access_permission:can_print_faithful: true"));
             assertTrue(hts.contains("pdf:access_permission:extract_content: true"));
             assertTrue(hts.contains("pdf:access_permission:extract_for_accessibility: true"));
             assertTrue(hts.contains("pdf:access_permission:fill_in_form: true"));
@@ -285,10 +289,12 @@ public class StandardParserTest extends TestCase {
             assertTrue(hts.contains("pdf:hasXMP: true"));
             assertTrue(hts.contains("pdf:producer: Adobe PDF Library 15.0"));
             assertTrue(hts.contains("pdf:unmappedUnicodeCharsPerPage: 0"));
-            assertTrue(hts.contains("pdf:xmp:CreateDate: 2017-08-29T14:12:20Z"));
+            // Tika 3.x normalizes XMP dates to UTC (consistent with the docinfo dates) instead of applying a
+            // local-zone offset; the instants are unchanged.
+            assertTrue(hts.contains("pdf:xmp:CreateDate: 2017-08-29T19:12:20Z"));
             assertTrue(hts.contains("common:xmp:CreatorTool: Adobe InDesign CC 2017 (Macintosh)"));
-            assertTrue(hts.contains("pdf:xmp:MetadataDate: 2017-09-12T15:12:44Z"));
-            assertTrue(hts.contains("pdf:xmp:ModifyDate: 2017-09-12T15:12:44Z"));
+            assertTrue(hts.contains("pdf:xmp:MetadataDate: 2017-09-12T19:12:44Z"));
+            assertTrue(hts.contains("pdf:xmp:ModifyDate: 2017-09-12T19:12:44Z"));
             assertTrue(hts.contains("pdf:xmpMM:DerivedFrom:DocumentID: xmp.did:f3bb53b2-ad53-4b82-8274-0773472726fc"));
             assertTrue(hts.contains("pdf:xmpMM:DerivedFrom:InstanceID: xmp.iid:367905db-1695-4b2f-853d-67618bdd58a9"));
             assertTrue(hts.contains("pdf:xmpMM:DocumentID: xmp.id:53055f1a-dc31-4555-871e-832d1d70ed0e"));

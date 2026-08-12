@@ -30,9 +30,8 @@
         <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
-        <tika.version>2.4.0</tika.version><!-- SyncMetadata change done in commit b673cf4 can be reverted when version is upgraded to include solution of https://issues.apache.org/jira/browse/TIKA-4126 -->
-        <tika.core.version>2.4.0-p1</tika.core.version>
-        <pdfbox.version>2.0.27</pdfbox.version>
+        <tika.version>3.3.1</tika.version><!-- TIKA-4126: verify fixed in 3.3.1, then revert SyncMetadata workaround (commit b673cf4) — see specs/001-tika3-upgrade task T028 -->
+        <pdfbox.version>3.0.7</pdfbox.version>
         <lucene.version>9.2.0</lucene.version>
         <sleuthkit.version>4.15.0.p1</sleuthkit.version>
         <libreoffice.version>7.2.2</libreoffice.version>
@@ -41,7 +40,7 @@
         <junit.version>4.13.2</junit.version>
         <hamcrest.version>3.0</hamcrest.version>
         <icepdf.version>7.0.0</icepdf.version>
-        <java.dbx.version>1.1-p6</java.dbx.version>
+        <java.dbx.version>1.1-p7</java.dbx.version>
         <xerial.sqlite.version>3.51.3.0</xerial.sqlite.version>
         <dockingframes.version>1.1.2</dockingframes.version>
         <telegram.version>1.0.15</telegram.version>
@@ -71,6 +70,38 @@
             <url>https://jitpack.io</url>
         </repository>
     </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Align the PDFBox companion + commons-lang3 to the versions Tika 3.3.1 / PDFBox 3.0.7 require.
+                 Maven's nearest-wins otherwise drags in the stale transitive versions:
+                 - fontbox 2.0.26 (pulled by icepdf-core 7.0.0) wins over pdfbox 3.0.7's fontbox 3.0.7,
+                   causing NoSuchMethodError TTFParser.parse(RandomAccessRead) against the pdfbox-io 3.x API;
+                 - commons-lang3 3.12.0 (pulled by commons-text 1.10.0) wins over the 3.20.0 that
+                   commons-compress 1.28.0 needs, causing NoClassDefFoundError o.a.c.lang3.SystemProperties. -->
+            <dependency><groupId>org.apache.pdfbox</groupId><artifactId>fontbox</artifactId><version>${pdfbox.version}</version></dependency>
+            <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.20.0</version></dependency>
+            <!-- Converge BouncyCastle onto a single jdk18on 1.84 line (the one Tika 3.3.1 ships).
+                 The legacy jdk15on 1.69/1.70 line is excluded at its sources (minio, icepdf) to
+                 avoid a split-package conflict (both define org.bouncycastle.*). -->
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcprov-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcutil-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcmail-jdk18on</artifactId><version>1.84</version></dependency>
+            <dependency><groupId>org.bouncycastle</groupId><artifactId>bcjmail-jdk18on</artifactId><version>1.84</version></dependency>
+            <!-- Converge ASM onto 9.10 (the version Tika 3.3.1 ships and validates against).
+                 nashorn-core 15.4 (via iped-engine) drags in asm 7.3.1 at a nearer level, so
+                 Maven's nearest-wins makes 7.3.1 win over Tika's 9.10. ASM 7.3.1 then rejects
+                 Tika's ClassParser, which builds a ClassVisitor with api=ASM9 (589824), throwing
+                 IllegalArgumentException("Unsupported api 589824") on every .class/.jar item.
+                 ASM is backward compatible (9.10 still accepts the ASM4..ASM7 APIs Nashorn uses). -->
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-commons</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-tree</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-util</artifactId><version>9.10</version></dependency>
+            <dependency><groupId>org.ow2.asm</groupId><artifactId>asm-analysis</artifactId><version>9.10</version></dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>

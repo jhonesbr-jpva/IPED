@@ -29,7 +29,7 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.microsoft.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
@@ -48,7 +48,7 @@ import iped.properties.ExtraProperties;
 import iped.utils.IOUtil;
 import iped.utils.SimpleHTMLEncoder;
 
-public class LibpffPSTParser extends AbstractParser {
+public class LibpffPSTParser implements Parser {
 
     /**
      * 
@@ -154,7 +154,7 @@ public class LibpffPSTParser extends AbstractParser {
         File tmpFile = File.createTempFile("iped", ".tmp"); //$NON-NLS-1$ //$NON-NLS-2$
         Process p = null;
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp, new org.apache.tika.metadata.Metadata());
             File file = tis.getFile();
 
             String extractionMode = "all"; //$NON-NLS-1$

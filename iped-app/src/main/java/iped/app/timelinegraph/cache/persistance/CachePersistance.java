@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.HexFormat;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
+import iped.utils.SeekableFileInputStream;
 import org.jfree.data.time.TimePeriod;
 import org.roaringbitmap.RoaringBitmap;
 
@@ -407,7 +407,7 @@ public class CachePersistance {
         public CacheFileIterator(File f) {
             this.f = f;
             try {
-                dis = new DataInputStream(new RandomAccessBufferedFileInputStream(f));
+                dis = new DataInputStream(new SeekableFileInputStream(f));
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

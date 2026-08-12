@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
+import iped.utils.SeekableFileInputStream;
 
 import iped.app.timelinegraph.cache.persistance.CachePersistance;
 
@@ -40,7 +40,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         this.monthIndexCacheFiles.put(string, new File(new File(f, string), "1"));
 
         int committed = 0;
-        try (RandomAccessBufferedFileInputStream lcacheSfis = new RandomAccessBufferedFileInputStream(cacheFile); DataInputStream lcacheDis = new DataInputStream(lcacheSfis)) {
+        try (SeekableFileInputStream lcacheSfis = new SeekableFileInputStream(cacheFile); DataInputStream lcacheDis = new DataInputStream(lcacheSfis)) {
             committed = lcacheDis.readShort();
         }
         if (committed != 1) {
@@ -52,16 +52,16 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
     Date lastStartDate = null;
     Date lastEndDate = null;
 
-    public RandomAccessBufferedFileInputStream getTmpCacheSfis(String className) throws IOException {
+    public SeekableFileInputStream getTmpCacheSfis(String className) throws IOException {
         File f = cacheFiles.get(className);
         if (f != null) {
-            return new RandomAccessBufferedFileInputStream(f);
+            return new SeekableFileInputStream(f);
         } else {
             return null;
         }
     }
 
-    public ResultIterator iterator(String className, RandomAccessBufferedFileInputStream lcacheSfis, Date startDate, Date endDate) {
+    public ResultIterator iterator(String className, SeekableFileInputStream lcacheSfis, Date startDate, Date endDate) {
         try {
             DataInputStream lcacheDis = new DataInputStream(lcacheSfis);
 
@@ -72,7 +72,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
 
             CacheTimePeriodEntry[] cache = timelineCache.get(className, entries);
 
-            long startpos = lcacheSfis.getPosition();// position of first entry in cache
+            long startpos = lcacheSfis.position();// position of first entry in cache
             if (startDate != null) {
                 // if start date is given, search for the position of correspondent first entry
                 // throught month index
@@ -133,7 +133,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
         int cacheCurrentIndex = 0;// current index being iterated (sum with startIndex to identify correspondent
                                   // cache array index)
         private CacheTimePeriodEntry[] lcache;// cache array to iterate
-        private RandomAccessBufferedFileInputStream lcacheSfis;// seekable stream to index file (to read from when entry not in cache)
+        private SeekableFileInputStream lcacheSfis;// seekable stream to index file (to read from when entry not in cache)
         private DataInputStream lcacheDis;// data parser stream to same above index file
         private TreeMap<Long, Integer> lcacheIndexes;
         private long startDate = 0;
@@ -151,7 +151,7 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                                    // from position in file)
         private long startPos;// start position in file to iterate
 
-        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, RandomAccessBufferedFileInputStream lcacheSfis, DataInputStream lcacheDis, long endDate, String className) {
+        public ResultIterator(long pos, Integer startIndex, TimelineCache timelineCache, SeekableFileInputStream lcacheSfis, DataInputStream lcacheDis, long endDate, String className) {
             this.startPos = pos;
             this.startIndex = startIndex;
             this.lcache = timelineCache.caches.get(className);
@@ -196,11 +196,11 @@ public class TimeIndexedMap extends HashMap<String, Set<CacheTimePeriodEntry>> {
                 if (lastHasNext == null) {// not in cache so load from file
                     long curpos = nextSeekPos;
                     synchronized (lcacheSfis) {
-                        if (nextSeekPos != lcacheSfis.getPosition()) {
+                        if (nextSeekPos != lcacheSfis.position()) {
                             lcacheSfis.seek(nextSeekPos);
                         }
                         lastHasNext = cp.loadNextEntry(lcacheDis, cp.isBitstreamSerialize());
-                        nextSeekPos = lcacheSfis.getPosition();
+                        nextSeekPos = lcacheSfis.position();
                     }
                     countRead++;
                     if (lcache != null && useCache) {

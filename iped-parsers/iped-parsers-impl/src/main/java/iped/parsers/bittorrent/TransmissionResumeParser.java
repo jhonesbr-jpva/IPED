@@ -13,7 +13,7 @@ import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -28,7 +28,7 @@ import iped.properties.ExtraProperties;
 import iped.search.IItemSearcher;
 import iped.utils.LocalizedFormat;
 
-public class TransmissionResumeParser extends AbstractParser {
+public class TransmissionResumeParser implements Parser {
     private static final long serialVersionUID = 2692632610374337656L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections
             .singleton(MediaType.application("x-transmission-resume"));
