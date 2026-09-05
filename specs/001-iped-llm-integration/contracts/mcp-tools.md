@@ -33,6 +33,8 @@ Valida integridade e faixa de versão antes de aceitar (FR-001, FR-002, FR-054).
 
 Retorna `case_id`, `total_items`, `iped_version`, `evidences`.
 
+Abre também, somente para leitura, o repositório de previews do caso (FR-085): item decodificado de dentro de um contêiner não tem trecho de evidência que seja ele, e seus únicos bytes estão ali. Falhar nisso **não** impede a abertura — um caso sem previews segue consultável.
+
 **Erros**: `NOT_A_CASE`, `CASE_INCOMPLETE`, `CASE_IN_PROCESSING`, `VERSION_UNSUPPORTED` — cada um com diagnóstico do que fazer.
 
 ### `iped_case_overview`
@@ -49,7 +51,7 @@ Alvo: < 30 s em caso de 10 M (SC-015).
 |---|---|---|
 | `case_id` | string | sim |
 
-Libera recursos sem deixar trava pendente (FR-005).
+Libera recursos sem deixar trava pendente (FR-005) — inclusive o repositório de previews do caso, aberto na abertura porque item decodificado tem ali os únicos bytes dele (FR-085).
 
 ---
 
@@ -86,23 +88,37 @@ Todos os campos indexados de um item — descoberta de vocabulário por exemplo 
 | Parâmetro | Tipo | Obrigatório | Default |
 |---|---|---|---|
 | `case_id` | string | sim | |
-| `query` | string | sim | |
+| `query` | string | **não** | com `bookmark`, o marcador inteiro (FR-081) |
+| `bookmark` | string | não | sem filtro de marcador |
 | `page_size` | inteiro | não | limitado por teto do servidor |
 | `cursor` | string | não | primeira página |
-| `timeout_ms` | inteiro | não | |
+| `timeout_ms` | inteiro | não | `queryTimeoutMs` |
+
+`query` e `bookmark` não podem faltar os dois — sem nenhum dos dois não há o que procurar, e a recusa nomeia `*:*` como a forma barata de pedir tudo. **Para pedir todo item, escreva `*:*`, nunca `*` sozinho**: os dois significam o mesmo para quem escreve e não para o parser, e o servidor reconhece o segundo declarando o reparo em `query_normalized` (FR-082).
 
 Retorna:
 
 | Campo | Sempre presente | Observação |
 |---|---|---|
-| `total_matches` | **sim** | Contagem exata, independente do que foi devolvido (FR-012) |
+| `total_matches` | **sim** | Total do conjunto, independente do que foi devolvido (FR-012). Vem da própria coleta — a página custa **uma** avaliação da consulta (FR-082) |
+| `total_matches_exact` | **sim** | `false` quando o orçamento de tempo interrompeu a varredura: aí `total_matches` é **piso** |
 | `items` | sim | `ItemView` já enriquecida, com `snippet` quando aplicável (FR-014, FR-015) |
-| `next_cursor` | não | Ausente na última página |
+| `bookmark` | não | Presente quando a busca foi restringida ao marcador informado |
+| `query_note` | não | Presente quando a expressão foi suprida pelo servidor por vir só o marcador |
+| `query_normalized` | não | Presente quando a expressão executada não é a pedida (escape de campo ou `*`) |
+| `next_cursor` | não | Ausente na última página **e em página parcial** (FR-079) |
+| `next_cursor_omitted` | não | O motivo, quando a página é parcial |
 | `partial` | sim | `true` se houve esgotamento de tempo (FR-018) |
 
 **Nunca** devolve o conjunto completo de uma consulta ampla (FR-013). Ordenação determinística (FR-019).
 
-**Erros**: `QUERY_SYNTAX` com posição do problema (FR-017); `UNKNOWN_FIELD` com campos sugeridos (FR-008).
+`timeout_ms` limita a **varredura**, não a montagem da consulta: expressão cuja expansão já é caríssima gasta tempo antes de o relógio ser consultado, então o parâmetro não é garantia de tempo de resposta.
+
+Quando `bookmark` é informado, a busca retorna a interseção entre a expressão e os itens atualmente
+associados ao marcador, sem materializar previamente sua lista de ids.
+
+**Erros**: `QUERY_SYNTAX` com posição do problema (FR-017); `UNKNOWN_FIELD` com campos sugeridos
+(FR-008); `BOOKMARK_NOT_FOUND` quando o nome do marcador não existe no caso.
 
 ### `iped_aggregate`
 | Parâmetro | Tipo | Obrigatório |
@@ -120,18 +136,46 @@ Alvo: < 15 s em caso de 10 M (SC-015).
 ## Inspeção de item
 
 ### `iped_get_items`
-| Parâmetro | Tipo | Obrigatório |
-|---|---|---|
-| `case_id` | string | sim |
-| `item_ids` | lista de inteiro | sim |
+| Parâmetro | Tipo | Obrigatório | Default |
+|---|---|---|---|
+| `case_id` | string | sim | |
+| `item_ids` | lista de inteiro | sim | |
+| `fields` | lista de string | não | propriedades essenciais |
 
-Propriedades essenciais de um **lote**, em uma chamada, com teto de tamanho (FR-024). Existe para evitar N chamadas.
+Propriedades de um **lote**, em uma chamada, com teto de tamanho (FR-024). Existe para evitar N chamadas.
+
+Sem `fields`, devolve as propriedades essenciais no formato plano de sempre. Com `fields`, devolve **só** os campos nomeados, em `items[].fields` com as chaves que o chamador pediu, mais `projection` e `projection_note` no topo — o que foi lido tem que ser legível na própria resposta. Nomes são os **planos** que `iped_list_fields`/`iped_item_fields` devolvem (a grafia de query, com colon escapado, também é aceita e vem declarada em `resolved_fields`), assim como as chaves que o servidor publica no item (`content_type`, `parent_id`, `bookmarks`, `selected`).
+
+Nome que este caso não tem **recusa a chamada inteira** com `UNKNOWN_FIELD`, `details.similar` por nome rejeitado e `details.recognized_fields` — responder com itens sem o campo é indistinguível de itens que não o têm, e é assim que se produz um "nada encontrado" errado (FR-047). `content` é recusado com explicação própria: é indexado e não armazenado, então nenhuma projeção o devolve.
 
 ### `iped_item_metadata`
 Metadados extraídos (EXIF, GPS, cabeçalhos, codec).
 
 ### `iped_item_text`
 Texto extraído. Trunca com aviso e informa tamanho real (FR-021). Se não houver texto, declara ausência e aponta alternativas (FR-022).
+
+Devolve `extracted_by` com o parser que efetivamente rodou — o fallback de strings cruas nunca falha, então "veio texto" sozinho não diz que o item foi compreendido. Quando o tipo do item não tem parser próprio (tipos que o processamento **atribui**, como os de chat decodificado), o tipo é detectado do conteúdo e a resposta traz `parsed_as` + `parsed_as_note` com os dois tipos: o do item é o que se cita (FR-083).
+
+O motivo da ausência é **derivado do item** — registro decodificado, diretório, parsing expirado, media type — e nomeia os campos de metadado daquele item que carregam conteúdo, quando há (FR-084). Não enuncia hipóteses alternativas: para item decodificado elas eram todas falsas enquanto o conteúdo estava em `Message-Body`.
+
+Falha do próprio servidor — recurso do caso que ele não abriu, inicialização que faltou — vem declarada como falha do servidor, não como ausência de texto no item, e não encaminha para `iped_item_content`, que alcança o item pela mesma tubulação (FR-086).
+
+### `iped_export_item`
+| Parâmetro | Tipo | Obrigatório | Default |
+|---|---|---|---|
+| `case_id` | string | sim | |
+| `item_id` | inteiro | sim | |
+| `text_only` | booleano | não | `false` |
+
+Escreve **um item** como arquivo na pasta de exportação configurada, e devolve o caminho com os digests do que foi escrito (FR-087). **Não há destino como parâmetro**: o nome vem da evidência, e nome de material apreendido é a entrada em que menos se confia — o servidor o sanea e decide onde põe. O arquivo vai para `<exportRoot>/<case_id>/<item_id>-<nome>`, com pasta por caso porque id de item é local ao caso.
+
+`text_only: false` (padrão) exporta os **bytes do próprio item** e confere o resultado contra o hash que o caso registrou (`hash_verified`, `hash_verified_against`, `hash_recorded_in_case`). `text_only: true` exporta o **texto extraído**, em UTF-8, pela mesma extração do `iped_item_text` — e diz que os digests não são comparáveis com o hash do caso, que é dos bytes.
+
+Nada é truncado: os tetos do `iped_item_content` e do `iped_item_text` protegem a conversa, e arquivo em disco não é a conversa.
+
+Item que não tem arquivo por trás — registro decodificado — exporta o preview que o IPED gerou, com `source_note` dizendo isso. Diretório e item de zero byte são declarados indisponíveis e **nada é escrito**: arquivo vazio com nome de item vira, depois, indistinguível de item realmente vazio.
+
+A política de egresso é aplicada por chamada, na classe que os argumentos pedem (`binary` ou `text`), e não na ferramenta inteira.
 
 ### `iped_item_thumbnail`
 Miniatura. Ausência declarada quando não existe.

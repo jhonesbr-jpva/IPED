@@ -7,12 +7,15 @@
 ## 1. Propósito
 
 - **Consulta paginada** de um caso, com contagem exata independente do que é devolvido.
+- **Filtro opcional por bookmark na busca**, intersectado com a consulta sem materializar seus ids.
 - **Agregações** por dimensão sem materializar itens.
 - **Descoberta de vocabulário** de campos, com sugestão de nomes próximos.
 - **Inspeção de item**: metadados, texto, miniatura, conteúdo bruto, hierarquia — todos com teto de volume e ausência declarada.
+- **Projeção de campos escolhidos** sobre um lote de ids: `iped_get_items` com `fields` devolve só os campos nomeados, resolvidos contra o vocabulário do caso antes de ler qualquer documento.
 - **Curadoria**: marcadores e seleção, desabilitados por padrão.
 - **Trilha de auditoria** append-only encadeada por hash, gravada antes de cada operação.
 - **Artefatos de saída**: xlsx, CSV e JSON do conjunto completo, sem trafegar pela conversa.
+- **Exportação de item**: um item como arquivo na pasta configurada — os bytes dele, conferidos contra o hash do caso, ou o texto extraído. Sem teto: o teto de leitura protege a conversa, não o arquivo.
 - **Política de egresso** opcional, aplicada no servidor.
 - **Criação de caso**: processa evidência com o motor do IPED em processo externo, com acompanhamento, cancelamento e retomada. Desabilitada por padrão.
 
@@ -28,14 +31,14 @@ iped/mcp/
 ├── protocol/                # JsonRpcCodec, McpError, ToolDescriptor, McpDispatcher
 ├── session/                 # Session, CaseRegistry, CaseValidator, OpenCase, ConcurrencyGuard
 ├── query/                   # PagedSearcher, Aggregator, SnippetBuilder, FieldVocabulary, FieldNames, Cursor
-├── item/                    # ItemView, ContentAccess
+├── item/                    # ItemView, FieldSelection, ContentAccess
 ├── curation/BookmarkWriter  # marcadores e seleção sobre Bookmarks/saveState
 ├── McpRelayMain.java        # relay stdio↔socket, para o harness em outra máquina
 ├── transport/               # Transport, StdioTransport, SocketTransport, HandshakeCodec
 ├── audit/                   # AuditRecord, AuditTrail, AuditSync, SessionManifest
 ├── processing/              # criação de caso: JobRunner, ProgressReader, JobStore, confinamentos
 ├── egress/EgressPolicy      # opcional, inativa por padrão
-├── export/ArtifactWriter    # xlsx (POI streaming), CSV, JSON
+├── export/                  # ArtifactWriter (xlsx/CSV/JSON), ItemFileWriter, EvidenceFileName, PathConfinement
 └── tools/                   # uma classe por grupo de ferramentas MCP
 ```
 
@@ -70,10 +73,13 @@ Duas consequências práticas menos óbvias:
 
 - **O campo `content` é indexado mas não armazenado.** Snippet exige reextrair o texto do item, o que é caro. Por isso `SnippetBuilder` trabalha sob três orçamentos (itens por página, bytes por item, tempo por página) e declara ausência quando estoura, em vez de devolver vazio.
 - **Registro precede ação.** Como a trilha é append-only, cada operação gera **dois** registros encadeados: `STARTED` antes de executar (com parâmetros e estado anterior) e o desfecho depois, ligado por `refSeq`. Se o `STARTED` não puder ser gravado, a operação é recusada e não executa.
+- **Bookmark na busca é filtro Lucene, não expansão de ids.** `BookmarkQuery` percorre o DocValues
+  numérico de `id` e consulta a associação corrente no `IBookmarks`. Ela declara
+  `isCacheable = false` porque o marcador pode mudar enquanto o searcher permanece aberto.
 
 ## 4. Configuração
 
-Tudo o que varia vive em `conf/McpServerConfig.txt` (Princípio IV da constituição), nunca em constante de código: área de auditoria, modo de acesso, política de egresso, tetos de página, de lote e de conteúdo, faixa de versão suportada, destino de exportação, reparo de nome de campo (`autoEscapeFieldNames`, desligado por padrão — ligado, uma expressão que só falha por colon não escapado é corrigida contra o vocabulário real do caso e o reparo vem declarado em `query_normalized`).
+Tudo o que varia vive em `conf/McpServerConfig.txt` (Princípio IV da constituição), nunca em constante de código: área de auditoria, modo de acesso, política de egresso, tetos de página, de lote e de conteúdo (o `maxBatchSize` limita tanto quantos ids quanto quantos **nomes de campo** uma projeção pede — não há teto novo para isso), faixa de versão suportada, destino de exportação, reparo de nome de campo (`autoEscapeFieldNames`, desligado por padrão — ligado, uma expressão que só falha por colon não escapado é corrigida contra o vocabulário real do caso e o reparo vem declarado em `query_normalized`).
 
 Acrescentado na 007: **criação de caso** (`processingEnabled`, `processingSourceAreas`, `processingCaseRoots`, `processingProfiles`, `processingMinFreeSpacePercentOfSource`, `processingSecretsFile`, `processingLocale`, `processingStallThresholdSeconds`, `processingJvm`). As duas listas de raízes **não têm padrão**, e vazio é erro de configuração, não permissão total — inventar raiz seria conceder o que ninguém concedeu, e é a lista onde errar transforma o servidor em conversor de sistema de arquivos em índice consultável.
 
@@ -95,7 +101,11 @@ Acrescentado na 006: **raízes de escrita** (`exportRoots`, separadas por `;` �
 | Política de egresso não contornável por escolha de ferramenta | classe de conteúdo declarada em `ToolDescriptor.returnsContent`, aplicada na fronteira do dispatcher |
 | Estado anterior antes de operação destrutiva | `ToolDescriptor.capturingPriorState`, avaliado antes do `recordStart` |
 | Referência a item sempre carrega o caso | contrato das ferramentas; `ToolSchemaTest` verifica |
-| Ausência ≠ vazio | `ItemView.unavailable`, `ContentAccess.unavailable` |
+| Ausência ≠ vazio | `ItemView.unavailable`, `ContentAccess.unavailable`, `FieldSelection.project` |
+| **Motivo de ausência é derivado do item, não escolhido de uma lista** | `ContentAccess.noText` decide por `isDecodedData`, media type, `isTimedOut` e pelos campos de metadado que o próprio item tem. A mensagem anterior oferecia três hipóteses de uma vez — binário, não parseado ou cifrado — e para item decodificado **as três eram falsas** enquanto o conteúdo estava em `Message-Body`. `AvailabilityTest` exige que o motivo nomeie algo verdadeiro daquele item |
+| Texto de item é o conteúdo dele, nunca o fonte | **`McpServerMain.bootstrapConfiguration` chama `SignatureTask.installCustomSignatures()`**, como o `UICaseDataLoader` faz antes de criar o parser da UI: o `conf/CustomSignatures.xml` declara `application/x-whatsapp-chat` como `sub-class-of text/html`, e é por essa hierarquia que o Tika acha o `HtmlParser`. Sem o registro, o fallback de strings cruas devolvia o HTML do preview como texto do chat. `ContentAccess.extractText` mantém a detecção por `hasSpecificParser` como segunda linha, para tipo que esta instalação não conhece. `ItemTextTest` fixa as duas |
+| **Falha do servidor é declarada como falha do servidor, nunca como propriedade do item** | Abrir caso abre também o repositório de previews (`CasePool.configurePreviews`), porque item decodificado sem trecho de evidência próprio tem os únicos bytes dele no `previews.mv.db`. Enquanto isso faltava, `iped_item_text` respondia `available: false` a uma mensagem que **tinha** conteúdo, e o remédio mandava tentar `iped_item_content`, que falha pela mesma tubulação. `extractText` separa `RuntimeException` do resto e diz de quem é a culpa; `PreviewBackedContentTest` fixa |
+| Projeção com nome que o caso não tem **recusa a chamada**, não devolve itens sem o campo | `FieldSelection.resolve` roda antes de ler documento e lança `UNKNOWN_FIELD` com os nomes próximos. Devolver a página com o campo ausente em todo item é indistinguível de itens que realmente não o têm — é a forma de "nada encontrado" errado que a FR-047 existe para impedir |
 | Charset explícito, logging por SLF4J | `JsonRpcCodec`, `AuditTrail`; `System.out` corromperia o próprio protocolo |
 | Nada além do protocolo alcança a saída padrão — **inclusive o que vem de fora do código** | O código respeita a linha acima; quem a contradizia era a **configuração de log da instalação**. As duas configurações distribuídas (`Log4j2ConfigurationConsoleOnly`, `Log4j2ConfigurationFile`) e o padrão da própria biblioteca apontam para `SYSTEM_OUT` — correto para a CLI e a UI, errado aqui. `conf/Log4j2ConfigurationMcp.xml` existe para isso e os comandos publicados nos guias **precisam** passá-la em `-Dlog4j.configurationFile`. Invariante mantida só no código não protege contra acoplamento por arquivo de configuração |
 | Uma mensagem malformada é respondida e descartada, nunca fatal | `JsonRpcCodec.readMessage` → `McpError.MALFORMED_MESSAGE`; `McpServerMain.start` responde `-32700` e continue. Deixar a falha do Jackson escapar derrubava a sessão inteira e todos os casos abertos nela |
@@ -103,7 +113,11 @@ Acrescentado na 006: **raízes de escrita** (`exportRoots`, separadas por `;` �
 | Recusa de destino não deixa rastro | A criação de pastas intermediárias em `ArtifactWriter` acontece depois do veredito `ALLOWED`, nunca antes |
 | Sucesso de exportação implica artefato existente | `ArtifactWriter.verifyArtifact` confere existência e tamanho depois de escrever. Contenção não é integridade: `<raiz>\NUL` fica dentro da raiz, aceita a escrita e não guarda nada |
 | Nenhum erro devolve uma grafia que não parseia | `PagedSearcher.plan` verifica a correção contra o caso antes de sugeri-la; `FieldNames.toQueryForm` em todo remedy que cita nome de campo |
-| Consulta reescrita é sempre declarada | `PagedSearcher.declareNormalization` → `query_normalized` no resultado de busca, agregação e exportação |
+| Consulta reescrita é sempre declarada | `PagedSearcher.declareNormalization` → `query_normalized` no resultado de busca, agregação e exportação. Duas causas hoje, com nota própria cada uma: escape de nome de campo e `*` reconhecido como match-all |
+| **Uma página custa uma avaliação da consulta** | O total vem de `TopDocs.totalHits`, não de um `searcher.count()` à parte. O `totalHitsThreshold = Integer.MAX_VALUE` proíbe término antecipado, então o coletor já conta todo o conjunto, em qualquer página e com qualquer cursor. `unit/CursorPaginationTest` fixa essa semântica do Lucene — se um upgrade mudar, `total_matches` passa a significar outra coisa em silêncio |
+| Total interrompido é **piso declarado**, nunca exato disfarçado | `total_matches_exact: false` + `partial_note` dizendo "floor". **Não se lê do `TotalHits.relation`**, que devolve `EQUAL_TO` mesmo com a varredura cortada: ele descreve o teto, não a interrupção. A autoridade é a `TimeExceededException` |
+| Página parcial não emite cursor | `PagedSearcher.search` só chama `nextCursor` quando `!partial`, e declara `next_cursor_omitted`. Cursor de página parcial retoma depois de posição que a varredura não alcançou; acerto ordenado antes dela sumiria desta página e de todas as seguintes. É o FR-079 aplicado a outra causa |
+| Pedir "tudo" tem caminho barato, e a superfície não obriga a inventar consulta | `PagedSearcher.isMatchAllExpression` reconhece `*` e `*:*` **antes do parser**; `iped_search` aceita `bookmark` sem `query`. O reconhecimento é estreito de propósito — só a expressão que é apenas a estrela |
 | **O motor nunca roda dentro do processo do servidor** | `iped-app` depende de `iped-mcp`, então chamar `Bootstrap` seria circular e o build recusa. `JobRunner` executa o `iped.jar` da instalação. Quem tentar `new Manager(...)` no pacote `processing/` descobre pelo erro de compilação — o `package-info.java` existe para que descubra antes |
 | Instalação padrão não cria caso | `processingEnabled = false`; com ele desligado as ferramentas **não aparecem** em `tools/list` e uma chamada forçada é recusada antes de ler argumento. `NoProcessingByDefaultTest` verifica as duas metades — só a ausência da listagem não prova nada sobre cliente que chame assim mesmo |
 | Cancelar destrói a **árvore**, não o filho | `Bootstrap` gera um neto e é o neto que lê evidência; o shutdown hook dele tem `process.destroy()` **comentado**. `JobRunner.destroyTree` mata descendentes antes do filho. `CancelJobTest` espera o neto existir antes de cancelar, senão não testa nada |
@@ -126,7 +140,7 @@ Nenhum artefato novo entra no release além do próprio `iped-mcp.jar`: POI e Ja
 ## 7. Testes
 
 ```bash
-mvn -pl iped-mcp test                                            # sem caso: 99 testes efetivos
+mvn -pl iped-mcp test                                            # sem caso: 222 efetivos de 315 (93 pulam)
 
 # Com caso, são necessários mais dois parâmetros — ver abaixo por quê:
 mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe \
@@ -176,6 +190,12 @@ só valem para a receita. Nenhuma era regressão — as cinco estavam intocadas 
 | `PaginationTest.pagingCoversEverythingExactlyOnce` | Teto de **5000 páginas × 20 = 100.000 itens**. Contra caso maior o laço bate no teto. Vale corrigir para o teto escalar com `total_matches` |
 | `VocabularyTest` (3) | Três suposições da receita: que o caso **não** tem campo `mediaType` (aqui tem, então vem `QUERY_SYNTAX` em vez de `UNKNOWN_FIELD`); que `campo:*` vale para todo campo (num campo **numérico** o parser recusa com `Unparseable number: "*"`); e que a sugestão nunca é namespaced — o teste concatena o nome cru em vez de usar o `query_form` que o servidor devolve exatamente para isso |
 
+`FieldProjectionTest` é **agnóstico ao conteúdo de propósito**, para não entrar nessa lista: tira os ids
+da própria busca e o campo específico do próprio `iped_list_fields`, em vez de esperar arquivo plantado
+ou vocabulário conhecido. Verificado contra caso fora da receita (release `4.4.0-SNAPSHOT`), 7 de 7,
+nenhum pulado. É só leitura — `iped_search`, `iped_get_items`, `iped_list_fields`,
+`iped_case_overview` — então não precisa do cuidado com `bookmarks.iped` da seção abaixo.
+
 **Em aberto**, caracterizado mas não resolvido:
 
 `CaseOpenTest.closingReleasesTheCaseWithoutLeavingALock` falha com `AccessDeniedException` ao renomear
@@ -224,19 +244,72 @@ As suítes que precisam de caso **pulam** quando ele não está configurado, e *
 
 A linha que importa é a da paginação profunda: a página 10 é **mais rápida** que a primeira. O custo acompanha a página, não a profundidade — é isso que separa `PagedSearcher` de uma implementação que materializa o conjunto.
 
+### O custo de uma página, medido — 2026-09-04
+
+Um chamado de campo (`bookmark` + `query: "*"`) demorou minutos. Medido depois da correção, no **mesmo
+caso** (8.553.336 itens, marcador de 1.905 itens), 20 itens por página, sem snippet, descontando
+11,7 s de bootstrap + `iped_open_case`:
+
+| Forma da chamada | Busca | `total_matches` | Exato | Cursor |
+|---|---|---|---|---|
+| `bookmark`, sem `query` | **849 ms** | 1.905 | sim | sim |
+| `bookmark` + `*:*` | 1.214 ms | 1.905 | sim | sim |
+| `bookmark` + `*` (reconhecido) | 1.046 ms | 1.905 | sim | sim |
+| `bookmark` + `content:*` — o custo antigo | **48.905 ms** | ≥ 1.905 | **não** | **não** |
+
+E, sem marcador, sobre os 8,5 M: `*:*` em **296 ms** com total exato; `*` em 505 ms, reescrito e
+declarado.
+
+Duas leituras:
+
+- **~49 s → ~0,85 s** na chamada que veio de campo. E os 49 s **subestimam** o custo antigo: são
+  medidos no código novo, que avalia a consulta uma vez; o antigo rodava também um `searcher.count()`
+  sem orçamento sobre a mesma expressão, e o wildcard cobria `name` além de `content`.
+- A última linha mostra as duas declarações novas funcionando sob estresse real: a varredura estourou
+  o orçamento, então o total veio como **piso** (`total_matches_exact: false`) e **nenhum cursor** foi
+  emitido. Antes, essa mesma chamada devolvia total exato pago fora do orçamento e um cursor que
+  puliria acertos em silêncio.
+
 ## 8. Skill
 
 Fonte canônica única em `src/main/resources/skill/`. Os invólucros por harness são gerados no build (`generate-resources`) para `iped-app/resources/skills/{claude-code,codex,opencode}/iped-forensics/` e copiados para `skills/` no release. **Não edite os invólucros** — são regenerados a cada build e ignorados pelo git. `SkillParityTest` verifica que os três são byte a byte idênticos à fonte: orientação divergente entre harnesses produziria análises divergentes sobre a mesma evidência.
+
+### Rotas de instalação, revisadas em 2026-09-04
+
+O `install/codex.md` mandava copiar a pasta e escrever ponteiro no `AGENTS.md`, o único mecanismo que
+existia quando foi escrito. **O Codex ganhou diretório nativo de skills**: verificado no
+`codex-cli 0.153.2`, as preinstaladas ficam em `$CODEX_HOME/skills/.system/<nome>/` com `SKILL.md` +
+`references/`, e o `skill-installer` da própria OpenAI declara instalar em
+`$CODEX_HOME/skills/<nome>`. O frontmatter que elas usam (`name`, `description`) é o que a nossa skill
+já carrega, então ela entra sem edição. O guia passa a ramificar por versão — pasta de skills quando
+existe, `AGENTS.md` quando não —, porque instalação que assume o mecanismo novo falha em silêncio no
+build antigo. **Se `~/.codex/skills/` seguir link simbólico não foi verificado**; o guia diz para
+confirmar e cair no `AGENTS.md`, que aceita caminho absoluto e não depende disso.
+
+Também documentado, e medido em vez de suposto: **Codex dentro do WSL2 lançando o `java.exe` do
+Windows** por interop (`command = /mnt/c/.../jre/bin/java.exe`, argumentos com caminho Windows). 25
+ferramentas em `tools/list`, stdout só com JSON-RPC, log do engine no stderr. É a melhor das opções
+porque o caminho continua sendo do Windows — o que mantém as `exportRoots` do `McpServerConfig.txt`
+casando e o índice sendo lido nativamente —, e porque o `jre/` do release é Windows e não roda sob
+Linux. O que ela **não** é: isolamento. Depende de `/mnt/c`, e aí o agente alcança a pasta do caso
+por fora da superfície de ferramentas.
 
 ## 9. ⚠️ Áreas sensíveis
 
 | Área | Cuidado |
 |---|---|
 | `PagedSearcher.forItems` | Replica a semântica de `IPEDSearcher` (rewrite com `mapChildToParentDocs`, exclusão de tree nodes). Divergir aqui muda silenciosamente o que uma consulta encontra. |
+| `McpServerMain.installCustomSignatures` | **Registro de mime é inicialização, não configuração.** `SignatureTask.installCustomSignatures()` só define uma propriedade de sistema, que o Tika lê quando **constrói** o registro de tipos. Chamada depois de qualquer coisa ter tocado o Tika, ela não registra nada e **não avisa** — foi exatamente assim que o primeiro experimento pareceu refutar a hipótese certa. Precede o primeiro parser do processo, e é o que faz a extração de texto bater com a da UI por construção |
+| `ContentAccess.extractText` | **Media type produzido por parser não tem parser próprio.** `application/x-whatsapp-chat` e `message/x-whatsapp-message` são tipos que o IPED *atribui*; fixá-los em `Indexer-Content-Type` seleciona nada e o `StandardParser` cai no `RawStringParser`, que **nunca falha** — devolve os bytes imprimíveis. Para um chat isso era o HTML do preview entregue como "texto extraído", em silêncio, com o teto gasto num favicon base64. Por isso o `hasSpecificParser` antes de fixar. Ao mexer aqui, meça em três classes de item — chat decodificado, PDF e binário — porque o fallback disfarça o erro como sucesso |
+| `EvidenceFileName` | **Nome de item é entrada, não nome.** Ele foi escolhido por quem fez o arquivo, dentro de material apreendido. Sai daqui sem separador, sem o dois-pontos de fluxo alternativo (`laudo.txt:oculto` grava dentro de um arquivo que *está* na pasta permitida — confinamento sozinho não pega), sem caractere de controle e sem ponto ou espaço final, que o Windows descarta em silêncio fazendo o caminho do resultado apontar para arquivo inexistente. O prefixo com o id não é decoração: liga o arquivo ao item **e** neutraliza os nomes de dispositivo do Windows de uma vez |
+| `CasePool.configurePreviews` / `closePreviews` | **Abrir caso é abrir os repositórios de onde o conteúdo dele sai, e fechar é devolvê-los.** O `PreviewRepositoryManager` é global ao processo e indexado por pasta: quem equilibra o par é a contagem de referências do pool, que libera quando a **última** sessão solta. Somente-leitura não é detalhe — `configureWritable` trava o H2 com exclusividade e tomaria do perito o caso aberto na interface. Ao escrever teste para isto, saiba que `hasPreview:true` são 1,7 milhão de itens quase todos com bytes próprios: a classe afetada é a que **não tem tamanho**, e a primeira versão do teste passou com o conserto removido |
+| `timeout_ms` / `TimeLimitingCollector` | **Cobre a varredura, não o plano.** O relógio é consultado dentro de `collect()`; a expansão de multi-term acontece antes, na montagem da consulta, onde nada o interrompe. Foi por isso que `query: "*"` não voltava `partial` depois de 30 s — pendurava num lugar onde o cronômetro não existe. Nenhum texto do servidor pode apresentar `timeout_ms` como garantia de tempo de resposta |
+| Custo de wildcard no vocabulário do IPED | O parser roda com `SCORING_BOOLEAN_REWRITE` e campos padrão `{name, content}` ([`QueryBuilder`](../iped-engine/src/main/java/iped/engine/search/QueryBuilder.java)), e o `IPEDSource` levanta `IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE)`. Consequência: wildcard amplo **não falha**, vira uma cláusula por termo do índice e custa o dicionário inteiro. Quem for acrescentar reconhecimento de expressão precisa saber que o teto não protege nada aqui |
 | `AuditTrail.digest` | A ordem dos campos em `AuditRecord.toNodeWithoutHash` faz parte do hash. Reordenar invalida a verificação de trilhas já emitidas. |
 | Portão de escrita no `McpDispatcher` | Precisa continuar antes de qualquer leitura de argumento, ou "sem tocar o caso" deixa de ser verdade. |
 | `ConcurrencyGuard` | A UI do IPED 4.3.1 não trava o caso. A detecção é cooperativa entre processos `iped-mcp` e best-effort para a UI — ausência de conflito **não** prova ausência de outro leitor. |
 | `ItemView.storedFields` | Lê do documento armazenado, não do `IItem`. Acrescentar campo aqui é barato; trocar por reconstrução de item custa a latência da página. |
+| `FieldSelection` | Tipagem tem que **concordar com o `ItemView`** campo a campo: tamanho é número, timestamp é instante ISO, flag é booleano nas duas formas — quem compara as duas respostas está comparando o mesmo item. Duas armadilhas do índice moram aqui: `isRoot` só é gravado quando verdadeiro, então **ausência é `false`**, não indeterminado; e campo binário (`thumbnail`, features, KnnVector) tem `stringValue()` nulo e é declarado em `unavailable` apontando a ferramenta que devolve bytes — projetá-lo como vazio seria mentir sobre o item. |
 | `CasePool` | Um `IPEDSource` por caso por processo, com contagem de referências. `OpenCase.close()` **solta referência**, não fecha o handle — fechá-lo direto tira o searcher de baixo de outra sessão. O que é compartilhado é imutável depois do construtor; nada com estado mutável pode entrar aqui |
 | `AuditRecord` | **Não acrescente campo.** `AuditTrail.verify` recompõe `toNodeWithoutHash` a partir do que lê, então um campo a mais muda o resultado para registros já emitidos. Foi por isso que identidade alegada foi para o campo `operator` e transporte/origem para o `SessionManifest` |
 | `bridge/mcp-bridge.py` | Mesmas duas regras do `McpRelayMain`, e pelas mesmas razões: nada em stdout — que aqui é o canal de volta ao harness — e `shutdown(SHUT_WR)` no fim da entrada. Não tem suíte própria: é script de recurso, não classe compilada. Ao mexer, verifique à mão as duas coisas que importam — as chamadas respondem **e** o processo sai com código 0 quando o stdin fecha. A primeira sozinha não prova nada |

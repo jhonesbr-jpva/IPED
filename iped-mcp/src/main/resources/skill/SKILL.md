@@ -17,12 +17,23 @@ Querying before you know the shape of the collection produces queries aimed at a
 
 **2. Narrow progressively.** Start broad enough to see the shape, then restrict. `iped_aggregate`
 counts by category, media type, period, evidence or bookmark without inspecting a single item — use
-it to decide where to look before you list anything. A `total_matches` in the hundreds of thousands
-is a signal to narrow, not to start paging.
+it to decide where to look before you list anything. To inspect one curated set, pass its exact name
+as `bookmark` to `iped_search`; it is intersected with the query, and **on its own, with no query at
+all, it lists the whole bookmark** — that is the cheap way to open a bookmark. A `total_matches` in
+the hundreds of thousands is a signal to narrow, not to start paging.
+
+When you do need every item, ask for it as `*:*`. A bare `*` means the same thing to you and
+something else to the parser — a wildcard over the name and text of every item, expanded term by
+term — and the server will answer it, tell you it rewrote it, and the rewrite is what saved the time.
+Never invent a query just to satisfy a parameter: if what you want is a bookmark, pass the bookmark
+alone.
 
 **3. Sample when the volume is high.** With a large result set, read the first page, aggregate to
 understand the distribution, and refine. Do not page through ten thousand items hoping to recognize
-something. If the examiner needs all of them, that is what `iped_export_artifact` is for.
+something. If the examiner needs all of them, that is what `iped_export_artifact` is for. When the
+question turns on one or two specific fields rather than on whole items, pass `fields` to
+`iped_get_items`: it returns exactly the fields you name for the whole batch of ids, which is how you
+read a sender, a coordinate or an EXIF tag across a result set without one call per item.
 
 **4. Cite items in every conclusion.** Every statement of fact about the case carries the item ids
 that support it. "There are messages discussing the transfer" is not a finding; "items 48213,
@@ -89,9 +100,29 @@ Report what the returned data supports and nothing beyond it.
 - A truncated text says `truncated: true`. Absence of a term in a truncated excerpt is not evidence
   of its absence from the item.
 - A partial result says `partial: true`. It means the time budget ran out, not that you saw
-  everything.
+  everything. Two things follow, and the answer states both: `total_matches` is a **floor** — at
+  least that many items match, possibly many more, and `total_matches_exact` is `false` — and no
+  cursor is issued, because paging on from a partial page skips hits silently. A partial page is a
+  sample the clock chose, not the top of the result set. Narrow the query and ask again rather than
+  reporting from it.
 - An absent field is absent, with a reason attached in `unavailable`. It is not an empty value, and
   it is not a fact about the world — an item with no GPS metadata is not an item that was nowhere.
+- **A message with no text of its own is not an empty message.** A chat record is built by a decoder
+  from a database; it has no file behind it, so there is nothing to re-extract, and what it says is
+  carried in its metadata. `iped_item_text` says exactly that and names the fields — follow it to
+  `iped_item_metadata` rather than reporting the conversation as empty. To read a conversation as a
+  conversation, use `iped_item_tree` to get the container and take its text: it reads in order, with
+  who said what.
+- **A failure of the server is not a fact about the evidence.** When an answer says the server could
+  not read an item, that is the server's fault and not the item's: report it as a gap in what you
+  could examine, never as an item with nothing in it, and do not reach for another content tool to
+  work around it — they read through the same machinery. `iped_item_metadata` answers from the index
+  and is unaffected.
+- A projection carries only what you asked for. When you pass `fields`, the answer lists what was
+  read in `projection`; a field outside that list was never looked at and says nothing about the
+  items. A field inside it that an item does not have is declared in that item's `unavailable`, with
+  the reason. And a field name this case does not have does not come back quietly empty — the call is
+  refused with the near names, precisely so a typo cannot become a finding of absence.
 - A `total_matches` you have not paged through is a count, not a set you have inspected.
 
 If the examiner asks something the data cannot answer, say so and say what would answer it.
@@ -139,6 +170,18 @@ When the examiner wants the items themselves — a spreadsheet, a list, a delive
 `iped_export_artifact`. It writes the complete set to a file and returns a count, a small sample and
 the path. Do not page a result set into the conversation to build a table by hand: it is slower, it
 truncates, and it produces a document nobody can reproduce.
+
+When the deliverable is **one item rather than a list** — the photograph, the document, the
+transcription of a conversation — use `iped_export_item`. It writes the item into the server's
+export folder and gives you back the path. Two things about it are worth knowing:
+
+- **You do not choose the path or the name.** The name comes from the evidence, and the server
+  decides how to write it safely. Report the path it returns; do not try to steer it.
+- **`text_only` decides what the file holds.** Left alone, it exports the item's own bytes and
+  checks them against the hash the case recorded — read `hash_verified` and say so, because a file
+  that does not verify is not the item until someone explains why. With `text_only: true` it writes
+  the extracted text instead, and nothing is truncated: this is how to obtain the whole of a text
+  whose reading in this conversation stopped at the ceiling.
 
 **The destination has to be inside a folder the server is allowed to write to.** The permitted
 folders are declared in the server's configuration and cannot be changed from this conversation. If

@@ -61,13 +61,18 @@ mvn -pl iped-mcp test            # testes do módulo
 
 Este é o cenário que separa a entrega da POC.
 
-1. `iped_search` com consulta ampla (ex.: correspondendo a > 1 M itens no caso grande).
-2. Conferir `total_matches` exato **e** `items` limitado a `page_size`.
+1. `iped_search` com consulta ampla (ex.: correspondendo a > 1 M itens no caso grande). Para "todo item", `*:*` — **nunca** `*` sozinho.
+2. Conferir `total_matches` exato, `total_matches_exact: true` **e** `items` limitado a `page_size`.
 3. Paginar com `next_cursor` até o fim; conferir que nenhum item se repete e nenhum falta.
 4. Repetir a mesma consulta desde o início; conferir **página idêntica, na mesma ordem** (FR-019).
 5. Cronometrar a primeira página.
+6. Repetir a consulta ampla com `timeout_ms` pequeno o bastante para cortar a varredura: conferir `partial: true`, `total_matches_exact: false` com o total declarado como **piso**, e **nenhum** `next_cursor` — com `next_cursor_omitted` dizendo por quê (FR-079, FR-082).
+7. Repetir com `query: "*"`: conferir mesmo total que `*:*` e `query_normalized` declarando o reparo.
+8. `iped_search` com `bookmark` e **sem** `query`: conferir que lista o marcador inteiro e que o total bate com o do mesmo marcador mais `*:*` (FR-081).
 
-**Esperado**: primeira página < 5 s no caso grande; nenhuma resposta excede o teto de volume, mesmo com milhões de correspondências.
+**Esperado**: primeira página < 5 s no caso grande; nenhuma resposta excede o teto de volume, mesmo com milhões de correspondências; e **uma** avaliação da consulta por página — total exato pago por passada separada roda fora do orçamento de tempo e é o que fazia uma consulta ampla pendurar em vez de responder parcial.
+
+Os passos 6 a 8 são cobertos por `integration/SearchTotalsTest`.
 
 **Armadilha a vigiar**: se a implementação chamar `IPEDSearcher`, este cenário passa em caso pequeno e falha no grande — porque `searchAll()` materializa todo o conjunto. Executar contra o caso grande é obrigatório, não opcional.
 
@@ -82,6 +87,18 @@ Este é o cenário que separa a entrega da POC.
 5. Refazer a consulta com o nome sugerido → resultados.
 
 **Esperado**: o agente se corrige sem intervenção humana. Menos de 5% das consultas emitidas retornam zero por nome de campo inexistente.
+
+---
+
+## Cenário 4a — Projeção de campos escolhidos *(FR-080)*
+
+1. `iped_search` para obter um lote de ids; `iped_item_fields` em um deles para descobrir um campo específico daquele caso.
+2. `iped_get_items` com esse campo e `name` em `fields` → só esses campos, com as chaves pedidas, para todos os ids em **uma** chamada.
+3. Conferir contra a resposta sem `fields` do mesmo lote: mesmos `item_id`, e tamanho número, timestamp instante ISO e flag booleana nas duas formas.
+4. Repetir com um nome que o caso não tem → `UNKNOWN_FIELD` com `details.similar` e `details.recognized_fields`, **nenhum item devolvido**.
+5. Pedir `content` → recusa explicada apontando `iped_item_text`.
+
+**Esperado**: nenhum caminho devolve item com o campo silenciosamente ausente — a projeção não é via para afirmar ausência. Coberto por `integration/FieldProjectionTest`.
 
 ---
 

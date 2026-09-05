@@ -48,7 +48,7 @@ public class ToolSchemaTest {
             "iped_list_bookmarks", "iped_create_bookmark", "iped_rename_bookmark", "iped_delete_bookmark",
             "iped_add_to_bookmark", "iped_remove_from_bookmark", "iped_get_selection", "iped_set_selection",
             // Output artifacts
-            "iped_export_artifact",
+            "iped_export_artifact", "iped_export_item",
             // Audit
             "iped_export_audit");
 
@@ -122,6 +122,10 @@ public class ToolSchemaTest {
         }
     }
 
+    /** Item types a parameter may declare. An array of anything else is a schema a client cannot fill. */
+    private static final Set<String> ITEM_TYPES = new HashSet<>(
+            Arrays.asList("integer", "string", "number", "boolean"));
+
     @Test
     public void arrayParametersDeclareTheirItemType() {
         for (JsonNode tool : tools) {
@@ -129,8 +133,10 @@ public class ToolSchemaTest {
             properties.fieldNames().forEachRemaining(field -> {
                 JsonNode property = properties.path(field);
                 if ("array".equals(property.path("type").asText())) {
-                    assertEquals("array parameter " + field + " of " + tool.path("name").asText()
-                            + " must declare its item type", "integer", property.path("items").path("type").asText());
+                    String itemType = property.path("items").path("type").asText();
+                    assertTrue("array parameter " + field + " of " + tool.path("name").asText()
+                            + " must declare a scalar item type, got '" + itemType + "'",
+                            ITEM_TYPES.contains(itemType));
                 }
             });
         }
@@ -146,6 +152,14 @@ public class ToolSchemaTest {
                     "parameter " + field + " of " + tool.path("name").asText() + " has no description",
                     properties.path(field).path("description").asText().isEmpty()));
         }
+    }
+
+    @Test
+    public void searchExposesBookmarkAsAnOptionalFilter() {
+        JsonNode schema = find("iped_search").path("inputSchema");
+        assertEquals("string", schema.path("properties").path("bookmark").path("type").asText());
+        assertFalse("bookmark must remain optional so existing search calls keep working",
+                schema.path("required").toString().contains("bookmark"));
     }
 
     @Test
