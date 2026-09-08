@@ -104,7 +104,13 @@ public class ItemFileWriter {
             try (OutputStream out = Files.newOutputStream(partial)) {
                 byte[] buffer = new byte[BUFFER];
                 int read;
-                while ((read = source.read(buffer)) > 0) {
+                // End of stream is -1, and only -1. A stream that hands back a zero-length read must
+                // not end the copy: the digests are computed from this same loop, so a file cut short
+                // here would hash to its own truncated content and agree with itself. The recorded
+                // case hash is the only thing that would catch it, and a case processed without
+                // hashing has none. IPED item content arrives through custom SeekableInputStream
+                // implementations, which is reason enough not to rely on a stream never returning 0.
+                while ((read = source.read(buffer)) >= 0) {
                     out.write(buffer, 0, read);
                     md5.update(buffer, 0, read);
                     sha256.update(buffer, 0, read);

@@ -201,17 +201,21 @@ então não precisa do cuidado com `bookmarks.iped` da seção abaixo.
 ### Segunda passagem, contra outra bancada — 2026-09-08
 
 Suíte inteira contra a bancada do `fastmode` (RockPi4, 319.641 itens), depois do merge do PR #6.
-Confirma as falhas acima e expõe **duas suítes que falham onde deveriam pular**:
+Confirma as falhas acima e expôs **duas suítes que falhavam onde deveriam pular** — corrigidas:
 
-| Suíte | O que acontece |
+| Suíte | O que acontecia |
 |---|---|
-| `PreviewBackedContentTest` (2 de 2) | A sonda é um `iped_search` em `hasPreview:true AND category:"Instant Messages"`. Num caso sem preview o servidor responde `UNKNOWN_FIELD` — que é o comportamento **certo**, e o que esta feature existe para garantir — e o `McpSessionRule.call` transforma a recusa em `AssertionError` **antes** de o `Assume` da suíte ser alcançado |
+| `PreviewBackedContentTest` (2 de 2) | A sonda é um `iped_search` em `hasPreview:true AND category:"Instant Messages"`. Num caso sem preview o servidor responde `UNKNOWN_FIELD` — que é o comportamento **certo**, e o que esta feature existe para garantir — e o `McpSessionRule.call` transformava a recusa em `AssertionError` **antes** de o `Assume` da suíte ser alcançado |
 | `ItemTextTest.aDecodedRecordSaysWhereItsContentIsInsteadOfDenyingIt` | Mesma mecânica, sondando `isDecodedData:true` |
 
-Não é suposição da receita nem propriedade do servidor: é a sonda perguntando por campo que o caso
-pode não ter, e por isso não entra na tabela acima. O conserto é o que a skill ensina ao agente e o
-que o `FieldProjectionTest` já faz — consultar `iped_list_fields` antes e devolver vazio, deixando o
-`Assume` decidir. **Em aberto.**
+Não era suposição da receita nem propriedade do servidor — por isso não entrou na tabela acima: era
+a sonda perguntando por campo que o caso pode não ter. O conserto é o que a skill ensina ao agente e
+o que o `FieldProjectionTest` já fazia: `McpSessionRule.hasField` consulta o `iped_check_field` antes
+de o nome aparecer numa consulta, e o `Assume` decide. Agora as duas **pulam** nessa bancada, e as
+falhas contra caso fora da receita caíram de oito para as cinco documentadas acima.
+
+Ao acrescentar suíte que dependa de campo específico do caso, use `hasField` pelo mesmo motivo: a
+recusa correta do servidor, dentro do harness, é indistinguível de defeito.
 
 A mesma rodada mostra o que essa bancada **não** exercita, e um teste pulado não é um teste que passou:
 `fastmode` não calcula hash e não gera preview, então os dois testes centrais do `ItemExportTest`
@@ -236,12 +240,10 @@ expectativa do teste mais estrita que o desenho, é questão da 001.
 de volta. Aqui o primeiro rename falhou, mas se tivesse funcionado e o segundo falhasse, o caso
 ficaria renomeado.
 
-Rodando contra caso fora da receita, exclua as incompatíveis — as três da receita e as duas cuja
-sonda pergunta por campo que o caso pode não ter:
+Rodando contra caso fora da receita, exclua as três incompatíveis:
 
 ```bash
-mvn -pl iped-mcp test \
-    -Dtest='!InvestigationBatteryTest,!PaginationTest,!VocabularyTest,!PreviewBackedContentTest,!ItemTextTest#aDecodedRecordSaysWhereItsContentIsInsteadOfDenyingIt' \
+mvn -pl iped-mcp test -Dtest='!InvestigationBatteryTest,!PaginationTest,!VocabularyTest' \
     -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe \
     -Diped.mcp.test.referenceCase=<caso>
 ```
@@ -332,6 +334,7 @@ por fora da superfície de ferramentas.
 | `McpServerMain.installCustomSignatures` | **Registro de mime é inicialização, não configuração.** `SignatureTask.installCustomSignatures()` só define uma propriedade de sistema, que o Tika lê quando **constrói** o registro de tipos. Chamada depois de qualquer coisa ter tocado o Tika, ela não registra nada e **não avisa** — foi exatamente assim que o primeiro experimento pareceu refutar a hipótese certa. Precede o primeiro parser do processo, e é o que faz a extração de texto bater com a da UI por construção |
 | `ContentAccess.extractText` | **Media type produzido por parser não tem parser próprio.** `application/x-whatsapp-chat` e `message/x-whatsapp-message` são tipos que o IPED *atribui*; fixá-los em `Indexer-Content-Type` seleciona nada e o `StandardParser` cai no `RawStringParser`, que **nunca falha** — devolve os bytes imprimíveis. Para um chat isso era o HTML do preview entregue como "texto extraído", em silêncio, com o teto gasto num favicon base64. Por isso o `hasSpecificParser` antes de fixar. Ao mexer aqui, meça em três classes de item — chat decodificado, PDF e binário — porque o fallback disfarça o erro como sucesso |
 | `EvidenceFileName` | **Nome de item é entrada, não nome.** Ele foi escolhido por quem fez o arquivo, dentro de material apreendido. Sai daqui sem separador, sem o dois-pontos de fluxo alternativo (`laudo.txt:oculto` grava dentro de um arquivo que *está* na pasta permitida — confinamento sozinho não pega), sem caractere de controle e sem ponto ou espaço final, que o Windows descarta em silêncio fazendo o caminho do resultado apontar para arquivo inexistente. O prefixo com o id não é decoração: liga o arquivo ao item **e** neutraliza os nomes de dispositivo do Windows de uma vez |
+| `ItemFileWriter.write` | **O laço de cópia é também o laço que calcula os digests**, então um arquivo cortado ali confere com o próprio digest que o resultado publica: a truncação some exatamente na verificação que existe para pegá-la. Só o hash gravado no caso a pegaria, e caso processado sem hashing não tem nenhum. Fim de fluxo é `-1`, e só `-1` — `> 0` no lugar de `>= 0` transforma uma leitura de zero bytes em exportação silenciosamente curta. O conteúdo de item chega por `SeekableInputStream` próprio do IPED, que é razão bastante para não apostar no contrato do fluxo |
 | `CasePool.configurePreviews` / `closePreviews` | **Abrir caso é abrir os repositórios de onde o conteúdo dele sai, e fechar é devolvê-los.** O `PreviewRepositoryManager` é global ao processo e indexado por pasta: quem equilibra o par é a contagem de referências do pool, que libera quando a **última** sessão solta. Somente-leitura não é detalhe — `configureWritable` trava o H2 com exclusividade e tomaria do perito o caso aberto na interface. Ao escrever teste para isto, saiba que `hasPreview:true` são 1,7 milhão de itens quase todos com bytes próprios: a classe afetada é a que **não tem tamanho**, e a primeira versão do teste passou com o conserto removido |
 | `timeout_ms` / `TimeLimitingCollector` | **Cobre a varredura, não o plano.** O relógio é consultado dentro de `collect()`; a expansão de multi-term acontece antes, na montagem da consulta, onde nada o interrompe. Foi por isso que `query: "*"` não voltava `partial` depois de 30 s — pendurava num lugar onde o cronômetro não existe. Nenhum texto do servidor pode apresentar `timeout_ms` como garantia de tempo de resposta |
 | Custo de wildcard no vocabulário do IPED | O parser roda com `SCORING_BOOLEAN_REWRITE` e campos padrão `{name, content}` ([`QueryBuilder`](../iped-engine/src/main/java/iped/engine/search/QueryBuilder.java)), e o `IPEDSource` levanta `IndexSearcher.setMaxClauseCount(Integer.MAX_VALUE)`. Consequência: wildcard amplo **não falha**, vira uma cláusula por termo do índice e custa o dicionário inteiro. Quem for acrescentar reconhecimento de expressão precisa saber que o teto não protege nada aqui |

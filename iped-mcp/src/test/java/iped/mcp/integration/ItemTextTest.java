@@ -84,6 +84,12 @@ public class ItemTextTest {
     @Test
     public void aDecodedRecordSaysWhereItsContentIsInsteadOfDenyingIt() {
         String caseId = session.openCase(McpTestSupport.requireReferenceCase());
+        // Asked of the vocabulary before it is named in a query: a case with no decoded records
+        // carries no isDecodedData field, and querying it would be refused with UNKNOWN_FIELD —
+        // correctly — which the harness would report as a failure of this test rather than as the
+        // skip it is.
+        Assume.assumeTrue("this case has no isDecodedData field, so it holds no decoded records",
+                session.hasField(caseId, "isDecodedData"));
         JsonNode record = anItemMatching(caseId, "isDecodedData:true", false);
         Assume.assumeTrue("this case has no decoded records", record != null);
 

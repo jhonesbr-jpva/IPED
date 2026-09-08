@@ -128,6 +128,14 @@ public class PreviewBackedContentTest {
      * same reason.
      */
     private List<JsonNode> previewBackedItems(String caseId) {
+        // The selector below names a field that a case need not have: processing without preview
+        // generation writes no hasPreview at all. Asking the vocabulary first is what makes such a
+        // case skip these tests instead of failing them — the server's UNKNOWN_FIELD is the right
+        // answer, and the harness turns any refusal into an AssertionError before the caller's
+        // Assume is ever reached.
+        if (!session.hasField(caseId, "hasPreview")) {
+            return new ArrayList<>();
+        }
         JsonNode items = session.call("iped_search", "case_id", caseId, "query",
                 "hasPreview:true AND category:\"Instant Messages\"", "page_size", 3 * SAMPLE,
                 "include_snippets", false).path("items");

@@ -89,6 +89,25 @@ public class McpSessionRule extends ExternalResource {
         return response.path("result").path("structuredContent");
     }
 
+    /**
+     * Whether this case's index carries a field, asked of the case rather than assumed.
+     *
+     * <p>
+     * A suite that probes with a case-specific field — {@code hasPreview} on a case processed
+     * without preview generation, {@code isDecodedData} on a disk image with no decoded records —
+     * has to ask this first. Naming a field the index does not have makes the server answer
+     * {@code UNKNOWN_FIELD}, which is the correct answer and the one this module exists to give, and
+     * {@link #call} turns any refusal into a failure. Without the probe the suite fails red where it
+     * means to skip, and "this case does not exercise the requirement" reads as a defect.
+     *
+     * <p>
+     * It is also what the skill tells an agent to do before concluding anything from a zero, so a
+     * suite that does it is exercising the documented path rather than working around it.
+     */
+    public boolean hasField(String caseId, String field) {
+        return call("iped_check_field", "case_id", caseId, "field", field).path("exists").asBoolean();
+    }
+
     /** Calls a tool and returns the raw JSON-RPC response, errors included. */
     public JsonNode raw(String tool, Object... keyValues) {
         ObjectNode arguments = JsonRpcCodec.mapper().createObjectNode();
