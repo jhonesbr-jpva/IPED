@@ -26,12 +26,25 @@ diacritic folding, mapping of content matches onto their parent item).
 | Numeric or date range | `size:[1000000 TO 5000000]` |
 | Open-ended range | `created:[2024-01-01 TO *]` |
 | Field has any value | `hash:*` |
+| Every item | `*:*` |
 
 Escape these with a backslash when you mean them literally:
 `+ - && || ! ( ) { } [ ] ^ " ~ * ? : \`
 
 A bare term with no field prefix searches **name** and **content**. Name matches are boosted, so a
 file called `contract.pdf` ranks above a file that merely mentions the word.
+
+### Every item is `*:*`, and a bare `*` is not the same thing
+
+`*:*` selects every item. A bare `*` is a **wildcard over name and content**, and the parser answers
+it by enumerating every term in the index and building one clause per term — the cost is the size of
+the term dictionary, not the size of the page you asked for. Nothing errors; it just takes as long as
+it takes. The server recognizes a lone `*` and runs `*:*` instead, saying so in `query_normalized`,
+but a `*` used anywhere else in an expression is yours to get right.
+
+The same trap in another shape: **do not invent a query in order to fill a parameter.** To list a
+bookmark, pass `bookmark` to `iped_search` with no `query` at all. To see the shape of the collection,
+`iped_case_overview` and `iped_aggregate` answer without listing items.
 
 ## Field names that contain a colon
 
@@ -57,7 +70,8 @@ Three things that trip agents here, in the order they cause trouble:
   server receives `p2p\:fileType`. Emitting a bare `\:` inside a JSON string is invalid JSON and the
   call is rejected before it reaches the case.
 - **The escape belongs only inside a query expression.** `iped_check_field`, the keys returned by
-  `iped_item_fields` and the `dimension` argument of `iped_aggregate` all take the plain name.
+  `iped_item_fields`, the `dimension` argument of `iped_aggregate` and the `fields` of
+  `iped_get_items` all take the plain name.
 
 `iped_list_fields` and `iped_item_fields` return the plain names and, when any of them need it, a
 `query_form` with the spelling to paste into a query. `iped_check_field` returns `query_form` for a
@@ -76,6 +90,12 @@ without checking — it is a processing-time setting.
 These are the basic properties present on essentially every 4.x case. Anything beyond them —
 parser-produced metadata, EXIF, message fields — varies by case and must come from
 `iped_list_fields` or `iped_item_fields`.
+
+Once you know the name, read it across a whole set in one call: `iped_get_items` with `fields`
+returns exactly the fields you name for a batch of ids. That is the pair to use — `iped_item_fields`
+on one item to learn what the case calls something, then `iped_get_items` with `fields` to read it
+for every id the search returned. A name this case does not have is refused with the near names
+attached, so a projection never comes back as an absence you might report as a finding.
 
 ### Identity and structure
 
@@ -140,7 +160,7 @@ zero rather than an error.
 | `md5`, `sha1` | `hash` — the algorithm is a processing setting |
 | `date`, `timestamp` | `created` / `modified` / `accessed`, or `timeStamp` |
 | `isDeleted` | `deleted` |
-| `label`, `tag` | bookmarks are not a query field; use `iped_list_bookmarks` |
+| `label`, `tag` | bookmarks are not query fields; pass `bookmark` separately to `iped_search` |
 | `p2p:fileType:"mp3"` | `p2p\:fileType:"mp3"` — see the colon section above |
 
 **Whenever a field-restricted query returns zero, call `iped_check_field` before drawing any
