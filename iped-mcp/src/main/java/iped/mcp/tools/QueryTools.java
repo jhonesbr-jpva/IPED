@@ -41,11 +41,13 @@ public class QueryTools {
         List<ToolDescriptor> tools = new ArrayList<>();
 
         tools.add(new ToolDescriptor("iped_search",
-                "Searches a case with IPED query syntax and returns one page of enriched items plus the exact "
-                        + "total number of matches. total_matches is always exact and independent of how many "
-                        + "items came back, so a large total means narrow the query rather than page through "
-                        + "it. Optionally restrict the result to one bookmark. Page with next_cursor. Ordering "
-                        + "is deterministic: the same query and bookmark return the same page in the same order.",
+                "Searches a case with IPED query syntax and returns one page of enriched items plus the total "
+                        + "number of matches. The total is independent of how many items came back, so a large "
+                        + "total means narrow the query rather than page through it. It is exact whenever the "
+                        + "scan completes, and the result always says which it is: when the time budget cuts "
+                        + "the scan short, total_matches_exact comes back false and the total is a floor. "
+                        + "Optionally restrict the result to one bookmark. Page with next_cursor. Ordering is "
+                        + "deterministic: the same query and bookmark return the same page in the same order.",
                 arguments -> search(arguments))
                         .required("case_id", "string", "Case identifier returned by iped_open_case.")
                         .optional("query", "string",

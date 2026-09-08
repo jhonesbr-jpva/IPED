@@ -30,7 +30,7 @@ iped/mcp/
 ├── config/McpServerConfig   # Configurable<UTF8Properties> lido de conf/McpServerConfig.txt
 ├── protocol/                # JsonRpcCodec, McpError, ToolDescriptor, McpDispatcher
 ├── session/                 # Session, CaseRegistry, CaseValidator, OpenCase, ConcurrencyGuard
-├── query/                   # PagedSearcher, Aggregator, SnippetBuilder, FieldVocabulary, FieldNames, Cursor
+├── query/                   # PagedSearcher, Aggregator, SnippetBuilder, FieldVocabulary, FieldNames, Cursor, BookmarkQuery
 ├── item/                    # ItemView, FieldSelection, ContentAccess
 ├── curation/BookmarkWriter  # marcadores e seleção sobre Bookmarks/saveState
 ├── McpRelayMain.java        # relay stdio↔socket, para o harness em outra máquina
@@ -140,7 +140,7 @@ Nenhum artefato novo entra no release além do próprio `iped-mcp.jar`: POI e Ja
 ## 7. Testes
 
 ```bash
-mvn -pl iped-mcp test                                            # sem caso: 222 efetivos de 315 (93 pulam)
+mvn -pl iped-mcp test                                            # sem caso: 231 efetivos de 327 (96 pulam)
 
 # Com caso, são necessários mais dois parâmetros — ver abaixo por quê:
 mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe \
@@ -188,13 +188,40 @@ só valem para a receita. Nenhuma era regressão — as cinco estavam intocadas 
 |---|---|
 | `InvestigationBatteryTest` | Procura arquivos **plantados pela receita** (`apagado-recibo.txt` em Q06). Um caso real não os tem |
 | `PaginationTest.pagingCoversEverythingExactlyOnce` | Teto de **5000 páginas × 20 = 100.000 itens**. Contra caso maior o laço bate no teto. Vale corrigir para o teto escalar com `total_matches` |
-| `VocabularyTest` (3) | Três suposições da receita: que o caso **não** tem campo `mediaType` (aqui tem, então vem `QUERY_SYNTAX` em vez de `UNKNOWN_FIELD`); que `campo:*` vale para todo campo (num campo **numérico** o parser recusa com `Unparseable number: "*"`); e que a sugestão nunca é namespaced — o teste concatena o nome cru em vez de usar o `query_form` que o servidor devolve exatamente para isso |
+| `VocabularyTest` (até 3) | Três suposições da receita: que o caso **não** tem campo `mediaType` (aqui tem, então vem `QUERY_SYNTAX` em vez de `UNKNOWN_FIELD`); que `campo:*` vale para todo campo (num campo **numérico** o parser recusa com `Unparseable number: "*"`); e que a sugestão nunca é namespaced — o teste concatena o nome cru em vez de usar o `query_form` que o servidor devolve exatamente para isso. **Quantas disparam depende do caso**: a terceira só existe onde há campo namespaced, e numa imagem de disco comum não há |
 
 `FieldProjectionTest` é **agnóstico ao conteúdo de propósito**, para não entrar nessa lista: tira os ids
 da própria busca e o campo específico do próprio `iped_list_fields`, em vez de esperar arquivo plantado
-ou vocabulário conhecido. Verificado contra caso fora da receita (release `4.4.0-SNAPSHOT`), 7 de 7,
-nenhum pulado. É só leitura — `iped_search`, `iped_get_items`, `iped_list_fields`,
-`iped_case_overview` — então não precisa do cuidado com `bookmarks.iped` da seção abaixo.
+ou vocabulário conhecido. Verificado contra dois casos fora da receita: release `4.4.0-SNAPSHOT`, 7 de
+7, nenhum pulado; e a bancada do `fastmode` abaixo, 6 de 7 com 1 pulado e **nenhuma falha** — que é a
+propriedade que importa, porque pular por falta de material no caso é o desfecho certo e falhar não
+seria. É só leitura — `iped_search`, `iped_get_items`, `iped_list_fields`, `iped_case_overview` —
+então não precisa do cuidado com `bookmarks.iped` da seção abaixo.
+
+### Segunda passagem, contra outra bancada — 2026-09-08
+
+Suíte inteira contra a bancada do `fastmode` (RockPi4, 319.641 itens), depois do merge do PR #6.
+Confirma as falhas acima e expõe **duas suítes que falham onde deveriam pular**:
+
+| Suíte | O que acontece |
+|---|---|
+| `PreviewBackedContentTest` (2 de 2) | A sonda é um `iped_search` em `hasPreview:true AND category:"Instant Messages"`. Num caso sem preview o servidor responde `UNKNOWN_FIELD` — que é o comportamento **certo**, e o que esta feature existe para garantir — e o `McpSessionRule.call` transforma a recusa em `AssertionError` **antes** de o `Assume` da suíte ser alcançado |
+| `ItemTextTest.aDecodedRecordSaysWhereItsContentIsInsteadOfDenyingIt` | Mesma mecânica, sondando `isDecodedData:true` |
+
+Não é suposição da receita nem propriedade do servidor: é a sonda perguntando por campo que o caso
+pode não ter, e por isso não entra na tabela acima. O conserto é o que a skill ensina ao agente e o
+que o `FieldProjectionTest` já faz — consultar `iped_list_fields` antes e devolver vazio, deixando o
+`Assume` decidir. **Em aberto.**
+
+A mesma rodada mostra o que essa bancada **não** exercita, e um teste pulado não é um teste que passou:
+`fastmode` não calcula hash e não gera preview, então os dois testes centrais do `ItemExportTest`
+pulam — `anItemWithBytesAndAHash` não acha nada — e o caminho de preview não tem o que procurar; e a
+evidência é de um SBC Linux, sem app de mensagem, então não há `isDecodedData` nem chat. Exercitar
+exportação conferida contra o hash do caso, conteúdo vindo de preview e texto de conversa exige outro
+perfil ou outra evidência. Exercitado à mão ali, fora da suíte: `*:*` 319.641 em 107 ms e `*` em 53 ms
+já reescrito, marcador sozinho sem consulta, projeção com `resolved_fields`, e `iped_export_item` dos
+bytes (141.107 bytes, igual ao índice, sem `.part` sobrando) e do texto — este com `hash_verified:
+false` corretamente explicado, porque o `fastmode` não gravou hash com que conferir.
 
 **Em aberto**, caracterizado mas não resolvido:
 
@@ -209,10 +236,12 @@ expectativa do teste mais estrita que o desenho, é questão da 001.
 de volta. Aqui o primeiro rename falhou, mas se tivesse funcionado e o segundo falhasse, o caso
 ficaria renomeado.
 
-Rodando contra caso fora da receita, exclua as três incompatíveis:
+Rodando contra caso fora da receita, exclua as incompatíveis — as três da receita e as duas cuja
+sonda pergunta por campo que o caso pode não ter:
 
 ```bash
-mvn -pl iped-mcp test -Dtest='!InvestigationBatteryTest,!PaginationTest,!VocabularyTest' \
+mvn -pl iped-mcp test \
+    -Dtest='!InvestigationBatteryTest,!PaginationTest,!VocabularyTest,!PreviewBackedContentTest,!ItemTextTest#aDecodedRecordSaysWhereItsContentIsInsteadOfDenyingIt' \
     -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe \
     -Diped.mcp.test.referenceCase=<caso>
 ```
@@ -287,8 +316,9 @@ build antigo. **Se `~/.codex/skills/` seguir link simbólico não foi verificado
 confirmar e cair no `AGENTS.md`, que aceita caminho absoluto e não depende disso.
 
 Também documentado, e medido em vez de suposto: **Codex dentro do WSL2 lançando o `java.exe` do
-Windows** por interop (`command = /mnt/c/.../jre/bin/java.exe`, argumentos com caminho Windows). 25
-ferramentas em `tools/list`, stdout só com JSON-RPC, log do engine no stderr. É a melhor das opções
+Windows** por interop (`command = /mnt/c/.../jre/bin/java.exe`, argumentos com caminho Windows). A
+superfície inteira em `tools/list` — 25 ferramentas na medição, 26 desde o `iped_export_item`; a
+lista canônica é a do `ToolSchemaTest` —, stdout só com JSON-RPC, log do engine no stderr. É a melhor das opções
 porque o caminho continua sendo do Windows — o que mantém as `exportRoots` do `McpServerConfig.txt`
 casando e o índice sendo lido nativamente —, e porque o `jre/` do release é Windows e não roda sob
 Linux. O que ela **não** é: isolamento. Depende de `/mnt/c`, e aí o agente alcança a pasta do caso
