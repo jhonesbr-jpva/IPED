@@ -26,6 +26,7 @@ Open Codex's configuration file, `~/.codex/config.toml` (on Windows,
 command = "C:\\path\\to\\IPED\\jre\\bin\\java.exe"
 args = [
   "-Diped.mcp.ipedRoot=C:\\path\\to\\IPED",
+  "-Dlog4j.configurationFile=C:\\path\\to\\IPED\\conf\\Log4j2ConfigurationMcp.xml",
   "-cp", "C:\\path\\to\\IPED\\lib\\*",
   "iped.mcp.McpServerMain"
 ]
@@ -38,6 +39,7 @@ args = [
 command = "/path/to/IPED/jre/bin/java"
 args = [
   "-Diped.mcp.ipedRoot=/path/to/IPED",
+  "-Dlog4j.configurationFile=/path/to/IPED/conf/Log4j2ConfigurationMcp.xml",
   "-cp", "/path/to/IPED/lib/*",
   "iped.mcp.McpServerMain"
 ]

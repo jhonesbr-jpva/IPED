@@ -22,13 +22,13 @@ In a terminal, from any folder:
 **Windows**
 
 ```
-claude mcp add iped -- "<IPED_ROOT>\jre\bin\java.exe" -Diped.mcp.ipedRoot="<IPED_ROOT>" -cp "<IPED_ROOT>\lib\*" iped.mcp.McpServerMain
+claude mcp add iped -- "<IPED_ROOT>\jre\bin\java.exe" -Dlog4j.configurationFile="<IPED_ROOT>\conf\Log4j2ConfigurationMcp.xml" -Diped.mcp.ipedRoot="<IPED_ROOT>" -cp "<IPED_ROOT>\lib\*" iped.mcp.McpServerMain
 ```
 
 **Linux**
 
 ```
-claude mcp add iped -- "<IPED_ROOT>/jre/bin/java" -Diped.mcp.ipedRoot="<IPED_ROOT>" -cp "<IPED_ROOT>/lib/*" iped.mcp.McpServerMain
+claude mcp add iped -- "<IPED_ROOT>/jre/bin/java" -Dlog4j.configurationFile="<IPED_ROOT>/conf/Log4j2ConfigurationMcp.xml" -Diped.mcp.ipedRoot="<IPED_ROOT>" -cp "<IPED_ROOT>/lib/*" iped.mcp.McpServerMain
 ```
 
 Substitute your real path for `<IPED_ROOT>` in both places. Keep the quotes: forensic installations

@@ -65,6 +65,7 @@ In the same `opencode.json`, add the `mcp` block:
       "command": [
         "C:\\path\\to\\IPED\\jre\\bin\\java.exe",
         "-Diped.mcp.ipedRoot=C:\\path\\to\\IPED",
+        "-Dlog4j.configurationFile=C:\\path\\to\\IPED\\conf\\Log4j2ConfigurationMcp.xml",
         "-cp", "C:\\path\\to\\IPED\\lib\\*",
         "iped.mcp.McpServerMain"
       ],
@@ -84,6 +85,7 @@ In the same `opencode.json`, add the `mcp` block:
       "command": [
         "/path/to/IPED/jre/bin/java",
         "-Diped.mcp.ipedRoot=/path/to/IPED",
+        "-Dlog4j.configurationFile=/path/to/IPED/conf/Log4j2ConfigurationMcp.xml",
         "-cp", "/path/to/IPED/lib/*",
         "iped.mcp.McpServerMain"
       ],
