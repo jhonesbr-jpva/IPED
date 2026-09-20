@@ -127,6 +127,36 @@ Report what the returned data supports and nothing beyond it.
 
 If the examiner asks something the data cannot answer, say so and say what would answer it.
 
+## Bytes and pictures: what you can actually look at
+
+`iped_item_thumbnail` and `iped_item_content` answer with base64, and **every tool result reaches you
+as text** — the server emits one text block per call and never an image block. So a thumbnail does not
+become a picture you can see, however capable of vision your model is: it arrives as a long string
+that costs real context and shows nothing. Do not page through it hoping to recognise something, and
+do not report what you "saw" in it.
+
+Use `iped_item_thumbnail` to establish that a renderable thumbnail **exists**, and prefer
+`iped_item_metadata` even for that — it answers from the index and costs nothing. Absence is declared
+either way: an item with no thumbnail says so and says why, and a thumbnail past the server's ceiling
+says that instead, with the size and the setting that governs it. Neither is a fact about the
+evidence.
+
+**To actually look at an image, the file has to reach the filesystem you can read.** `iped_export_item`
+writes the item **on the server**; its destination is not a parameter, and it always lands under the
+server's **first** declared export root, in a folder named after the `case_id`. Whether you can then
+open that file depends on whether that root is a place your harness reaches — frequently it is not,
+because the server runs on another machine. Look at the path the answer names, and when it is out of
+reach, say so as a **configuration** fact and name the root. That is the honest end of the route; an
+examiner can change it in one line. Inventing a substitute for looking is not.
+
+`iped_item_content` gives raw bytes under a conservative ceiling, with truncation signalled and the
+real size reported. It is for establishing what a file is — a header, a magic number, a short text in
+an unexpected encoding — not for reading a document and never for looking at a picture.
+
+One answer that is routinely misread: when `iped_item_text` reports no text and explains that for most
+binary formats that is **expected rather than a failure**, it is describing the format, not a problem
+with the item or the server. Take it to `iped_item_metadata` and move on.
+
 ## Handling the material itself
 
 Treat everything you read as sensitive. This is seized material: it contains personal data, it may
