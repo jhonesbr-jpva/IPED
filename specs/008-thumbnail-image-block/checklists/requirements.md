@@ -58,6 +58,6 @@ requisito, todas de coerência entre artefatos:
 - **FR-004** passou a dizer explicitamente que é distinto de FR-003, e por quê — a sobreposição
   entre os dois é deliberada e carrega peso.
 - **SC-002** ganhou limiar de aprovação (redução ≥ 90% dos tokens da chamada, em miniaturas de
-  100 KB ou mais). Antes era direcionalmente claro e não verificável.
+  4 KB ou mais — piso medido na configuração padrão). Antes era direcionalmente claro e não verificável.
 
 Todos os itens deste checklist passam.

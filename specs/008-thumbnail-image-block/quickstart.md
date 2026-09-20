@@ -52,7 +52,9 @@ D3 de verdade — é por ali que entram miniaturas que não são JPEG.
 ```powershell
 $env:JAVA_HOME = "H:\java\LibericaJDK-11-Full"
 mvn -pl iped-mcp -am install -DskipTests
-mvn -pl iped-mcp test "-Diped.mcp.referenceCase=H:\iped-cases\thumbs-bench"
+mvn -pl iped-mcp test `
+  "-Diped.mcp.test.referenceCase=H:\iped-cases\thumbs-bench" `
+  "-Diped.mcp.ipedRoot=C:\iped\iped-mcp\iped-4.3.1"
 ```
 
 **Esperado**: verde, e **nenhum skip** nas suítes de miniatura. Um skip aqui não é um pass — é
@@ -197,8 +199,11 @@ imagem é propriedade dele (Assumptions do spec).
 
 ## Cenário 8 — o custo de contexto caiu (SC-002)
 
-Mesmo item, mesma pergunta, antes e depois da mudança, sobre uma miniatura de **100 KB ou
-maior**. Compare os tokens consumidos pela chamada.
+Mesmo item, mesma pergunta, antes e depois da mudança, sobre a **maior miniatura da bancada**.
+Compare os tokens consumidos pela chamada.
+
+> Na configuração padrão (`imgThumbSize = 256`), as miniaturas desta bancada vão de **4,3 KB a
+> 16 KB** — medido, não estimado. Não procure uma de 100 KB: ela não existe com esse ajuste.
 
 **Esperado**: a cadeia base64 **não** aparece mais transcrita no diálogo. O custo passa a ser o
 de uma imagem, mais o payload curto do bloco de texto.

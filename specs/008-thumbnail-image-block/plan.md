@@ -42,7 +42,7 @@ exige.
 
 **Resolvido em 2026-09-20**: a tensão não ficou pendente entre plano e spec. FR-003 recebeu a
 ressalva de D4, FR-004 passou a declarar-se deliberadamente distinto de FR-003, e SC-002 ganhou
-limiar de aprovação (redução ≥ 90% dos tokens da chamada, em miniaturas de 100 KB ou mais),
+limiar de aprovação (redução ≥ 90% dos tokens da chamada, em miniaturas de 4 KB ou mais),
 medido por T032. O raciocínio completo e as três alternativas descartadas continuam em
 [research.md](research.md), D4.
 

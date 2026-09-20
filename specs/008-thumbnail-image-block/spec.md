@@ -131,7 +131,7 @@ Quando não há miniatura — porque o item não é visual, porque nada foi rend
 ### Measurable Outcomes
 
 - **SC-001**: Diante de dez itens visuais de conteúdo conhecido, o agente descreve corretamente o que há em pelo menos nove, conferido contra as mesmas imagens abertas na interface do IPED.
-- **SC-002**: Examinar uma imagem deixa de transcrever a codificação da figura no diálogo: o custo de contexto de olhar um item cai para o de uma imagem. **Limiar de aprovação**: medido em tokens consumidos pela chamada, na mesma evidência antes e depois, a redução é de **pelo menos 90%** para miniaturas de 100 KB ou maiores. Abaixo disso, a entrega não está surtindo o efeito que a motiva.
+- **SC-002**: Examinar uma imagem deixa de transcrever a codificação da figura no diálogo: o custo de contexto de olhar um item cai para o de uma imagem. **Limiar de aprovação**: medido em tokens consumidos pela chamada, na mesma evidência antes e depois, a redução é de **pelo menos 90%** para qualquer miniatura de **4 KB ou mais** — que é o piso observado na configuração padrão de miniatura. Abaixo disso, a entrega não está surtindo o efeito que a motiva.
 - **SC-003**: Nenhum agente precisa exportar arquivos para examinar imagem; a rota por exportação some dos registros de trabalho produzidos em uma perícia completa.
 - **SC-004**: Instalações que não apresentam imagens não registram nenhuma falha nova nem perda de informação após a mudança, verificado exercitando a mesma chamada por um cliente que ignore imagens.
 - **SC-005**: Nenhuma afirmação sobre conteúdo visual aparece em artefato de perícia sem que a imagem correspondente tenha sido efetivamente entregue ao modelo — a verificação passa a ser possível, e o relato passa a ser conferível.
