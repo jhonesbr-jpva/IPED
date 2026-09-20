@@ -252,7 +252,7 @@ public class McpDispatcher {
         try {
             Object result = tool.invoke(arguments);
             session.getAuditTrail().recordEnd(start, AuditRecord.Outcome.OK, volumeOf(result), null);
-            return renderResult(result);
+            return renderResult(result, tool.getContentClass());
         } catch (McpError e) {
             Map<String, Object> blocked = isPolicyRefusal(e) ? blockDetails(e) : null;
             session.getAuditTrail().recordEnd(start,
@@ -316,18 +316,38 @@ public class McpDispatcher {
     /**
      * Renders a tool result in the shape MCP clients expect: a text block carrying the JSON, plus
      * the same payload as structured content for clients that read it.
+     *
+     * <p>
+     * A thumbnail is delivered as a picture as well (FR-001): the text block stays where it is, in
+     * position 0, and an {@code image} block follows it. Only the thumbnail content class does
+     * this, so no other tool changes shape (FR-005), and {@code structuredContent} is the same in
+     * either branch (FR-003) — see {@link ImageBlock} for why the gate is the declared class.
+     *
+     * @param contentClass
+     *            the class of evidence content the tool declared, or {@code null} when it declared
+     *            none. It decides the shape of the answer as well as the egress verdict, so that a
+     *            tool cannot acquire a different shape without having declared what it returns.
      */
-    private static ObjectNode renderResult(Object result) {
+    private static ObjectNode renderResult(Object result, String contentClass) {
         ObjectNode response = JsonRpcCodec.mapper().createObjectNode();
         JsonNode structured = JsonRpcCodec.mapper().valueToTree(result);
+        boolean asImage = ImageBlock.isEmittable(structured, contentClass);
+
         ArrayNode content = response.putArray("content");
         ObjectNode text = content.addObject();
         text.put("type", "text");
+        // The encoding is dropped from the text rendering only when the image block carries it;
+        // with no image block there is nowhere for the note to point, so nothing is elided.
+        JsonNode rendered = asImage ? ImageBlock.elided(structured) : structured;
         try {
-            text.put("text", JsonRpcCodec.mapper().writerWithDefaultPrettyPrinter().writeValueAsString(structured));
+            text.put("text", JsonRpcCodec.mapper().writerWithDefaultPrettyPrinter().writeValueAsString(rendered));
         } catch (Exception e) {
-            text.put("text", String.valueOf(structured));
+            text.put("text", String.valueOf(rendered));
         }
+        if (asImage) {
+            content.add(ImageBlock.of(structured));
+        }
+
         response.set("structuredContent", structured);
         response.put("isError", false);
         return response;

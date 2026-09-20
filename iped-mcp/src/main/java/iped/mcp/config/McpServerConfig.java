@@ -381,6 +381,18 @@ public class McpServerConfig implements Configurable<UTF8Properties> {
         return maxThumbnailBytes;
     }
 
+    /**
+     * Overrides the thumbnail ceiling in force.
+     *
+     * <p>
+     * The installation sets it in {@code conf/McpServerConfig.txt} like every other ceiling; this
+     * exists so a suite can lower it under an item it knows has a thumbnail, and check the refusal,
+     * rather than having to find evidence with an unusually large picture in it.
+     */
+    public void setMaxThumbnailBytes(int bytes) {
+        this.maxThumbnailBytes = bytes;
+    }
+
     public int getSnippetLength() {
         return snippetLength;
     }

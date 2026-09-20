@@ -77,6 +77,13 @@ Duas consequências práticas menos óbvias:
   numérico de `id` e consulta a associação corrente no `IBookmarks`. Ela declara
   `isCacheable = false` porque o marcador pode mudar enquanto o searcher permanece aberto.
 
+Um quinto achado veio da 008, e muda a forma da resposta:
+
+| Achado | Consequência no código |
+|---|---|
+| **O protocolo não oferece canal para negociar tipos de bloco de conteúdo.** Na revisão `2025-06-18`, que `McpDispatcher.PROTOCOL_VERSION` declara, `ImageContent` já faz parte da união `ContentBlock`, e as capacidades que um cliente anuncia (`roots`, `sampling`, `elicitation`) nada dizem sobre isso | O bloco de imagem é emitido **sempre**, sem condicionar a anúncio nenhum. Não há chave de configuração para desligá-lo: conformidade com especificação não é preferência de instalação. Criar uma negociação exigiria extensão proprietária, e produziria um comportamento que só se reproduz com o cliente certo |
+| **A codificação não pode viajar duas vezes.** Se o bloco de texto mantivesse o base64 ao lado do bloco de imagem, olhar uma figura passaria a custar **mais** contexto, não menos | `ImageBlock.elided()` troca **apenas** a chave `data` de nível superior por uma nota, **apenas** no bloco de texto, e **apenas** quando o bloco de imagem foi de fato emitido. `structuredContent` sai intacto — é por onde todo consumidor programático lê |
+
 ## 4. Configuração
 
 Tudo o que varia vive em `conf/McpServerConfig.txt` (Princípio IV da constituição), nunca em constante de código: área de auditoria, modo de acesso, política de egresso, tetos de página, de lote e de conteúdo (o `maxBatchSize` limita tanto quantos ids quanto quantos **nomes de campo** uma projeção pede — não há teto novo para isso), faixa de versão suportada, destino de exportação, reparo de nome de campo (`autoEscapeFieldNames`, desligado por padrão — ligado, uma expressão que só falha por colon não escapado é corrigida contra o vocabulário real do caso e o reparo vem declarado em `query_normalized`).
@@ -97,6 +104,9 @@ Acrescentado na 006: **raízes de escrita** (`exportRoots`, separadas por `;` �
 | No máximo uma sessão escreve um caso | `ConcurrencyGuard.acquireWriteLock` sobre `access.lock`; duas sessões do mesmo processo colidem por `OverlappingFileLockException`. `WriteClaims` **não exclui** — só nomeia a detentora no diagnóstico |
 | Identidade alegada nunca se lê como verificada | `OperatorIdentity.describe()` põe "unverified" **dentro do valor**, e é esse valor que vai para o campo `operator` da trilha. Nome de campo não sobrevive a ser copiado para um laudo; o valor sobrevive |
 | Nenhuma operação executa sem registro prévio | `McpDispatcher.callTool` → `AuditTrail.recordStart` |
+| **Só a classe `thumbnail` vira bloco de imagem** | `ImageBlock.isEmittable` exige `contentClass == "thumbnail"`, `available`, `data` não vazio e `media_type` casando com `image/*`. O gatilho é a **mesma** marcação que a política de egresso usa, e não o nome da ferramenta — duas marcações para o mesmo fato seriam duas chances de divergirem. `ImageBlockContractTest` verifica que metadado, texto e conteúdo bruto seguem com um único bloco |
+| **`structuredContent` nunca é afetado pela forma da resposta** | `McpDispatcher.renderResult` serializa o payload original em `structuredContent` nos dois ramos; só a renderização textual muda. Quebrar isso quebra todo consumidor programático de uma vez, em silêncio |
+| **Tipo de mídia de miniatura é lido dos bytes, nunca presumido** | `ThumbnailMediaType.detect` devolve `null` quando a detecção não dá um tipo `image/*`, e aí **nenhuma** imagem é emitida. A constante `"image/jpeg"` que isso substituiu estava errada para avatares vindos de `THUMBNAIL_BASE64` — um vCard com foto PNG produz miniatura PNG |
 | Somente-leitura por padrão; curadoria recusada sem tocar o caso | portão de modo de acesso no `McpDispatcher`, antes de qualquer leitura de argumento |
 | Política de egresso não contornável por escolha de ferramenta | classe de conteúdo declarada em `ToolDescriptor.returnsContent`, aplicada na fronteira do dispatcher |
 | Estado anterior antes de operação destrutiva | `ToolDescriptor.capturingPriorState`, avaliado antes do `recordStart` |
@@ -167,6 +177,28 @@ Abrir caso real no harness exige duas coisas que o teste unitário não exige, e
 
 - **`-Diped.mcp.ipedRoot`** — a configuração do engine (`IndexTaskConfig`, `AnalysisConfig`, `CategoryConfig`) tem que ser carregada de uma instalação antes de abrir caso, exatamente como o `McpServerMain.main` faz. Sem isso o `iped_open_case` falha com `CASE_INACCESSIBLE` e `IndexTaskConfig` nulo. `McpTestSupport.requireIpedConfiguration()` cuida disso, chamado de `requireReferenceCase()`/`requireLargeCase()`.
 - **`-Djvm` apontando para o JRE 11 do release** — carregar o task installer arrasta o FST, que reflete em interno do JDK (`String.value`, `BigDecimal.intVal`, e mais conforme registra suas classes padrão). Java permite até a 15 e recusa a partir da 16. Em JVM ≥ 16 o harness **recusa antes de falhar**, com o comando pronto; abrir pacote a pacote com `--add-opens` é caça sem fim e um conjunto incompleto só desloca a confusão.
+
+### O perfil do caso decide o que a suíte consegue exercitar
+
+Mesma disciplina já registrada para hash e preview, agora para miniatura — e esta pula em silêncio,
+que é o modo pior.
+
+**`fastmode` não gera miniatura nenhuma.** O perfil desliga as quatro chaves
+(`enableImageThumbs`, `enableVideoThumbs`, `enableDocThumbs`, `enableImageSimilarity` em
+`iped-app/resources/config/profiles/fastmode/IPEDConfig.txt`). Num caso assim, **todo** item cai no
+ramo `available: false` das ferramentas de miniatura: a suíte passa, sem ter tocado o caminho que
+importa. Para exercitar a entrega visual (008) é preciso um caso processado com o perfil padrão.
+
+Duas medições da bancada da 008 (`H:\iped-cases\thumbs-bench`, pasta pequena de imagens geradas,
+perfil padrão, 16 itens em 30 s), úteis para calibrar expectativa:
+
+- Com `imgThumbSize = 256` (o padrão), as miniaturas ficam entre **4,3 KB e 16 KB**. Não existe
+  miniatura de 100 KB nessa configuração — um critério escrito em torno desse tamanho é
+  inverificável.
+- **Um vCard com foto PNG produz miniatura PNG.** É a rota `THUMBNAIL_BASE64`, em que o parser
+  entrega os bytes crus da fonte e o `ParsingTask` os grava sem reencodar. Um caso só de JPEG nunca
+  distingue tipo detectado de tipo presumido, e foi por isso que a constante `"image/jpeg"`
+  sobreviveu tanto tempo.
 
 ### O que um caso de referência diferente do da receita revela
 

@@ -92,8 +92,10 @@ public class ItemTools {
                                 .returnsContent("text"));
 
         tools.add(new ToolDescriptor("iped_item_thumbnail",
-                "Thumbnail of one item, base64-encoded. Absence is declared: an item with no thumbnail says so "
-                        + "and why.",
+                "Thumbnail of one item, delivered as an image your client can show you when it renders images, "
+                        + "with its media type read from the bytes rather than assumed. Absence is declared: an "
+                        + "item with no thumbnail says so and why, and a thumbnail past the server's ceiling "
+                        + "says that instead, with the real size — neither is a fact about the evidence.",
                 arguments -> contentAccess.thumbnail(caseOf(arguments), itemOf(arguments)))
                         .required("case_id", "string", "Case identifier returned by iped_open_case.")
                         .required("item_id", "integer", "Item identifier, local to this case.")

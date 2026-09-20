@@ -346,7 +346,17 @@ public class ContentAccess {
         }
         result.put("available", true);
         result.put("encoding", "base64");
-        result.put("media_type", "image/jpeg");
+        // Read from the bytes, not assumed (FR-002). A thumbnail that came from a parser rather
+        // than from a thumbnail task carries whatever the source database held — a vCard or chat
+        // avatar is routinely PNG — and the constant this replaced announced JPEG for all of them.
+        String mediaType = ThumbnailMediaType.detect(thumb);
+        if (mediaType != null) {
+            result.put("media_type", mediaType);
+        } else {
+            result.put("media_type_note",
+                    "The media type of these bytes could not be established, so they are not delivered as an "
+                            + "image. The base64 below is the thumbnail exactly as the case stores it.");
+        }
         result.put("bytes", thumb.length);
         result.put("data", Base64.getEncoder().encodeToString(thumb));
         return result;
