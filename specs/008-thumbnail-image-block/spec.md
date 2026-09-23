@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-18
 
-**Status**: Planejado — clarificações resolvidas em [plan.md](plan.md) / [research.md](research.md) (D1, D2, D4)
+**Status**: Implementado e validado — os nove cenários do quickstart foram aprovados, e o Cenário 7, com modelo de visão, em 2026-09-21. Evidência em [validation-log.md](validation-log.md). Clarificações resolvidas em [plan.md](plan.md) / [research.md](research.md) (D1, D2, D4)
 
 **Input**: User description: "Vamos mudar o servidor emitir um bloco image de verdade para o contentClass=thumbnail."
 

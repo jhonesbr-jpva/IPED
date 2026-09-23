@@ -180,8 +180,24 @@ Este é o único cenário que precisa de um harness com modelo de visão. É tam
 mede a razão de existir da feature.
 
 1. Carregue a skill `iped-forensics` e abra o caso de bancada.
-2. Peça: *"descreva o que há nos itens 1 a 10"*.
-3. Confira cada descrição abrindo o mesmo item na interface do IPED.
+2. Peça algo que o nome do arquivo não responda. *"Descreva o que há nos itens 1 a 10"* **não
+   serve**: `photo-07-black-circle.jpg` já entrega a resposta, e o cenário passaria com a feature
+   desligada. A pergunta usada na execução de 2026-09-21 foi: *"para cada item que tenha miniatura,
+   responda (1) a cor de fundo, (2) o texto escrito dentro da imagem, transcrito literalmente, e
+   (3) quantos lados tem a figura; se não conseguir ver alguma imagem, diga isso em vez de deduzir
+   do nome do arquivo"*.
+3. Confira cada descrição contra **a miniatura**, não contra o arquivo original. Os dois podem
+   divergir: no item 9, o ruído colorido do original vira ruído cinza a 256 px, e quem descreve cinza
+   está certo.
+4. Confira no harness que a imagem chegou ao modelo como anexo. No opencode isso fica em
+   `state.attachments` da parte da chamada, em `~/.local/share/opencode/opencode.db`. É isso que
+   separa "o modelo viu" de "o modelo acertou pelo nome".
+
+> **Limite desta bancada.** O texto dentro de cada imagem é o nome do arquivo em maiúsculas, e o
+> item 13 se chama `…-white-star-on-navy.png`. A resposta (2) e o fundo do item 13 se deduzem do
+> nome. A prova de visão fica nos anexos do passo 4 e em detalhes que o nome não dá: a ordem
+> `AVATAR PNG` no item 4, cujo nome diz `png-avatar`, a faixa branca do item 9 e a posição da
+> legenda.
 
 **Esperado**:
 
@@ -237,10 +253,10 @@ antes se quiser essa verificação valendo em vez de pulando.
 
 ## Checklist de encerramento
 
-- [ ] `mvn -pl iped-mcp -am install` passa com o JDK 11 Liberica
-- [ ] nenhuma das sete suítes protegidas precisou ser editada
-- [ ] Cenários 2 a 6 conferidos na resposta crua
-- [ ] Cenário 7 rodado com modelo de visão, resultado registrado
-- [ ] Cenário 8 medido e o número anotado, com a redução ≥ 90% confirmada
-- [ ] `validation-log.md` preenchido — um veredito por cenário, com evidência
-- [ ] `iped-mcp/CLAUDE.md` atualizado (a forma da resposta é contrato do módulo)
+- [x] `mvn -pl iped-mcp -am install` passa com o JDK 11 Liberica — 347 testes, só as 4 falhas da linha de base (2026-09-20)
+- [x] nenhuma das sete suítes protegidas precisou ser editada — T021
+- [x] Cenários 2 a 6 conferidos na resposta crua — 2026-09-20
+- [x] Cenário 7 rodado com modelo de visão, resultado registrado — 2026-09-21, 13 de 13
+- [x] Cenário 8 medido e o número anotado, com a redução ≥ 90% confirmada — 98,8%
+- [x] `validation-log.md` preenchido — um veredito por cenário, com evidência
+- [x] `iped-mcp/CLAUDE.md` atualizado (a forma da resposta é contrato do módulo) — T028
