@@ -33,6 +33,7 @@ import iped.mcp.query.SnippetBuilder;
 import iped.mcp.session.CasePool;
 import iped.mcp.session.Session;
 import iped.mcp.session.WriteClaims;
+import iped.mcp.transport.ProtocolStdout;
 import iped.mcp.transport.SocketTransport;
 import iped.mcp.transport.StdioTransport;
 import iped.mcp.transport.Transport;
@@ -62,7 +63,9 @@ import iped.mcp.tools.VocabularyTools;
  *
  * <p>
  * <b>Nothing here writes to {@code System.out}.</b> stdout <i>is</i> the protocol channel; a single
- * stray print corrupts the stream. All diagnostics go to SLF4J.
+ * stray print corrupts the stream. All diagnostics go to SLF4J. Dependencies are not bound by that,
+ * and one of them does print, so {@link #main} takes stdout for the transport before anything else
+ * runs and sends {@code System.out} to stderr — see {@link ProtocolStdout}.
  */
 public class McpServerMain implements AutoCloseable {
 
@@ -239,6 +242,10 @@ public class McpServerMain implements AutoCloseable {
     }
 
     public static void main(String[] args) {
+        // First, before configuration, diagnostics or any library runs: from here on, stdout is
+        // reachable only through this stream.
+        OutputStream protocolOut = ProtocolStdout.claim();
+
         File ipedRoot = Diagnostics.resolveIpedRoot();
         McpServerConfig config = bootstrapConfiguration(ipedRoot);
 
@@ -273,7 +280,7 @@ public class McpServerMain implements AutoCloseable {
                     "iped-mcp-processing-shutdown"));
         }
 
-        try (Transport transport = createTransport(config, casePool, writeClaims)) {
+        try (Transport transport = createTransport(config, casePool, writeClaims, protocolOut)) {
             transport.serve();
         } catch (Exception e) {
             LOGGER.error("The MCP server terminated abnormally", e);
@@ -290,11 +297,14 @@ public class McpServerMain implements AutoCloseable {
      * An installation that configures nothing gets exactly what it got before this feature existed:
      * stdio, no listening socket, FR-057 of feature 001 satisfied without anyone having to know
      * there was something to switch off (FR-011).
+     *
+     * @param protocolOut
+     *            the stdout {@link ProtocolStdout#claim()} took; used only by the stdio transport
      */
-    static Transport createTransport(McpServerConfig config, CasePool casePool, WriteClaims writeClaims)
-            throws IOException {
+    static Transport createTransport(McpServerConfig config, CasePool casePool, WriteClaims writeClaims,
+            OutputStream protocolOut) throws IOException {
         if (config.getTransport() != McpServerConfig.TransportMode.SOCKET) {
-            return new StdioTransport(config, casePool, writeClaims);
+            return new StdioTransport(config, casePool, writeClaims, System.in, protocolOut);
         }
         SocketTransport socket = new SocketTransport(config, casePool, writeClaims);
         // Binding here, before serving, so a missing secret or an occupied port is a startup failure

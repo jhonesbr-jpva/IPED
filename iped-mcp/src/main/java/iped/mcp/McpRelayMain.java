@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import iped.mcp.config.McpServerConfig;
 import iped.mcp.transport.HandshakeCodec;
+import iped.mcp.transport.ProtocolStdout;
 
 /**
  * Bridges a harness that speaks stdio to a server listening on a socket.
@@ -34,7 +35,8 @@ import iped.mcp.transport.HandshakeCodec;
  * <p>
  * <b>Nothing here writes to {@code System.out}.</b> On this side stdout is the protocol channel back
  * to the harness, exactly as it is on the server side, and a single stray print corrupts the
- * client's session instead of the server's. Diagnostics go to SLF4J.
+ * client's session instead of the server's. Diagnostics go to SLF4J, and {@link #main} takes stdout
+ * for the relay before anything else runs, as the server does — see {@link ProtocolStdout}.
  */
 public final class McpRelayMain {
 
@@ -51,6 +53,9 @@ public final class McpRelayMain {
     }
 
     public static void main(String[] args) {
+        // First, before anything else runs: from here on, stdout is reachable only through this stream.
+        OutputStream toHarness = ProtocolStdout.claim();
+
         String host = resolve(HOST_PROPERTY, HOST_ENV);
         String port = resolve(PORT_PROPERTY, PORT_ENV);
         if (host == null || port == null) {
@@ -94,7 +99,7 @@ public final class McpRelayMain {
             }
             LOGGER.info("Relay connected to {}:{}", host, port);
 
-            relay(System.in, System.out, socket);
+            relay(System.in, toHarness, socket);
         } catch (IOException e) {
             LOGGER.error("The relay could not reach the server at {}:{}: {}", host, port, e.getMessage());
             System.exit(4);

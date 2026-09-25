@@ -34,7 +34,7 @@ iped/mcp/
 ├── item/                    # ItemView, FieldSelection, ContentAccess
 ├── curation/BookmarkWriter  # marcadores e seleção sobre Bookmarks/saveState
 ├── McpRelayMain.java        # relay stdio↔socket, para o harness em outra máquina
-├── transport/               # Transport, StdioTransport, SocketTransport, HandshakeCodec
+├── transport/               # Transport, StdioTransport, SocketTransport, HandshakeCodec, ProtocolStdout
 ├── audit/                   # AuditRecord, AuditTrail, AuditSync, SessionManifest
 ├── processing/              # criação de caso: JobRunner, ProgressReader, JobStore, confinamentos
 ├── egress/EgressPolicy      # opcional, inativa por padrão
@@ -118,6 +118,7 @@ Acrescentado na 006: **raízes de escrita** (`exportRoots`, separadas por `;` �
 | Projeção com nome que o caso não tem **recusa a chamada**, não devolve itens sem o campo | `FieldSelection.resolve` roda antes de ler documento e lança `UNKNOWN_FIELD` com os nomes próximos. Devolver a página com o campo ausente em todo item é indistinguível de itens que realmente não o têm — é a forma de "nada encontrado" errado que a FR-047 existe para impedir |
 | Charset explícito, logging por SLF4J | `JsonRpcCodec`, `AuditTrail`; `System.out` corromperia o próprio protocolo |
 | Nada além do protocolo alcança a saída padrão — **inclusive o que vem de fora do código** | O código respeita a linha acima; quem a contradizia era a **configuração de log da instalação**. As duas configurações distribuídas (`Log4j2ConfigurationConsoleOnly`, `Log4j2ConfigurationFile`) e o padrão da própria biblioteca apontam para `SYSTEM_OUT` — correto para a CLI e a UI, errado aqui. `conf/Log4j2ConfigurationMcp.xml` existe para isso e os comandos publicados nos guias **precisam** passá-la em `-Dlog4j.configurationFile`. Nenhum jar do IPED traz `log4j2.xml`, mas isso **não** torna a flag dispensável: o `neo4j-logging` traz um na raiz do seu jar e o `-cp lib/*` o alcança, e sem configuração alguma o fallback do Log4j escreve em SYSTEM_OUT. Medido em 2026-09-08 rodando o comando publicado sem a flag: 182 bytes no stdout, um deles um ERROR do `PythonParser`; com a flag, zero. Os seis comandos de servidor dos guias ficaram sem ela do commit da 001 até então. Invariante mantida só no código não protege contra acoplamento por arquivo de configuração |
+| **Nada além do protocolo alcança a saída padrão — nem o que uma dependência imprime** | `ProtocolStdout.claim()` é a primeira instrução do `main` do servidor e do relay: guarda o `System.out` original para o transporte e aponta `System.out` para o stderr pelo resto do processo. O `StdioTransport` recebe esse stream e não lê `System.out`. Encontrado em campo (relato de 2026-09-18, release da 007): o `LibraryUtils` do Sleuthkit imprime `Temp Folder for Libraries: …` e `SleuthkitJNI: loaded libtsk_jni` com `System.out.println` ao carregar a biblioteca nativa, na primeira abertura de caso vindo de imagem — no meio da sessão, antes da resposta —, e um cliente que lê cada linha como mensagem parou na primeira. A medição de 2026-09-08 da linha acima não abriu caso assim. **Não dispensa a flag de log**: o Log4j é inicializado quando a classe de entrada carrega, antes do `main`, e um appender apontado para `SYSTEM_OUT` já capturou o stream original. Código nativo escrevendo direto no descritor 1 também escapa (não observado). `StrictStdioClientTest` sobe o servidor em processo separado e lê o stdout como cliente estrito; `ProtocolStdoutTest` roda sem caso |
 | Uma mensagem malformada é respondida e descartada, nunca fatal | `JsonRpcCodec.readMessage` → `McpError.MALFORMED_MESSAGE`; `McpServerMain.start` responde `-32700` e continue. Deixar a falha do Jackson escapar derrubava a sessão inteira e todos os casos abertos nela |
 | Artefato só é gravado sob raiz declarada | `PathConfinement.resolve` chamado por `ExportTools.checkDestination` **antes** de `ArtifactWriter.write`. É lista de permissão, não de recusa, e a comparação é sobre o caminho **real** (`Path.toRealPath`) contra a raiz **real**. `File.getCanonicalPath()` **não atravessa junção de diretório no Windows** e por isso não pode voltar a ser usado aqui |
 | Recusa de destino não deixa rastro | A criação de pastas intermediárias em `ArtifactWriter` acontece depois do veredito `ALLOWED`, nunca antes |
@@ -150,7 +151,7 @@ Nenhum artefato novo entra no release além do próprio `iped-mcp.jar`: POI e Ja
 ## 7. Testes
 
 ```bash
-mvn -pl iped-mcp test                                            # sem caso: 231 efetivos de 327 (96 pulam)
+mvn -pl iped-mcp test                                            # sem caso: 240 efetivos de 350 (110 pulam)
 
 # Com caso, são necessários mais dois parâmetros — ver abaixo por quê:
 mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe \
@@ -167,6 +168,16 @@ As suítes de processamento precisam de duas coisas a mais, pelo mesmo motivo da
 evidência para processar e uma raiz onde criar caso. Sem elas **pulam**. A raiz é declarada em vez de
 cair num diretório temporário de propósito — defaultar ali funcionaria e deixaria de exercitar a
 regra de confinamento que a feature existe para impor.
+
+O `StrictStdioClientTest` usa o caso de referência, mas só exercita o caminho em que o defeito foi
+achado se esse caso **veio de uma imagem de disco** (tem `sleuth.db`): é abrir um caso assim que
+carrega a biblioteca nativa do Sleuthkit, e ela imprime uma vez por processo. O teste diz no stderr
+se o carregamento aconteceu. Ele sobe o servidor sobre uma cópia da configuração da instalação —
+`conf/`, `localization/`, `profiles/`, `scripts/` e `tools/tsk/` — com um `McpServerConfig.txt`
+próprio (stdio, somente leitura), porque a instalação de bancada costuma estar em socket, com a porta
+ocupada pelo servidor em uso. **Copiada, nunca ligada**: uma junção sob a pasta temporária para a
+instalação real seria esvaziada pela limpeza recursiva. Na bancada da 007 (`rockpi4-smoke`) o teste
+leva cerca de 7 s.
 
 Duas medições da bancada de referência (imagem E01 de 8,57 GB, 48 núcleos), úteis para calibrar
 expectativa: processamento completo em **103 s** com `fastmode`, e o teste ponta a ponta inteiro —
