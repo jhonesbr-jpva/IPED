@@ -159,7 +159,7 @@ public final class SyntheticCase {
         for (Color c : frames) {
             list.add(picture(c, 64, 48));
         }
-        return VisualItem.video(id, Set.of("Vídeos"), () -> list.isEmpty() ? null : list, durationMs);
+        return VisualItem.video(id, Set.of("Vídeos"), () -> list.isEmpty() ? null : list, durationMs, 25.0);
     }
 
     public VisualItem frameSubitem(int id, Color color) {

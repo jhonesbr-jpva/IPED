@@ -238,6 +238,40 @@ public class SemanticToolsContractTest {
     }
 
     @Test
+    public void visualEntriesCarryTheFrameAndNoPicture() {
+        String caseId = session.openCase(McpTestSupport.requireSemanticCase());
+        JsonNode status = session.call("iped_semantic_status", "case_id", caseId);
+        org.junit.Assume.assumeTrue("the semantic case has no visual modality prepared",
+                status.path("modalities").path("visual").path("available").asBoolean());
+        assertTrue(status.path("modalities").path("visual").path("keys").isObject());
+
+        JsonNode answer = session.call("iped_semantic_search", "case_id", caseId, "question", "uma praia ao pôr do sol",
+                "modality", "visual", "page_size", 50);
+        assertOrderingNotice(answer);
+        assertNoForbiddenContent(answer);
+        JsonNode visual = answer.path("orderings").path("visual");
+        assertFalse("the visual ordering declares no text mode", visual.has("mode"));
+        assertTrue(visual.path("entries").size() > 0);
+        java.util.Set<Integer> videos = new java.util.HashSet<>();
+        for (JsonNode entry : visual.path("entries")) {
+            String kind = entry.path("kind").asText();
+            assertTrue(kind, kind.equals("image") || kind.equals("video"));
+            assertEquals("relative", entry.path("proximity_kind").asText());
+            assertFalse("no picture in the answer (FR-039)", entry.has("thumbnail") || entry.has("image")
+                    || entry.has("data") || entry.has("excerpts"));
+            if (kind.equals("video")) {
+                assertTrue("one entry per video", videos.add(entry.path("item_id").asInt()));
+                JsonNode frame = entry.path("frame");
+                assertTrue(frame.path("frame_index").isInt());
+                if (frame.has("instant_approx")) {
+                    assertTrue(frame.path("instant_approx").asText().startsWith("≈ "));
+                    assertTrue(frame.path("instant_is_approximate").asBoolean());
+                }
+            }
+        }
+    }
+
+    @Test
     public void similarLeavesTheReferenceOut() {
         String caseId = session.openCase(McpTestSupport.requireSemanticCase());
         JsonNode passage = firstEntryOfKind(caseId, "passage");

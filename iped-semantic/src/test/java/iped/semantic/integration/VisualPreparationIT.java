@@ -158,7 +158,7 @@ public class VisualPreparationIT {
                     assertNotNull(e.getFrame());
                     assertEquals("the best frame represents the video", best, e.getFrame().getFrameIndex());
                     assertEquals(Integer.valueOf(frames.length), e.getFrame().getFrameCount());
-                    assertEquals(FrameInstant.approxMillis(600_000L, best, frames.length),
+                    assertEquals(FrameInstant.approxMillis(600_000L, 25.0, best, frames.length),
                             e.getFrame().getInstantApproxMs());
                     assertEquals(bestScore, e.getProximity(), 1e-5);
                 } else if (e.getItemId() == 12) {

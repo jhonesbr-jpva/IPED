@@ -119,7 +119,7 @@ public class SemanticVisualTask extends AbstractTask {
         Metadata md = evidence.getMetadata();
         if (MetadataUtil.isVideoType(mediaType)) {
             return VisualItem.video(evidence.getId(), categories, () -> VideoMosaicSplitter.framesOf(moduleDir, evidence),
-                    durationMs(md));
+                    durationMs(md), fps(md));
         }
         if (MetadataUtil.isImageType(mediaType)) {
             Integer w = dimension(md, ExtraProperties.IMAGE_META_PREFIX + "Width");
@@ -153,15 +153,45 @@ public class SemanticVisualTask extends AbstractTask {
         }
     }
 
-    /** Duration VideoThumbTask recorded, in seconds, as milliseconds; {@code null} when absent. */
+    /**
+     * Duration of a video in milliseconds; {@code null} when absent. {@code VideoThumbTask} records
+     * it in seconds as {@code xmpDM:duration}, and the metadata normalisation of parsing, which runs
+     * after it, moves video metadata under the {@code video:} prefix.
+     */
     static Long durationMs(Metadata md) {
-        String v = md == null ? null : md.get(XMPDM.DURATION.getName());
+        if (md == null) {
+            return null;
+        }
+        String v = md.get(ExtraProperties.VIDEO_META_PREFIX + XMPDM.DURATION.getName());
+        if (v == null) {
+            v = md.get(XMPDM.DURATION.getName());
+        }
         if (v == null) {
             return null;
         }
         try {
             double seconds = Double.parseDouble(v.trim());
             return seconds > 0 ? Math.round(seconds * 1000) : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** Frame rate VideoThumbTask recorded ({@code framerate}, moved under {@code video:}); or {@code null}. */
+    static Double fps(Metadata md) {
+        if (md == null) {
+            return null;
+        }
+        String v = md.get(ExtraProperties.VIDEO_META_PREFIX + "framerate");
+        if (v == null) {
+            v = md.get("framerate");
+        }
+        if (v == null) {
+            return null;
+        }
+        try {
+            double f = Double.parseDouble(v.trim());
+            return f > 0 ? f : null;
         } catch (NumberFormatException e) {
             return null;
         }

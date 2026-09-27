@@ -405,7 +405,7 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
 - [X] T079 [US6] Registrar `<task class="iped.semantic.task.SemanticVisualTask"></task>` logo depois de `ImageSimilarityTask` em `iped-app/resources/config/conf/TaskInstaller.xml` e em `iped-app/resources/config/profiles/triage/conf/TaskInstaller.xml`.
 - [X] T080 [US6] Modalidade visual em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: pergunta pelo codificador de texto do modelo visual (PT e EN, FR-036); um vídeo por entrada, pelo melhor quadro; `BOTH` → **duas** ordenações, nunca mescladas (FR-034); sempre `mode: SEMANTIC`.
 - [ ] T081 [US6] Aba visual no painel: `iped-app/src/main/java/iped/app/ui/semantic/VisualEntryRenderer.java`, com a miniatura desenhada respeitando o desfoque global (`GalleryModel.getBlurFilter()` e `ImageUtil.blur`, como a galeria, FR-037) e "≈ mm:ss" nos vídeos; escolha Texto/Visual/Ambas em `SemanticSearchPanel.java`, com as modalidades não preparadas desabilitadas e com dica.
-- [ ] T082 [US6] Entradas visuais em `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java`: `kind` `image`/`video`, `frame.frame_index`, `frame.instant_approx`, `instant_is_approximate: true`, **sem** imagem (FR-039). Acrescentar a `semantic-search.md` que o exame é por `iped_item_thumbnail`.
+- [X] T082 [US6] Entradas visuais em `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java`: `kind` `image`/`video`, `frame.frame_index`, `frame.instant_approx`, `instant_is_approximate: true`, **sem** imagem (FR-039). Acrescentar a `semantic-search.md` que o exame é por `iped_item_thumbnail`.
 
 **Checkpoint**: US6 funcional, com cada chave afetando só o que governa.
 

@@ -46,9 +46,55 @@ public class FrameInstantTest {
         assertEquals(Long.valueOf(1_000 + 12 * 40_000), FrameInstant.approxMillis(600_000L, 11, 12));
     }
 
+    /** VideoThumbsMaker's frameStep, line for line. */
+    private static int videoThumbsMakerFrameStep(long durationMs, float fps, int maxThumbs) {
+        fps = Math.min(240, fps);
+        int frameStep = (int) (fps * (durationMs - 1) * 0.001 / (maxThumbs + 2));
+        if (frameStep < 1) {
+            frameStep = 1;
+        } else if (frameStep > 600) {
+            frameStep = 600;
+        }
+        return frameStep;
+    }
+
+    @Test
+    public void aShortVideoIsExtractedByFramesWithoutTheInitialSeek() {
+        // 40 s at 25 fps, 20 cells: frequency = 39000 * 0.00095 / 22 = 1.68 -> 1, so by frames:
+        // frameStep = 25 * 39.959 / 22 = 45 frames = 1.8 s, and cell k is extracted frame k + 1
+        assertTrue(FrameInstant.byFrames(39_960, 20));
+        assertEquals(videoThumbsMakerFrameStep(39_960, 25f, 20), FrameInstant.frameStep(39_960, 25.0, 20));
+        assertEquals(45, FrameInstant.frameStep(39_960, 25.0, 20));
+        assertEquals(Long.valueOf(6 * 1_800), FrameInstant.approxMillis(39_960L, 25.0, 5, 20));
+        assertEquals(Long.valueOf(17 * 1_800), FrameInstant.approxMillis(39_960L, 25.0, 16, 20));
+        // an unknown frame rate falls back to the duration over the cells plus two
+        assertEquals(Long.valueOf(Math.round(6 * 39_959 / 22.0)), FrameInstant.approxMillis(39_960L, null, 5, 20));
+        // the frame rate is capped at 240 and the step at 600 frames
+        assertEquals(videoThumbsMakerFrameStep(3_000_000, 1000f, 1), FrameInstant.frameStep(3_000_000, 1000.0, 1));
+        // a long video keeps the extraction by seconds whatever the frame rate
+        assertEquals(Long.valueOf(1_000 + 6 * 40_000), FrameInstant.approxMillis(600_000L, 25.0, 5, 12));
+    }
+
+    @Test
+    public void theFrameStepIsVideoThumbsMakers() {
+        long[] durations = { 1_500, 10_000, 39_960, 45_000 };
+        float[] rates = { 15f, 25f, 29.97f, 60f, 300f };
+        for (long d : durations) {
+            for (float f : rates) {
+                assertEquals(d + " ms at " + f, videoThumbsMakerFrameStep(d, f, 20), FrameInstant.frameStep(d, f, 20));
+            }
+        }
+    }
+
     @Test
     public void neverPastTheEndAndUnknownWithoutDuration() {
-        assertEquals(Long.valueOf(3_000), FrameInstant.approxMillis(3_000L, 11, 12));
+        // 3 s, 12 cells: extracted by frames, the last cell falls inside the video
+        long last = FrameInstant.approxMillis(3_000L, 11, 12);
+        assertEquals(Math.round(12 * 2_999 / 14.0), last);
+        assertTrue(last <= 3_000);
+        for (int k = 0; k < 30; k++) {
+            assertTrue(FrameInstant.approxMillis(10_000L, 30.0, k, 30) <= 10_000);
+        }
         assertNull(FrameInstant.approxMillis(null, 0, 12));
         assertNull(FrameInstant.approxMillis(0L, 0, 12));
         assertNull(FrameInstant.approxMillis(600_000L, -1, 12));

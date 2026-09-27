@@ -40,9 +40,11 @@ public final class VisualItem {
     final ThumbSource thumb;
     final FramesSource frames;
     final Long durationMs;
+    /** Frame rate of a video; {@code null} when unknown. */
+    final Double fps;
 
     private VisualItem(int id, Kind kind, Set<String> categories, Integer width, Integer height, ThumbSource thumb,
-            FramesSource frames, Long durationMs) {
+            FramesSource frames, Long durationMs, Double fps) {
         this.id = id;
         this.kind = kind;
         this.categories = categories == null ? Set.of() : categories;
@@ -51,6 +53,7 @@ public final class VisualItem {
         this.thumb = thumb;
         this.frames = frames;
         this.durationMs = durationMs;
+        this.fps = fps;
     }
 
     /**
@@ -58,21 +61,27 @@ public final class VisualItem {
      *            original width, {@code null} when the metadata does not say
      */
     public static VisualItem image(int id, Set<String> categories, Integer width, Integer height, ThumbSource thumb) {
-        return new VisualItem(id, Kind.IMAGE, categories, width, height, thumb, null, null);
+        return new VisualItem(id, Kind.IMAGE, categories, width, height, thumb, null, null, null);
     }
 
     /** A frame subitem: prepared as an image only while videos are off. */
     public static VisualItem videoFrameSubitem(int id, Set<String> categories, Integer width, Integer height,
             ThumbSource thumb) {
-        return new VisualItem(id, Kind.VIDEO_FRAME_SUBITEM, categories, width, height, thumb, null, null);
+        return new VisualItem(id, Kind.VIDEO_FRAME_SUBITEM, categories, width, height, thumb, null, null, null);
     }
 
-    public static VisualItem video(int id, Set<String> categories, FramesSource frames, Long durationMs) {
-        return new VisualItem(id, Kind.VIDEO, categories, null, null, null, frames, durationMs);
+    /**
+     * @param durationMs
+     *            {@code null} when unknown: the frames then have no instant
+     * @param fps
+     *            {@code null} when unknown: a short video's instants are then estimated without it
+     */
+    public static VisualItem video(int id, Set<String> categories, FramesSource frames, Long durationMs, Double fps) {
+        return new VisualItem(id, Kind.VIDEO, categories, null, null, null, frames, durationMs, fps);
     }
 
     public static VisualItem other(int id, Set<String> categories) {
-        return new VisualItem(id, Kind.OTHER, categories, null, null, null, null, null);
+        return new VisualItem(id, Kind.OTHER, categories, null, null, null, null, null, null);
     }
 
     public int getId() {

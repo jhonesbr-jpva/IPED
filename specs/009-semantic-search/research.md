@@ -320,6 +320,15 @@ miniaturas já existem.
   depende da duração e do número de quadros. O instante é derivado dessa mesma fórmula e exibido
   como "≈ mm:ss". O salto é para quadro-chave, então o erro real é da ordem de um passo. Emenda
   **A2**, aceita e aplicada à FR-035.
+  - *Nota da implementação (2026-09-27)*: há um segundo caminho. Quando o passo inteiro em
+    segundos dá menos de 2 — vídeo curto, abaixo de uns 47 s com 20 células —, o `VideoThumbsMaker`
+    tira o `-ss 1 -sstep` e extrai por `framestep` de `min(240, fps)·(duração − 1 ms)/(células + 2)`
+    quadros, desde o início. A célula `k` guarda o quadro extraído `k + 1` (o primeiro é
+    descartado). O `FrameInstant` segue os dois caminhos, com o fps de `video:framerate`, e a
+    duração vem de `video:xmpDM:duration` (a normalização de metadados do parsing, que roda depois
+    do `VideoThumbTask`, põe o prefixo `video:`). Na bancada, um vídeo de 40 s com praia (0–10 s),
+    carro (10–20 s) e cidade à noite (20–40 s): a fórmula só por segundos dava o carro em ≈ 00:07 e a
+    noite em ≈ 00:18; com os dois caminhos, ≈ 00:10 e ≈ 00:30.
 - **Quadros como subitens** (`videoThumbsSubitems=true`): com a chave de vídeos ligada, esses
   subitens saem da ordenação de imagens (motivo "coberto pelo vídeo de origem"). O mesmo conteúdo
   não aparece duas vezes, como imagem e como vídeo.

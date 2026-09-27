@@ -406,7 +406,7 @@ public final class VisualPreparation implements Closeable {
             return;
         }
         videos.items.incrementAndGet();
-        VideoJob job = new VideoJob(item.id, frames.size(), item.durationMs);
+        VideoJob job = new VideoJob(item.id, frames.size(), item.durationMs, item.fps);
         for (int k = 0; k < frames.size(); k++) {
             service.submitImage(new FrameUnit(job, k), frames.get(k));
         }
@@ -456,14 +456,16 @@ public final class VisualPreparation implements Closeable {
         final int itemId;
         final int frameCount;
         final Long durationMs;
+        final Double fps;
         final float[][] vectors;
         final AtomicInteger remaining;
         volatile Exception failure;
 
-        VideoJob(int itemId, int frameCount, Long durationMs) {
+        VideoJob(int itemId, int frameCount, Long durationMs, Double fps) {
             this.itemId = itemId;
             this.frameCount = frameCount;
             this.durationMs = durationMs;
+            this.fps = fps;
             this.vectors = new float[frameCount][];
             this.remaining = new AtomicInteger(frameCount);
         }
@@ -480,7 +482,7 @@ public final class VisualPreparation implements Closeable {
                 List<Document> docs = new ArrayList<>(frameCount + 1);
                 for (int k = 0; k < frameCount; k++) {
                     docs.add(SemanticIndexWriter.visual(SemanticFields.KIND_VIDEO_FRAME, itemId, k, frameCount,
-                            FrameInstant.approxMillis(durationMs, k, frameCount), vectors[k]));
+                            FrameInstant.approxMillis(durationMs, fps, k, frameCount), vectors[k]));
                 }
                 docs.add(SemanticIndexWriter.status(itemId, CoverageReason.COVERED, "frames: " + frameCount));
                 writer.replaceItem(itemId, docs);
