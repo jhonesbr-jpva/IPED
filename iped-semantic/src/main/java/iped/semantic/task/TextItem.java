@@ -56,6 +56,17 @@ public final class TextItem {
         return new TextItem(id, mediaType, categories, text, transcript, chatId, date, position, sender, body);
     }
 
+    /**
+     * The same item as a document whose text fails to open, as a parser failure would. Only the
+     * processing test hook of {@link SemanticTextTask} builds one.
+     */
+    TextItem failing(String reason) {
+        TextSource broken = () -> {
+            throw new IOException(reason);
+        };
+        return new TextItem(id, mediaType, categories, broken, null, null, null, null, null, null);
+    }
+
     public boolean isMessage() {
         return chatId != null;
     }

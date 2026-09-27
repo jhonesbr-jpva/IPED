@@ -150,7 +150,7 @@ SC-001 e SC-002).
   - um item por ordenação, com o melhor trecho mais até 2 de contexto;
   - absorção gulosa de janelas: "nenhuma mensagem aparece em duas entradas";
   - desempate por proximidade decrescente, depois `itemId`, depois `ordinal` (FR-015).
-- [ ] T021 [P] [US1] `iped-semantic/src/test/java/iped/semantic/integration/TextPreparationIT.java` (`-Diped.semantic.test.referenceCase`). Processa com o texto ligado e verifica:
+- [X] T021 [P] [US1] `iped-semantic/src/test/java/iped/semantic/integration/TextPreparationIT.java` (`-Diped.semantic.test.referenceCase`). Processa com o texto ligado e verifica:
   - `state: COMPLETE`;
   - `counts` somam os itens considerados;
   - todo `text` de trecho é igual ao intervalo do texto do item (SC-006);
@@ -158,6 +158,7 @@ SC-001 e SC-002).
   - o item de chat com mensagens montadas tem status `COVERED_BY_MESSAGES` e nenhum trecho;
   - o índice principal fica sem campo novo (compara `FieldInfos` antes e depois);
   - um item preparado para falhar (injeção por propriedade de teste) sai com `PREP_FAILURE`, os demais são cobertos e o processamento conclui (FR-022).
+  - Implementado com `ProcessedCases`, que processa pelo release a evidência de referência duas vezes (capacidade desligada e ligada, perfil `semantic-it`): parâmetros `-Diped.semantic.test.ipedRoot=<release>` e `-Diped.semantic.test.referenceEvidence=<pasta>` em vez de `referenceCase`, porque o teste processa. A falha é injetada pela variável de ambiente `IPED_SEMANTIC_TEST_FAIL_ITEM` (o motor roda em JVM neta). SC-006 é conferido contra o arquivo da evidência: o texto do trecho é literal e o deslocamento é consistente entre os trechos do item (o texto extraído tem um prefixo antes do conteúdo). A linha de sequência guarda o valor do parser como veio; o índice principal o guarda aparado.
 - [ ] T022 [P] [US1] Harness de avaliação em `iped-semantic/src/test/java/iped/semantic/eval/TextQualityEval.java` (`-Diped.semantic.test.evalCase`):
   - descarta as perguntas `conceptual` cuja busca por palavra (com `IPEDSearcher` e os termos da pergunta) encontra algum pertinente, registrando quais;
   - calcula SC-001 (≥ 80% com pertinente no top-10) e SC-002 (≥ 70%);
@@ -353,7 +354,8 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
   - `truncated` em `contextMaxChars`;
   - mensagens vizinhas em sequência.
 - [ ] T063 [P] [US7] `iped-semantic/src/test/java/iped/semantic/eval/HybridQualityEval.java`: SC-018 (≥ 80% nas `mixed`; no máximo 5 pontos de perda nas de SC-001). Registrar no `validation-log.md` o `defaultTextMode` de fábrica que vence.
-- [ ] T064 [P] [US7] `iped-semantic/src/test/java/iped/semantic/integration/KeywordSearchUnchangedIT.java`: o roteiro fixo de buscas por palavra dá resultado idêntico com e sem a parte semântica preparada no caso (FR-047).
+- [X] T064 [P] [US7] `iped-semantic/src/test/java/iped/semantic/integration/KeywordSearchUnchangedIT.java`: o roteiro fixo de buscas por palavra dá resultado idêntico com e sem a parte semântica preparada no caso (FR-047).
+  - Roteiro em `iped-semantic/src/test/resources/eval/keyword-script.txt`, sobre o par de `ProcessedCases`. Compara por caminho e pontuação (os ids seguem a ordem dos workers) e compara também as estatísticas de termos de `content` e `name`.
 
 ### Implementation for User Story 7
 

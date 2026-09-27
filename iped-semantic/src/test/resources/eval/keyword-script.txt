@@ -1,0 +1,19 @@
+# Fixed keyword-search script (quickstart, scenarios 2 and 3; FR-047, SC-007).
+# One Lucene query per line over the main index's content field, parsed with the analyzer that
+# indexed it. The same script must give identical results on a case processed with semantic search
+# on and on the same evidence processed with it off. Lines starting with # are comments.
+pagamento
+pacote
+portaria
+amanhã
+acerto
+dinheiro
+telefone
+receita
+relatório
+envio
+"pacote com o moleque"
+pagamento AND amanhã
+pacote OR entrega
+moleque~1
+pag*

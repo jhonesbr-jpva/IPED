@@ -133,8 +133,21 @@ public class SemanticTextTask extends AbstractTask {
         if (prep == null || !evidence.isToAddToCase() || evidence.isQueueEnd()) {
             return;
         }
-        prep.prepare(toTextItem(evidence));
+        TextItem item = toTextItem(evidence);
+        if (FAIL_ITEM != null && FAIL_ITEM.equals(evidence.getName())) {
+            item = item.failing("failure injected by " + FAIL_ITEM_ENV);
+        }
+        prep.prepare(item);
     }
+
+    /**
+     * Test hook for FR-022 on a real processing run ({@code TextPreparationIT}): the item whose name
+     * this environment variable holds fails its preparation, as a parser failure would, and the
+     * processing must go on. An environment variable because the engine runs in a JVM the test does
+     * not start directly. Unset in any real installation, where it costs one comparison per item.
+     */
+    static final String FAIL_ITEM_ENV = "IPED_SEMANTIC_TEST_FAIL_ITEM";
+    private static final String FAIL_ITEM = System.getenv(FAIL_ITEM_ENV);
 
     static TextItem toTextItem(IItem evidence) {
         String mediaType = evidence.getMediaType() == null ? "" : evidence.getMediaType().toString();
