@@ -1,0 +1,902 @@
+[
+ {
+  "lang": "pt",
+  "title": "Brasília",
+  "revid": 72871097,
+  "url": "https://pt.wikipedia.org/wiki/Bras%C3%ADlia",
+  "license": "CC BY-SA 4.0",
+  "sha256": "e1ac0f031a327cdd60503f6e77e511e8964eb6a94bde731303ce588b254a924a",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Rio Amazonas",
+  "revid": 72812018,
+  "url": "https://pt.wikipedia.org/wiki/Rio_Amazonas",
+  "license": "CC BY-SA 4.0",
+  "sha256": "147bfdec2eb49dd7adad5a87c391a5ea47b5ad6fb4c6857aaf35b0e68674ae8e",
+  "chars": 17733
+ },
+ {
+  "lang": "pt",
+  "title": "Futebol",
+  "revid": 73051365,
+  "url": "https://pt.wikipedia.org/wiki/Futebol",
+  "license": "CC BY-SA 4.0",
+  "sha256": "fe87484233a027a39bc33f8b8cda50be6319e941bd1f55ab9fc8331cbc734142",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Samba",
+  "revid": 72823407,
+  "url": "https://pt.wikipedia.org/wiki/Samba",
+  "license": "CC BY-SA 4.0",
+  "sha256": "986272d5ae85686691940ad2f658273719d83b7f9c29d1058e0d7cd5598a0eea",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Café",
+  "revid": 72903526,
+  "url": "https://pt.wikipedia.org/wiki/Caf%C3%A9",
+  "license": "CC BY-SA 4.0",
+  "sha256": "2981f4af8c428159179d1ef59efd57b958f7026c79044af520f80cfe9a12b1a5",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Mata Atlântica",
+  "revid": 72762421,
+  "url": "https://pt.wikipedia.org/wiki/Mata_Atl%C3%A2ntica",
+  "license": "CC BY-SA 4.0",
+  "sha256": "62d85e5e283a733a93de28d0240cd3a148bd66c38f72daf9c388a0cd21e53759",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Pantanal",
+  "revid": 71983980,
+  "url": "https://pt.wikipedia.org/wiki/Pantanal",
+  "license": "CC BY-SA 4.0",
+  "sha256": "88e665ea1a809eff7d6585faa3cb1eea300e9e1c43e16c629bf3dc7107a5bca0",
+  "chars": 18119
+ },
+ {
+  "lang": "pt",
+  "title": "Machado de Assis",
+  "revid": 72949918,
+  "url": "https://pt.wikipedia.org/wiki/Machado_de_Assis",
+  "license": "CC BY-SA 4.0",
+  "sha256": "5ec3f244f6d002ad4ddc48fff731dc88aca0d5cec82b6d704a2c1117ccc255f3",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Carnaval do Brasil",
+  "revid": 71128498,
+  "url": "https://pt.wikipedia.org/wiki/Carnaval_do_Brasil",
+  "license": "CC BY-SA 4.0",
+  "sha256": "bfa423cec2d765a5cbdcd0ce925f45e39a150fb6bf0d4d7bcd6b71fb011fab2e",
+  "chars": 12895
+ },
+ {
+  "lang": "pt",
+  "title": "Feijoada",
+  "revid": 72003482,
+  "url": "https://pt.wikipedia.org/wiki/Feijoada",
+  "license": "CC BY-SA 4.0",
+  "sha256": "608c8b6fdcb36ed9dce4c76be4c6dcedda565027435f29f6a10a230ed1edaaa1",
+  "chars": 2818
+ },
+ {
+  "lang": "pt",
+  "title": "Capoeira",
+  "revid": 72108626,
+  "url": "https://pt.wikipedia.org/wiki/Capoeira",
+  "license": "CC BY-SA 4.0",
+  "sha256": "6805b0ec0098f2af54bd3cd05a2822cc5d9c4e8fd4ef5d3e10199037863f14ec",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Cerrado",
+  "revid": 73053757,
+  "url": "https://pt.wikipedia.org/wiki/Cerrado",
+  "license": "CC BY-SA 4.0",
+  "sha256": "a9a07f61dfaed960dd62e1c3215a899c2c83525259aee92e86434829ed159f28",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Amazônia",
+  "revid": 73032365,
+  "url": "https://pt.wikipedia.org/wiki/Amaz%C3%B4nia",
+  "license": "CC BY-SA 4.0",
+  "sha256": "c532b3b8ec69943af214356da1e8d6c49c4b50d91d25418fa985c7b17828bf2f",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Salvador",
+  "revid": 73051319,
+  "url": "https://pt.wikipedia.org/wiki/Salvador",
+  "license": "CC BY-SA 4.0",
+  "sha256": "904a01fd10c60239607f6bfbdfbafa00cdacfef157c6dd573a25653ecb1f0dd6",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Ouro Preto",
+  "revid": 72935911,
+  "url": "https://pt.wikipedia.org/wiki/Ouro_Preto",
+  "license": "CC BY-SA 4.0",
+  "sha256": "c2a84c3df7be5bff287f003da69002a581471195ee067ee16b0d5b31fc8e7f8a",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Pão de Açúcar (desambiguação)",
+  "revid": 72768617,
+  "url": "https://pt.wikipedia.org/wiki/P%C3%A3o_de_A%C3%A7%C3%BAcar_(desambigua%C3%A7%C3%A3o)",
+  "license": "CC BY-SA 4.0",
+  "sha256": "abce54a77074c9589a48686749998dea59346de67e2b89c9d05472c043105bbf",
+  "chars": 1003
+ },
+ {
+  "lang": "pt",
+  "title": "Cristo Redentor",
+  "revid": 72437460,
+  "url": "https://pt.wikipedia.org/wiki/Cristo_Redentor",
+  "license": "CC BY-SA 4.0",
+  "sha256": "32f79ec6bbd9900ab5ee1d0a2f8e01b22a6e27cada416e579575b2aefcf70e8f",
+  "chars": 15052
+ },
+ {
+  "lang": "pt",
+  "title": "Bossa nova",
+  "revid": 72973470,
+  "url": "https://pt.wikipedia.org/wiki/Bossa_nova",
+  "license": "CC BY-SA 4.0",
+  "sha256": "94fa89bdfa0e04d085591d67583d2918d9b57153e72e54ca5a622b6108bd4dec",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Tom Jobim",
+  "revid": 72881886,
+  "url": "https://pt.wikipedia.org/wiki/Tom_Jobim",
+  "license": "CC BY-SA 4.0",
+  "sha256": "bf6dd7117eff4bd39158bed6b1f6d9ea1896bfedc020a84e85d16c231c0f6e67",
+  "chars": 15575
+ },
+ {
+  "lang": "pt",
+  "title": "Pelé",
+  "revid": 72909098,
+  "url": "https://pt.wikipedia.org/wiki/Pel%C3%A9",
+  "license": "CC BY-SA 4.0",
+  "sha256": "db2db89bb4d51f8918ef0ca805adb50515c28269c544534b2b7b4b693c29e147",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Ayrton Senna",
+  "revid": 72961233,
+  "url": "https://pt.wikipedia.org/wiki/Ayrton_Senna",
+  "license": "CC BY-SA 4.0",
+  "sha256": "73eadd463c4016ba6dcd8ae46057966d67fdd77ff97a91dbcf6e4147d8ddfb0c",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Energia solar",
+  "revid": 72575665,
+  "url": "https://pt.wikipedia.org/wiki/Energia_solar",
+  "license": "CC BY-SA 4.0",
+  "sha256": "8f19277640582af4badbbb9e4356d09ea96dc62dd813a019d0f597eb7d4b2c15",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Fotossíntese",
+  "revid": 73032270,
+  "url": "https://pt.wikipedia.org/wiki/Fotoss%C3%ADntese",
+  "license": "CC BY-SA 4.0",
+  "sha256": "49405feab5fc2284995b671ab1971a6657536d0896e30dc12e09317557f0245c",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Sistema Solar",
+  "revid": 72599122,
+  "url": "https://pt.wikipedia.org/wiki/Sistema_Solar",
+  "license": "CC BY-SA 4.0",
+  "sha256": "dc073a7187881377a1b8fb766085de1ad9e422a0e0cb597be17d8b34341c2d70",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Lua",
+  "revid": 73047646,
+  "url": "https://pt.wikipedia.org/wiki/Lua",
+  "license": "CC BY-SA 4.0",
+  "sha256": "026cebbcaa77ff80a1c95ff5149b047c41aa9f208028585749734350ff608f70",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Vulcão",
+  "revid": 71732509,
+  "url": "https://pt.wikipedia.org/wiki/Vulc%C3%A3o",
+  "license": "CC BY-SA 4.0",
+  "sha256": "0fb5e04b1266252c467e8f1064dcdaf43c92a25db12b71bd5d5da4ede8883d32",
+  "chars": 12096
+ },
+ {
+  "lang": "pt",
+  "title": "Sismo",
+  "revid": 72983555,
+  "url": "https://pt.wikipedia.org/wiki/Sismo",
+  "license": "CC BY-SA 4.0",
+  "sha256": "14a4b53970b5e62b1ab33f0f63b64a1c8baf7e765003131936becb9d2cc99794",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Oceano Atlântico",
+  "revid": 72850447,
+  "url": "https://pt.wikipedia.org/wiki/Oceano_Atl%C3%A2ntico",
+  "license": "CC BY-SA 4.0",
+  "sha256": "b548587498b2c109cd63238a98fd85056b324a4968c9b782d066e665eb98547b",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Revolução Industrial",
+  "revid": 72650097,
+  "url": "https://pt.wikipedia.org/wiki/Revolu%C3%A7%C3%A3o_Industrial",
+  "license": "CC BY-SA 4.0",
+  "sha256": "3e9edaff1afdcf59e5c109a3a9dd0cb446f7662cc7c2ce21dc58b6f468f7d10a",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Império Romano",
+  "revid": 72276044,
+  "url": "https://pt.wikipedia.org/wiki/Imp%C3%A9rio_Romano",
+  "license": "CC BY-SA 4.0",
+  "sha256": "a42d7b27cfac9160072ad1bac9acac61b5ccdc01c696831e48294d9ab2f50a59",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Idade Média",
+  "revid": 72999139,
+  "url": "https://pt.wikipedia.org/wiki/Idade_M%C3%A9dia",
+  "license": "CC BY-SA 4.0",
+  "sha256": "87b917cd2783c134fb63735397224fafaabf76ddee5baac1e50c2bb32a8111a6",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Renascimento",
+  "revid": 72998176,
+  "url": "https://pt.wikipedia.org/wiki/Renascimento",
+  "license": "CC BY-SA 4.0",
+  "sha256": "b42732b8ea16b0d48799a7d653b0d81395851ae09b71aed353b85b07faef8c7f",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Segunda Guerra Mundial",
+  "revid": 72938949,
+  "url": "https://pt.wikipedia.org/wiki/Segunda_Guerra_Mundial",
+  "license": "CC BY-SA 4.0",
+  "sha256": "06a944c8370e23c8a4d1b88be63885c97b8b41b908ca19d540755fba4584794a",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Independência do Brasil",
+  "revid": 72939820,
+  "url": "https://pt.wikipedia.org/wiki/Independ%C3%AAncia_do_Brasil",
+  "license": "CC BY-SA 4.0",
+  "sha256": "230aff7494ca288e20bced01730c5a7aea328d647fabde451a760de125ebcf2e",
+  "chars": 19438
+ },
+ {
+  "lang": "pt",
+  "title": "Proclamação da República do Brasil",
+  "revid": 72575571,
+  "url": "https://pt.wikipedia.org/wiki/Proclama%C3%A7%C3%A3o_da_Rep%C3%BAblica_do_Brasil",
+  "license": "CC BY-SA 4.0",
+  "sha256": "7d4a8b98a12c2be7d7d858a9f75c86c994b98c0423f89dd66a77127b38538244",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Lei Áurea",
+  "revid": 72839404,
+  "url": "https://pt.wikipedia.org/wiki/Lei_%C3%81urea",
+  "license": "CC BY-SA 4.0",
+  "sha256": "4bbb689242f3eaae0cbab5deb26956df2907c85af52c1249c413e3665b7d8160",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Língua portuguesa",
+  "revid": 72602251,
+  "url": "https://pt.wikipedia.org/wiki/L%C3%ADngua_portuguesa",
+  "license": "CC BY-SA 4.0",
+  "sha256": "622cd2baf3ced4834388aac45174f80e02ea1173483ddfe33cd8cb934ba47eb5",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "MPB",
+  "revid": 73065011,
+  "url": "https://pt.wikipedia.org/wiki/MPB",
+  "license": "CC BY-SA 4.0",
+  "sha256": "659301ae08cb40928341fa7c61f6d57772741034bcda652a9a3e2f9eb13c357a",
+  "chars": 8588
+ },
+ {
+  "lang": "pt",
+  "title": "Cinema",
+  "revid": 71224589,
+  "url": "https://pt.wikipedia.org/wiki/Cinema",
+  "license": "CC BY-SA 4.0",
+  "sha256": "f773bfff6af787d60e3c8e70b7d8bfbede36bc258a49d65a3b265b7e57d0f637",
+  "chars": 10269
+ },
+ {
+  "lang": "pt",
+  "title": "Teatro",
+  "revid": 72349233,
+  "url": "https://pt.wikipedia.org/wiki/Teatro",
+  "license": "CC BY-SA 4.0",
+  "sha256": "9ab53c57bf977909f6ce28cf495bb9663890c65710ec5087ed0ae985a2d21581",
+  "chars": 14882
+ },
+ {
+  "lang": "pt",
+  "title": "Xadrez",
+  "revid": 72611509,
+  "url": "https://pt.wikipedia.org/wiki/Xadrez",
+  "license": "CC BY-SA 4.0",
+  "sha256": "f3d72c457b0dee4fe7f4c19cb485ade99cc0e982739b584c3c6a567ab4fbac63",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Voleibol",
+  "revid": 72860837,
+  "url": "https://pt.wikipedia.org/wiki/Voleibol",
+  "license": "CC BY-SA 4.0",
+  "sha256": "e2d2b0a00a5e79c509abf78c0942ef70cfe768b6e44aaea17efe24b93cb19f9f",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Basquetebol",
+  "revid": 72838549,
+  "url": "https://pt.wikipedia.org/wiki/Basquetebol",
+  "license": "CC BY-SA 4.0",
+  "sha256": "4c03b44e3f35bc34fd67319c1b999ca21fa05476407620c0655dc112a5081d30",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Natação",
+  "revid": 69819457,
+  "url": "https://pt.wikipedia.org/wiki/Nata%C3%A7%C3%A3o",
+  "license": "CC BY-SA 4.0",
+  "sha256": "d71a5b641c1dc531edf4c78cff0a26d86268f6e538514495cb5ab6a372ac82f7",
+  "chars": 4955
+ },
+ {
+  "lang": "pt",
+  "title": "Jogos Olímpicos",
+  "revid": 72468772,
+  "url": "https://pt.wikipedia.org/wiki/Jogos_Ol%C3%ADmpicos",
+  "license": "CC BY-SA 4.0",
+  "sha256": "63c13d1155bc954d9baa3881eddb65c2e8f26543f08c246d7099c664578c79be",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Arroz",
+  "revid": 72899112,
+  "url": "https://pt.wikipedia.org/wiki/Arroz",
+  "license": "CC BY-SA 4.0",
+  "sha256": "7c742c6a8c673d505bc98c012382b45b816991b28bda75cd6ed32c5e489f0f15",
+  "chars": 7501
+ },
+ {
+  "lang": "pt",
+  "title": "Mandioca",
+  "revid": 72490228,
+  "url": "https://pt.wikipedia.org/wiki/Mandioca",
+  "license": "CC BY-SA 4.0",
+  "sha256": "b0c30f3e50e1380a7bcda58a5c0172a1c3f0cf67ab25132efc1daf72f0c6f71c",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Cana-de-açúcar",
+  "revid": 72809122,
+  "url": "https://pt.wikipedia.org/wiki/Cana-de-a%C3%A7%C3%BAcar",
+  "license": "CC BY-SA 4.0",
+  "sha256": "89cd582326e7400cfca232c670b020a6ae52e1db86639d194c4854a0b8872ab6",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Soja",
+  "revid": 72834664,
+  "url": "https://pt.wikipedia.org/wiki/Soja",
+  "license": "CC BY-SA 4.0",
+  "sha256": "57c00d5568d9a22ba3f9b7d8b1e9a25e2692e7426460b3f5ca0e3cef87d6c071",
+  "chars": 20000
+ },
+ {
+  "lang": "pt",
+  "title": "Bos taurus",
+  "revid": 72892230,
+  "url": "https://pt.wikipedia.org/wiki/Bos_taurus",
+  "license": "CC BY-SA 4.0",
+  "sha256": "99a1f7ae78fad45d8bfae7ba319b836b099cba8036cdcb034497fd22a57b85ef",
+  "chars": 9555
+ },
+ {
+  "lang": "en",
+  "title": "Photosynthesis",
+  "revid": 1371284103,
+  "url": "https://en.wikipedia.org/wiki/Photosynthesis",
+  "license": "CC BY-SA 4.0",
+  "sha256": "65a19bbeed58644847ba36602fa4e1a9aa8c3ad0cc55e15271bb4287d5164a53",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Solar System",
+  "revid": 1377020987,
+  "url": "https://en.wikipedia.org/wiki/Solar_System",
+  "license": "CC BY-SA 4.0",
+  "sha256": "a234b9a72b73abc3d63749436f4c87aa802c1c326ba572b8f1852ae39d16a844",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Volcano",
+  "revid": 1372671594,
+  "url": "https://en.wikipedia.org/wiki/Volcano",
+  "license": "CC BY-SA 4.0",
+  "sha256": "c3dee9a6e89211e380008de0661eed2e88d8c5207372709839c1201f2a8ec006",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Earthquake",
+  "revid": 1376729325,
+  "url": "https://en.wikipedia.org/wiki/Earthquake",
+  "license": "CC BY-SA 4.0",
+  "sha256": "3b7f9bfed6758840cfb1892221e1493e36aa70313036a75db87c851cacc28610",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Roman Empire",
+  "revid": 1376983801,
+  "url": "https://en.wikipedia.org/wiki/Roman_Empire",
+  "license": "CC BY-SA 4.0",
+  "sha256": "c22f3f0dfa53ed363b404c5e0a4b89567b2bcbb9bfc745964aab62c15e110dc1",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Renaissance",
+  "revid": 1377007469,
+  "url": "https://en.wikipedia.org/wiki/Renaissance",
+  "license": "CC BY-SA 4.0",
+  "sha256": "98e4978cc6e36212dd94d81cf111f15c553372012e8f1723bf31176ee10f192e",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Industrial Revolution",
+  "revid": 1376873072,
+  "url": "https://en.wikipedia.org/wiki/Industrial_Revolution",
+  "license": "CC BY-SA 4.0",
+  "sha256": "a862777dcbbdd5ded5adad8d6982d40d0ee7eafebc74d19a94cd9cbc84ef4f39",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Chess",
+  "revid": 1376110183,
+  "url": "https://en.wikipedia.org/wiki/Chess",
+  "license": "CC BY-SA 4.0",
+  "sha256": "78bf0da2ad7344b32e3f343b4cca3a14532b109b53bad7d4a74ae9580663f521",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Basketball",
+  "revid": 1376014402,
+  "url": "https://en.wikipedia.org/wiki/Basketball",
+  "license": "CC BY-SA 4.0",
+  "sha256": "0c2c31bfb224a447a3efacbe9542599fd0a8f7b81eda897bf4505678964a119e",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Tennis",
+  "revid": 1375888835,
+  "url": "https://en.wikipedia.org/wiki/Tennis",
+  "license": "CC BY-SA 4.0",
+  "sha256": "5f4226e772e4b9a45f51aca7b9d4d1d195a7870f368eb2698562340c360c5d97",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Coffee",
+  "revid": 1371799424,
+  "url": "https://en.wikipedia.org/wiki/Coffee",
+  "license": "CC BY-SA 4.0",
+  "sha256": "bd210a3b0a09688cab644d53a9816b358ff036d7b06c1567df1607c121cf0bfc",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Tea",
+  "revid": 1374563032,
+  "url": "https://en.wikipedia.org/wiki/Tea",
+  "license": "CC BY-SA 4.0",
+  "sha256": "2eaa7c6ba6c274faf08b46e7a1531d027586e2884dc302c515092602b0e8b0fe",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Bread",
+  "revid": 1375886095,
+  "url": "https://en.wikipedia.org/wiki/Bread",
+  "license": "CC BY-SA 4.0",
+  "sha256": "d59ddf58f17c95fcb5c19f3a662bed9ee82a40345d14874e55897b26c5e41d0b",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Cheese",
+  "revid": 1376859092,
+  "url": "https://en.wikipedia.org/wiki/Cheese",
+  "license": "CC BY-SA 4.0",
+  "sha256": "aefbc92d5d5991a2495c39dee29dcad9e0d37b8053f2c49207f2892302ace74a",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Honey bee",
+  "revid": 1377002721,
+  "url": "https://en.wikipedia.org/wiki/Honey_bee",
+  "license": "CC BY-SA 4.0",
+  "sha256": "d628420c4acd4164fa0e5c12796f0fcdf03a1e653a1b3a4bc672607c39c98f00",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Elephant",
+  "revid": 1376330386,
+  "url": "https://en.wikipedia.org/wiki/Elephant",
+  "license": "CC BY-SA 4.0",
+  "sha256": "aad07f2aae4276c2e6dfd5c21bd23dbc48b9114d4888f3c875b2e4cab8464550",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Whale",
+  "revid": 1374105880,
+  "url": "https://en.wikipedia.org/wiki/Whale",
+  "license": "CC BY-SA 4.0",
+  "sha256": "d3da321f7d9116e5bd7a517acd5e03002c4f8231ae0b58e36ac32160d9433a24",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Penguin",
+  "revid": 1375836195,
+  "url": "https://en.wikipedia.org/wiki/Penguin",
+  "license": "CC BY-SA 4.0",
+  "sha256": "9466095a86b290a84985e35779aed71c41143d42f2eaac92ca49c39ff709af81",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Rainforest",
+  "revid": 1371774008,
+  "url": "https://en.wikipedia.org/wiki/Rainforest",
+  "license": "CC BY-SA 4.0",
+  "sha256": "79936b12ce066b518c569a423d997156c34ccb7e2a81ff4b954d72653255b313",
+  "chars": 15909
+ },
+ {
+  "lang": "en",
+  "title": "Desert",
+  "revid": 1374310187,
+  "url": "https://en.wikipedia.org/wiki/Desert",
+  "license": "CC BY-SA 4.0",
+  "sha256": "211a8774c4fee45df29dfd964c0542b8dde741ded61f0782b019dbd82c5d57e8",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Glacier",
+  "revid": 1376978672,
+  "url": "https://en.wikipedia.org/wiki/Glacier",
+  "license": "CC BY-SA 4.0",
+  "sha256": "36eb67917ef1271d75708b64d997f0c8a48a602cf05a9d3ff6494fbac936dbf4",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Mount Everest",
+  "revid": 1376942985,
+  "url": "https://en.wikipedia.org/wiki/Mount_Everest",
+  "license": "CC BY-SA 4.0",
+  "sha256": "00512d0af87969c1c5fd379cc60e0f339b15e02a137075df25c47976d0200a5d",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Amazon River",
+  "revid": 1376437983,
+  "url": "https://en.wikipedia.org/wiki/Amazon_River",
+  "license": "CC BY-SA 4.0",
+  "sha256": "eb10d5313d8f4154417e34a25924d9766b8ac50931015ad104d5d0a8558a940d",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Nile",
+  "revid": 1368885921,
+  "url": "https://en.wikipedia.org/wiki/Nile",
+  "license": "CC BY-SA 4.0",
+  "sha256": "d28e71236927a6b7c3f7f5b8fc30a7e95825cc61eeb1538276f62adf48006ffb",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Pacific Ocean",
+  "revid": 1375870492,
+  "url": "https://en.wikipedia.org/wiki/Pacific_Ocean",
+  "license": "CC BY-SA 4.0",
+  "sha256": "4153fe59dd03da094a5b42c337706a701240184bc0ea032507e5ccce64bf5af8",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Printing press",
+  "revid": 1377022545,
+  "url": "https://en.wikipedia.org/wiki/Printing_press",
+  "license": "CC BY-SA 4.0",
+  "sha256": "5a1cb71792b952d6e8a02c22caa5f095e7add379c24214c0bad1073ec6c42b83",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Telephone",
+  "revid": 1376797188,
+  "url": "https://en.wikipedia.org/wiki/Telephone",
+  "license": "CC BY-SA 4.0",
+  "sha256": "d37fea70e0b6efd458fb29ceec6e2dc594ecc7d319261aa5a639196e39f30770",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Internet",
+  "revid": 1376382969,
+  "url": "https://en.wikipedia.org/wiki/Internet",
+  "license": "CC BY-SA 4.0",
+  "sha256": "9ccd6a7c9797301e0364f2d86509efe4d15cec913111de84dc3d015418e289d9",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Rail transport",
+  "revid": 1377038822,
+  "url": "https://en.wikipedia.org/wiki/Rail_transport",
+  "license": "CC BY-SA 4.0",
+  "sha256": "88326a7e5f25f6300d79206c3d46c82835dfd010ec14740b5840c9b2aa559347",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Bicycle",
+  "revid": 1375091239,
+  "url": "https://en.wikipedia.org/wiki/Bicycle",
+  "license": "CC BY-SA 4.0",
+  "sha256": "ac7322c4ad3e0e515721cb9215d68dd05a9d99416a2127f9068757d32b3378dc",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Olympic Games",
+  "revid": 1376486612,
+  "url": "https://en.wikipedia.org/wiki/Olympic_Games",
+  "license": "CC BY-SA 4.0",
+  "sha256": "f59d2ffa88ed54bc63dd81270d59dfed06f2bc9b8ee5bbcd15028bdf8952e8b9",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Jazz",
+  "revid": 1375156663,
+  "url": "https://en.wikipedia.org/wiki/Jazz",
+  "license": "CC BY-SA 4.0",
+  "sha256": "3c14c13e9529c982fbe92662ce52565fd9ea6278b653f294bc639a318c053d6a",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Opera",
+  "revid": 1374395865,
+  "url": "https://en.wikipedia.org/wiki/Opera",
+  "license": "CC BY-SA 4.0",
+  "sha256": "b774b6d76aded54f78b69eb372c9141b15b9edf661f34a1ba127a029b8290e10",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Impressionism",
+  "revid": 1376612980,
+  "url": "https://en.wikipedia.org/wiki/Impressionism",
+  "license": "CC BY-SA 4.0",
+  "sha256": "b57519fde08f1d70115bb498afdf4a579a82032062d2edc6492bcb525eeedbbb",
+  "chars": 20000
+ },
+ {
+  "lang": "en",
+  "title": "Architecture",
+  "revid": 1369557716,
+  "url": "https://en.wikipedia.org/wiki/Architecture",
+  "license": "CC BY-SA 4.0",
+  "sha256": "c76726af2099fde8ea098ae682dc3ec5f8dd8514bc4dc32df450d5a215057249",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Madrid",
+  "revid": 175512132,
+  "url": "https://es.wikipedia.org/wiki/Madrid",
+  "license": "CC BY-SA 4.0",
+  "sha256": "5fea320661b65bb82fc8c1a1e3bfe4bdc7fb6d91b39432b762123c29976a98c2",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Buenos Aires",
+  "revid": 175518366,
+  "url": "https://es.wikipedia.org/wiki/Buenos_Aires",
+  "license": "CC BY-SA 4.0",
+  "sha256": "20a60dbef00160ab58bc87ec93272382541a0651db56959793cabd6e06d9e153",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Cordillera de los Andes",
+  "revid": 175534243,
+  "url": "https://es.wikipedia.org/wiki/Cordillera_de_los_Andes",
+  "license": "CC BY-SA 4.0",
+  "sha256": "2258328ab0a27cbc1f54f4f63e3ebaf41f50da6353e35598d4c991693accc5ce",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Tango",
+  "revid": 175321903,
+  "url": "https://es.wikipedia.org/wiki/Tango",
+  "license": "CC BY-SA 4.0",
+  "sha256": "0eef181c30cbf39cbedecebe5d3e953c33be71750329d90faa9454f948030217",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Flamenco",
+  "revid": 173185954,
+  "url": "https://es.wikipedia.org/wiki/Flamenco",
+  "license": "CC BY-SA 4.0",
+  "sha256": "48e186678658e9f848546faa05a3414c4e586b643ac9b585237701e9230c92be",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Paella",
+  "revid": 175265410,
+  "url": "https://es.wikipedia.org/wiki/Paella",
+  "license": "CC BY-SA 4.0",
+  "sha256": "eabf7ecbd186bd09d8aac3ecc1d0797da36885a3ad44ac51ae712f38eb440819",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Café",
+  "revid": 175492772,
+  "url": "https://es.wikipedia.org/wiki/Caf%C3%A9",
+  "license": "CC BY-SA 4.0",
+  "sha256": "2e5d08bade9920ed784435dca92419a5d01efa6ec820b30b701d8d57cedae383",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Fútbol",
+  "revid": 174661370,
+  "url": "https://es.wikipedia.org/wiki/F%C3%BAtbol",
+  "license": "CC BY-SA 4.0",
+  "sha256": "853f9bb2ce1f746b7b193c9c705294dd0d01e83a96f20146cb6dc21daaef50f6",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Río de la Plata",
+  "revid": 174246084,
+  "url": "https://es.wikipedia.org/wiki/R%C3%ADo_de_la_Plata",
+  "license": "CC BY-SA 4.0",
+  "sha256": "fc4ebb61653fd2d4d79e5450b5bbb31d52f04f91e83cfe289684ded46ecd65ce",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Machu Picchu",
+  "revid": 175078416,
+  "url": "https://es.wikipedia.org/wiki/Machu_Picchu",
+  "license": "CC BY-SA 4.0",
+  "sha256": "38f8dabf3112379c2e1605184431ccc7ffec9610f4d419837f5c2443ad4ee6dc",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Don Quijote de la Mancha",
+  "revid": 175535609,
+  "url": "https://es.wikipedia.org/wiki/Don_Quijote_de_la_Mancha",
+  "license": "CC BY-SA 4.0",
+  "sha256": "65e18e8d7285bfe50b939fb2e3777bbce3941e5a0e36e432264473afebb2ce86",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Pablo Picasso",
+  "revid": 175510182,
+  "url": "https://es.wikipedia.org/wiki/Pablo_Picasso",
+  "license": "CC BY-SA 4.0",
+  "sha256": "5379dbecd500122b8b7eb80d7e69ffde3e1c22517ab853ee8f0846cfb37648de",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Gabriel García Márquez",
+  "revid": 175288724,
+  "url": "https://es.wikipedia.org/wiki/Gabriel_Garc%C3%ADa_M%C3%A1rquez",
+  "license": "CC BY-SA 4.0",
+  "sha256": "bc8b52553fb13f5a26764627a388e3272ff73dc2d2afcf1175a1805fd1f348cd",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Volcán",
+  "revid": 175479501,
+  "url": "https://es.wikipedia.org/wiki/Volc%C3%A1n",
+  "license": "CC BY-SA 4.0",
+  "sha256": "1b1c05df5f29c635a1a6581eeb4cf8c56a46ed660a4a7dd8d435abd7580ee068",
+  "chars": 20000
+ },
+ {
+  "lang": "es",
+  "title": "Sistema solar",
+  "revid": 175400556,
+  "url": "https://es.wikipedia.org/wiki/Sistema_solar",
+  "license": "CC BY-SA 4.0",
+  "sha256": "0cce2da99c00c843739eb154afc83197efe76a1ebff02b4d4bd0256f4ae180dc",
+  "chars": 20000
+ }
+]

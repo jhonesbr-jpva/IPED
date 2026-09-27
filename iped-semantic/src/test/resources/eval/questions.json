@@ -1,0 +1,2023 @@
+{
+ "version": 1,
+ "corpus": "iped-semantic/tools/eval-corpus",
+ "questions": [
+  {
+   "id": "conceptual-01",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "combinar a compra de algo pagando com dinheiro vivo num local de encontro",
+   "relevant": [
+    {
+     "message": "quanto?"
+    },
+    {
+     "message": "5 mil"
+    },
+    {
+     "message": "fechado, amanhã na portaria"
+    },
+    {
+     "message": "leva em espécie, nada de transferência"
+    },
+    {
+     "message": "sexta, pode ser em notas mesmo"
+    },
+    {
+     "message": "tá bom, sexta no estacionamento do mercado"
+    },
+    {
+     "path": "docs/pt/bilhete.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-02",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "negociação de arma de fogo sem registro",
+   "relevant": [
+    {
+     "message": "consegui a peça que tu pediu"
+    },
+    {
+     "message": "é a de nove?"
+    },
+    {
+     "message": "isso, com dois pentes"
+    },
+    {
+     "message": "7 e meio, sem nota né"
+    },
+    {
+     "message": "numeração raspada, pode ficar tranquilo"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-03",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "carro roubado sendo desmontado para revenda de componentes",
+   "relevant": [
+    {
+     "message": "o Civic prata de ontem já foi pro desmanche"
+    },
+    {
+     "message": "motor e câmbio vendidos, lataria vai pro ferro-velho"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-04",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "trocar a identificação do automóvel para enganar a fiscalização",
+   "relevant": [
+    {
+     "message": "já botei a placa fria no outro"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-05",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "intimidação envolvendo os filhos de um devedor",
+   "relevant": [
+    {
+     "message": "a gente sabe onde tua filha estuda"
+    },
+    {
+     "message": "então paga até sexta. senão a gente faz uma visita"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-06",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "movimentar recursos ilícitos por meio de terceiros para não levantar suspeita",
+   "relevant": [
+    {
+     "message": "abre uma conta no nome da tua tia"
+    },
+    {
+     "message": "fala que é pra receber aposentadoria"
+    },
+    {
+     "message": "aí a gente passa pix de 900 pra não chamar atenção"
+    },
+    {
+     "path": "docs/pt/relatorio_auditoria.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-07",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "fracionar transferências em valores pequenos para escapar do controle",
+   "relevant": [
+    {
+     "message": "aí a gente passa pix de 900 pra não chamar atenção"
+    },
+    {
+     "message": "umas cinco, cada uma recebe um pouco por dia"
+    },
+    {
+     "path": "docs/pt/relatorio_auditoria.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-08",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "mercadoria ilegal cruzando a divisa entre países oculta num compartimento secreto",
+   "relevant": [
+    {
+     "message": "a encomenda sai de Pedro Juan na terça"
+    },
+    {
+     "message": "pela linha seca em Ponta Porã, de madrugada"
+    },
+    {
+     "message": "vai no fundo falso do caminhão frigorífico"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-09",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "falsificação de documentos de identidade",
+   "relevant": [
+    {
+     "message": "o RG fica pronto em três dias"
+    },
+    {
+     "message": "foto 3x4 e o nome que vai no documento"
+    },
+    {
+     "message": "essa demora uma semana, cobra à parte"
+    },
+    {
+     "message": "igualzinho o original, ninguém percebe"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-10",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "golpe com cobrança falsa enviada para várias pessoas",
+   "relevant": [
+    {
+     "message": "manda o link do boleto pro pessoal da lista"
+    },
+    {
+     "message": "já disparei pra 300 números"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-11",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "página na internet copiando um comércio conhecido para ludibriar clientes",
+   "relevant": [
+    {
+     "message": "o site clonado da loja tá no ar até amanhã"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-12",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "planejamento de um assalto a transporte de valores",
+   "relevant": [
+    {
+     "message": "a Aurora começa segunda às 4h"
+    },
+    {
+     "message": "o carro-forte passa na avenida às 5h10"
+    },
+    {
+     "message": "eu fico, vocês dois no carro de apoio"
+    },
+    {
+     "message": "as ferramentas já tão no galpão"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-13",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "divisão de tarefas entre os integrantes antes de uma ação criminosa",
+   "relevant": [
+    {
+     "message": "quem fica com o rádio?"
+    },
+    {
+     "message": "eu fico, vocês dois no carro de apoio"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-14",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "suborno a funcionário público para liberar uma autorização",
+   "relevant": [
+    {
+     "path": "docs/pt/relatorio_manutencao_2023.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-15",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "servidor municipal exigindo pagamento por fora",
+   "relevant": [
+    {
+     "path": "docs/pt/relatorio_manutencao_2023.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-16",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "orientação para evitar ir de automóvel particular a um encontro",
+   "relevant": [
+    {
+     "message": "o Baiano pediu pra não vir de carro próprio"
+    },
+    {
+     "message": "vou de uber"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-17",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "conversa sobre guardar produtos na casa de um familiar",
+   "relevant": [
+    {
+     "message": "chegou, tá guardada no depósito do meu primo"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-18",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "evitar mencionar quantias em mensagens",
+   "relevant": [
+    {
+     "message": "melhor não falar valor por aqui"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-19",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "cartuchos incluídos na venda de uma pistola",
+   "relevant": [
+    {
+     "message": "e a caixinha de bala?"
+    },
+    {
+     "message": "50 unidades, vai junto"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-20",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "número de série apagado de uma arma",
+   "relevant": [
+    {
+     "message": "numeração raspada, pode ficar tranquilo"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-21",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "desfazer-se do localizador GPS do carro",
+   "relevant": [
+    {
+     "message": "cuidado com o rastreador"
+    },
+    {
+     "message": "arranquei na hora, joguei no rio"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-22",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "ultimato para quitar um débito sob pena de represália",
+   "relevant": [
+    {
+     "message": "o prazo acabou, cadê o dinheiro?"
+    },
+    {
+     "message": "então paga até sexta. senão a gente faz uma visita"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-23",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "adiamento para juntar a quantia devida",
+   "relevant": [
+    {
+     "message": "tô juntando, me dá mais uma semana"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-24",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "retiradas em espécie feitas por gente diversa em casas lotéricas",
+   "relevant": [
+    {
+     "message": "saque no caixa de lotérica, sempre pessoa diferente"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-25",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "papelada de produto perecível como disfarce para a viagem",
+   "relevant": [
+    {
+     "message": "o motorista tem nota de carne, tá tudo certo"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-26",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "prazo para ficar pronta uma identidade falsificada",
+   "relevant": [
+    {
+     "message": "o RG fica pronto em três dias"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-27",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "idosa enganada que efetuou o pagamento de uma fraude",
+   "relevant": [
+    {
+     "message": "a senhora de Campinas caiu, pagou 2.400"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-28",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "festa para o avô com carne assada",
+   "relevant": [
+    {
+     "message": "domingo é o aniversário do vô, todo mundo vem?"
+    },
+    {
+     "message": "vou fazer o churrasco, compra picanha"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-29",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "remarcação de um encontro de trabalho",
+   "relevant": [
+    {
+     "message": "reunião de resultados remarcada pra quinta às 10h"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-30",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "jantar romântico num restaurante",
+   "relevant": [
+    {
+     "message": "também, amanhã a gente janta?"
+    },
+    {
+     "message": "aquele italiano da praça"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-31",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "partida de futebol semanal com amigos",
+   "relevant": [
+    {
+     "message": "quinta tem jogo às 21h"
+    },
+    {
+     "message": "quem não pagou a quadra acerta comigo"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-32",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "receita de sobremesa com cacau",
+   "relevant": [
+    {
+     "path": "docs/pt/receita_bolo.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-33",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "atolamento no equipamento de impressão e como resolver",
+   "relevant": [
+    {
+     "path": "docs/pt/manual_impressora.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-34",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "notificação formal exigindo quitação de débito",
+   "relevant": [
+    {
+     "path": "docs/pt/carta_cobranca.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-35",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "enchentes que desalojaram moradores",
+   "relevant": [
+    {
+     "path": "docs/pt/noticia_chuvas.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-36",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "solicitação para mandar a quantia a uma parente por estar com restrição bancária",
+   "relevant": [
+    {
+     "path": "docs/pt/email_transferencia.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-37",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "recado sobre deixar uma encomenda com o rapaz da entrada do prédio",
+   "relevant": [
+    {
+     "path": "docs/pt/bilhete.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-38",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "orientação para não conversar sobre o assunto por ligação",
+   "relevant": [
+    {
+     "path": "docs/pt/bilhete.txt"
+    },
+    {
+     "message": "ninguém fala Aurora por telefone, só aqui"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-39",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "reclamações sobre o controle de acesso do edifício discutidas pelos moradores",
+   "relevant": [
+    {
+     "path": "docs/pt/ata_condominio.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-40",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "viagem de férias ao litoral nordestino",
+   "relevant": [
+    {
+     "path": "docs/pt/diario_viagem.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-41",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "registro policial de um carro que sumiu de um centro comercial",
+   "relevant": [
+    {
+     "path": "docs/pt/boletim_ocorrencia.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-42",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "termos para residir numa unidade alugada",
+   "relevant": [
+    {
+     "path": "docs/pt/contrato_aluguel.txt"
+    }
+   ]
+  },
+  {
+   "id": "conceptual-43",
+   "type": "conceptual",
+   "lang": "pt",
+   "question": "trajetória de carreira de uma candidata a emprego",
+   "relevant": [
+    {
+     "path": "docs/pt/curriculo.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-01",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "anúncio vendendo uma pistola sem número de série",
+   "relevant": [
+    {
+     "path": "docs/en/weapon_listing.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-02",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "memorando orientando dividir depósitos entre contas de parentes",
+   "relevant": [
+    {
+     "path": "docs/en/laundering_memo.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-03",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "carta ameaçando visitar a família caso a dívida não seja paga",
+   "relevant": [
+    {
+     "path": "docs/es/amenaza.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-04",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "carga atravessando a fronteira à noite escondida entre caixas de frutas",
+   "relevant": [
+    {
+     "path": "docs/es/envio_mercancia.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-05",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "compartimento secreto em contêiner com carne congelada",
+   "relevant": [
+    {
+     "path": "docs/en/shipping_manifest.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-06",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "oferta de passaportes falsos idênticos aos verdadeiros",
+   "relevant": [
+    {
+     "path": "docs/es/documentos_falsos.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-07",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "mensagem fraudulenta ameaçando suspender a conta do cliente",
+   "relevant": [
+    {
+     "path": "docs/en/phishing_template.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-08",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "prato espanhol de arroz com açafrão",
+   "relevant": [
+    {
+     "path": "docs/es/receta.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-09",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "resultado de vendas do trimestre abaixo da meta",
+   "relevant": [
+    {
+     "path": "docs/en/meeting_minutes.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-10",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "servidores de arquivos criptografados por sequestro de dados",
+   "relevant": [
+    {
+     "path": "docs/en/security_report.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-11",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "acordo de consultoria contábil por doze meses",
+   "relevant": [
+    {
+     "path": "docs/es/contrato.txt"
+    }
+   ]
+  },
+  {
+   "id": "crosslingual-12",
+   "type": "crosslingual",
+   "lang": "pt",
+   "question": "receita de panquecas fofas",
+   "relevant": [
+    {
+     "path": "docs/en/recipe.txt"
+    }
+   ]
+  },
+  {
+   "id": "mixed-01",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "pagamento combinado com o Baiano",
+   "relevant": [
+    {
+     "message": "e aí, conseguiu falar com o Baiano?"
+    },
+    {
+     "message": "falei, ele tem o material"
+    },
+    {
+     "message": "quanto?"
+    },
+    {
+     "message": "5 mil"
+    },
+    {
+     "message": "fechado, amanhã na portaria"
+    },
+    {
+     "message": "leva em espécie, nada de transferência"
+    },
+    {
+     "message": "beleza, 8h tô lá"
+    },
+    {
+     "message": "o Baiano pediu pra não vir de carro próprio"
+    },
+    {
+     "message": "vou de uber"
+    },
+    {
+     "message": "chegando lá manda um áudio que ele desce"
+    }
+   ]
+  },
+  {
+   "id": "mixed-02",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "entrega do material do Baiano na portaria",
+   "relevant": [
+    {
+     "message": "e aí, conseguiu falar com o Baiano?"
+    },
+    {
+     "message": "falei, ele tem o material"
+    },
+    {
+     "message": "quanto?"
+    },
+    {
+     "message": "5 mil"
+    },
+    {
+     "message": "fechado, amanhã na portaria"
+    },
+    {
+     "message": "leva em espécie, nada de transferência"
+    },
+    {
+     "message": "beleza, 8h tô lá"
+    },
+    {
+     "message": "o Baiano pediu pra não vir de carro próprio"
+    },
+    {
+     "message": "vou de uber"
+    },
+    {
+     "message": "chegando lá manda um áudio que ele desce"
+    }
+   ]
+  },
+  {
+   "id": "mixed-03",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "o que está planejado para a Aurora",
+   "relevant": [
+    {
+     "message": "a Aurora começa segunda às 4h"
+    },
+    {
+     "message": "o carro-forte passa na avenida às 5h10"
+    },
+    {
+     "message": "quem fica com o rádio?"
+    },
+    {
+     "message": "eu fico, vocês dois no carro de apoio"
+    },
+    {
+     "message": "as ferramentas já tão no galpão"
+    },
+    {
+     "message": "ninguém fala Aurora por telefone, só aqui"
+    }
+   ]
+  },
+  {
+   "id": "mixed-04",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "horário do carro-forte na operação Aurora",
+   "relevant": [
+    {
+     "message": "a Aurora começa segunda às 4h"
+    },
+    {
+     "message": "o carro-forte passa na avenida às 5h10"
+    }
+   ]
+  },
+  {
+   "id": "mixed-05",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "travessia em Ponta Porã com mercadoria escondida",
+   "relevant": [
+    {
+     "message": "a encomenda sai de Pedro Juan na terça"
+    },
+    {
+     "message": "atravessa por onde?"
+    },
+    {
+     "message": "pela linha seca em Ponta Porã, de madrugada"
+    },
+    {
+     "message": "vai no fundo falso do caminhão frigorífico"
+    },
+    {
+     "message": "e se a PRF parar?"
+    },
+    {
+     "message": "o motorista tem nota de carne, tá tudo certo"
+    }
+   ]
+  },
+  {
+   "id": "mixed-06",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "o Civic prata levado para o desmanche",
+   "relevant": [
+    {
+     "message": "o Civic prata de ontem já foi pro desmanche"
+    },
+    {
+     "message": "motor e câmbio vendidos, lataria vai pro ferro-velho"
+    },
+    {
+     "path": "docs/pt/boletim_ocorrencia.txt"
+    }
+   ]
+  },
+  {
+   "id": "mixed-07",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "pistola de nove com numeração raspada",
+   "relevant": [
+    {
+     "message": "consegui a peça que tu pediu"
+    },
+    {
+     "message": "é a de nove?"
+    },
+    {
+     "message": "isso, com dois pentes"
+    },
+    {
+     "message": "e a caixinha de bala?"
+    },
+    {
+     "message": "50 unidades, vai junto"
+    },
+    {
+     "message": "quanto sai tudo?"
+    },
+    {
+     "message": "7 e meio, sem nota né"
+    },
+    {
+     "message": "tá limpa? sem histórico?"
+    },
+    {
+     "message": "numeração raspada, pode ficar tranquilo"
+    }
+   ]
+  },
+  {
+   "id": "mixed-08",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "pix de 900 em contas de laranjas",
+   "relevant": [
+    {
+     "message": "abre uma conta no nome da tua tia"
+    },
+    {
+     "message": "aí a gente passa pix de 900 pra não chamar atenção"
+    },
+    {
+     "message": "umas cinco, cada uma recebe um pouco por dia"
+    }
+   ]
+  },
+  {
+   "id": "mixed-09",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "vítima de Campinas que caiu no golpe",
+   "relevant": [
+    {
+     "message": "a senhora de Campinas caiu, pagou 2.400"
+    },
+    {
+     "message": "saca logo antes do banco bloquear"
+    }
+   ]
+  },
+  {
+   "id": "mixed-10",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "ameaça do Sérgio à família por causa da dívida",
+   "relevant": [
+    {
+     "message": "o prazo acabou, cadê o dinheiro?"
+    },
+    {
+     "message": "tô juntando, me dá mais uma semana"
+    },
+    {
+     "message": "a gente sabe onde tua filha estuda"
+    },
+    {
+     "message": "não mexe com a minha família"
+    },
+    {
+     "message": "então paga até sexta. senão a gente faz uma visita"
+    }
+   ]
+  },
+  {
+   "id": "mixed-11",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "RG e carteira de motorista com o despachante",
+   "relevant": [
+    {
+     "message": "o RG fica pronto em três dias"
+    },
+    {
+     "message": "precisa de quê?"
+    },
+    {
+     "message": "foto 3x4 e o nome que vai no documento"
+    },
+    {
+     "message": "e a carteira de motorista?"
+    },
+    {
+     "message": "essa demora uma semana, cobra à parte"
+    },
+    {
+     "message": "sai com o carimbo do Detran?"
+    },
+    {
+     "message": "igualzinho o original, ninguém percebe"
+    }
+   ]
+  },
+  {
+   "id": "mixed-12",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "placa fria colocada em outro veículo",
+   "relevant": [
+    {
+     "message": "e a placa?"
+    },
+    {
+     "message": "já botei a placa fria no outro"
+    }
+   ]
+  },
+  {
+   "id": "mixed-13",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "caminhão frigorífico com fundo falso",
+   "relevant": [
+    {
+     "message": "vai no fundo falso do caminhão frigorífico"
+    },
+    {
+     "message": "o motorista tem nota de carne, tá tudo certo"
+    },
+    {
+     "path": "docs/en/shipping_manifest.txt"
+    }
+   ]
+  },
+  {
+   "id": "mixed-14",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "fiscal da prefeitura pedindo agrado",
+   "relevant": [
+    {
+     "path": "docs/pt/relatorio_manutencao_2023.txt"
+    }
+   ]
+  },
+  {
+   "id": "mixed-15",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "lotérica para sacar o dinheiro das contas da tia",
+   "relevant": [
+    {
+     "message": "abre uma conta no nome da tua tia"
+    },
+    {
+     "message": "e depois tira como?"
+    },
+    {
+     "message": "saque no caixa de lotérica, sempre pessoa diferente"
+    }
+   ]
+  },
+  {
+   "id": "mixed-16",
+   "type": "mixed",
+   "lang": "pt",
+   "question": "bilhete sobre o moleque da portaria",
+   "relevant": [
+    {
+     "path": "docs/pt/bilhete.txt"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-01",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "praia com ondas do mar e areia",
+   "relevant": [
+    {
+     "path": "images/praia-1.jpg"
+    },
+    {
+     "path": "images/praia-2.jpg"
+    },
+    {
+     "path": "images/praia-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-02",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "um cachorro de coleira",
+   "relevant": [
+    {
+     "path": "images/cachorro-1.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-03",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "gato doméstico",
+   "relevant": [
+    {
+     "path": "images/gato-1.jpg"
+    },
+    {
+     "path": "images/gato-2.jpg"
+    },
+    {
+     "path": "images/gato-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-04",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "cavalo no pasto",
+   "relevant": [
+    {
+     "path": "images/cavalo-1.jpg"
+    },
+    {
+     "path": "images/cavalo-2.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-05",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "carro esportivo vermelho",
+   "relevant": [
+    {
+     "path": "images/carro-vermelho-1.jpg"
+    },
+    {
+     "path": "images/carro-vermelho-2.jpg"
+    },
+    {
+     "path": "images/carro-vermelho-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-06",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "motocicleta estacionada",
+   "relevant": [
+    {
+     "path": "images/motocicleta-1.jpg"
+    },
+    {
+     "path": "images/motocicleta-2.jpg"
+    },
+    {
+     "path": "images/motocicleta-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-07",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "bicicleta encostada na rua",
+   "relevant": [
+    {
+     "path": "images/bicicleta-1.jpg"
+    },
+    {
+     "path": "images/bicicleta-2.jpg"
+    },
+    {
+     "path": "images/bicicleta-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-08",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "avião de passageiros voando",
+   "relevant": [
+    {
+     "path": "images/aviao-1.jpg"
+    },
+    {
+     "path": "images/aviao-2.jpg"
+    },
+    {
+     "path": "images/aviao-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-09",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "barco a vela no mar",
+   "relevant": [
+    {
+     "path": "images/barco-1.jpg"
+    },
+    {
+     "path": "images/barco-2.jpg"
+    },
+    {
+     "path": "images/barco-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-10",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "trem de passageiros",
+   "relevant": [
+    {
+     "path": "images/trem-1.jpg"
+    },
+    {
+     "path": "images/trem-2.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-11",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "ponte sobre um rio",
+   "relevant": [
+    {
+     "path": "images/ponte-1.jpg"
+    },
+    {
+     "path": "images/ponte-2.jpg"
+    },
+    {
+     "path": "images/ponte-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-12",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "fachada de uma igreja",
+   "relevant": [
+    {
+     "path": "images/igreja-1.jpg"
+    },
+    {
+     "path": "images/igreja-2.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-13",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "cidade iluminada à noite",
+   "relevant": [
+    {
+     "path": "images/cidade-noite-1.jpg"
+    },
+    {
+     "path": "images/cidade-noite-2.jpg"
+    },
+    {
+     "path": "images/cidade-noite-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-14",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "árvores de uma floresta",
+   "relevant": [
+    {
+     "path": "images/floresta-1.jpg"
+    },
+    {
+     "path": "images/floresta-2.jpg"
+    },
+    {
+     "path": "images/floresta-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-15",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "montanhas cobertas de neve",
+   "relevant": [
+    {
+     "path": "images/montanha-neve-1.jpg"
+    },
+    {
+     "path": "images/montanha-neve-2.jpg"
+    },
+    {
+     "path": "images/montanha-neve-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-16",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "uma pizza",
+   "relevant": [
+    {
+     "path": "images/pizza-1.jpg"
+    },
+    {
+     "path": "images/pizza-2.jpg"
+    },
+    {
+     "path": "images/pizza-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-17",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "prato com frutas variadas",
+   "relevant": [
+    {
+     "path": "images/frutas-1.jpg"
+    },
+    {
+     "path": "images/frutas-2.jpg"
+    },
+    {
+     "path": "images/frutas-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-18",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "flores num vaso",
+   "relevant": [
+    {
+     "path": "images/flores-1.jpg"
+    },
+    {
+     "path": "images/flores-2.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-19",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "arma de fogo, uma pistola",
+   "relevant": [
+    {
+     "path": "images/pistola-1.jpg"
+    },
+    {
+     "path": "images/pistola-2.jpg"
+    },
+    {
+     "path": "images/pistola-3.jpg"
+    },
+    {
+     "path": "images/pistola-4.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-20",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "facas de cozinha",
+   "relevant": [
+    {
+     "path": "images/faca-1.jpg"
+    },
+    {
+     "path": "images/faca-2.jpg"
+    },
+    {
+     "path": "images/faca-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-21",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "cédulas de dinheiro",
+   "relevant": [
+    {
+     "path": "images/dinheiro-1.jpg"
+    },
+    {
+     "path": "images/dinheiro-2.jpg"
+    },
+    {
+     "path": "images/dinheiro-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-22",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "notebook aberto",
+   "relevant": [
+    {
+     "path": "images/laptop-1.jpg"
+    },
+    {
+     "path": "images/laptop-2.jpg"
+    },
+    {
+     "path": "images/laptop-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-23",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "telefone celular",
+   "relevant": [
+    {
+     "path": "images/celular-1.jpg"
+    },
+    {
+     "path": "images/celular-2.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-24",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "bola de futebol na grama",
+   "relevant": [
+    {
+     "path": "images/bola-futebol-1.jpg"
+    },
+    {
+     "path": "images/bola-futebol-2.jpg"
+    },
+    {
+     "path": "images/bola-futebol-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-25",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "estádio de futebol",
+   "relevant": [
+    {
+     "path": "images/estadio-1.jpg"
+    },
+    {
+     "path": "images/estadio-2.jpg"
+    },
+    {
+     "path": "images/estadio-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-26",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "viatura da polícia",
+   "relevant": [
+    {
+     "path": "images/viatura-policia-1.jpg"
+    },
+    {
+     "path": "images/viatura-policia-2.jpg"
+    },
+    {
+     "path": "images/viatura-policia-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-27",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "bombeiros apagando um incêndio",
+   "relevant": [
+    {
+     "path": "images/incendio-1.jpg"
+    },
+    {
+     "path": "images/incendio-2.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-28",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "garrafas de cerveja",
+   "relevant": [
+    {
+     "path": "images/cerveja-1.jpg"
+    },
+    {
+     "path": "images/cerveja-2.jpg"
+    },
+    {
+     "path": "images/cerveja-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-29",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "cinzeiro com cigarros",
+   "relevant": [
+    {
+     "path": "images/cigarro-1.jpg"
+    },
+    {
+     "path": "images/cigarro-2.jpg"
+    },
+    {
+     "path": "images/cigarro-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-30",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "comprimidos e remédios",
+   "relevant": [
+    {
+     "path": "images/comprimidos-1.jpg"
+    },
+    {
+     "path": "images/comprimidos-2.jpg"
+    },
+    {
+     "path": "images/comprimidos-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-31",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "uma seringa",
+   "relevant": [
+    {
+     "path": "images/seringa-1.jpg"
+    },
+    {
+     "path": "images/seringa-2.jpg"
+    },
+    {
+     "path": "images/seringa-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-32",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "planta de maconha",
+   "relevant": [
+    {
+     "path": "images/maconha-1.jpg"
+    },
+    {
+     "path": "images/maconha-2.jpg"
+    },
+    {
+     "path": "images/maconha-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-33",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "passaportes",
+   "relevant": [
+    {
+     "path": "images/passaporte-1.jpg"
+    },
+    {
+     "path": "images/passaporte-2.jpg"
+    },
+    {
+     "path": "images/passaporte-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-34",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "multidão em protesto na rua",
+   "relevant": [
+    {
+     "path": "images/multidao-1.jpg"
+    },
+    {
+     "path": "images/multidao-2.jpg"
+    },
+    {
+     "path": "images/multidao-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-35",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "martelo e ferramentas",
+   "relevant": [
+    {
+     "path": "images/ferramentas-1.jpg"
+    },
+    {
+     "path": "images/ferramentas-2.jpg"
+    },
+    {
+     "path": "images/ferramentas-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-36",
+   "type": "visual-image",
+   "lang": "pt",
+   "question": "cozinha moderna",
+   "relevant": [
+    {
+     "path": "images/cozinha-1.jpg"
+    },
+    {
+     "path": "images/cozinha-2.jpg"
+    },
+    {
+     "path": "images/cozinha-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-37",
+   "type": "visual-image",
+   "lang": "en",
+   "question": "a red sports car",
+   "relevant": [
+    {
+     "path": "images/carro-vermelho-1.jpg"
+    },
+    {
+     "path": "images/carro-vermelho-2.jpg"
+    },
+    {
+     "path": "images/carro-vermelho-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-38",
+   "type": "visual-image",
+   "lang": "en",
+   "question": "a handgun",
+   "relevant": [
+    {
+     "path": "images/pistola-1.jpg"
+    },
+    {
+     "path": "images/pistola-2.jpg"
+    },
+    {
+     "path": "images/pistola-3.jpg"
+    },
+    {
+     "path": "images/pistola-4.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-39",
+   "type": "visual-image",
+   "lang": "en",
+   "question": "cannabis plants",
+   "relevant": [
+    {
+     "path": "images/maconha-1.jpg"
+    },
+    {
+     "path": "images/maconha-2.jpg"
+    },
+    {
+     "path": "images/maconha-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-40",
+   "type": "visual-image",
+   "lang": "en",
+   "question": "a passport",
+   "relevant": [
+    {
+     "path": "images/passaporte-1.jpg"
+    },
+    {
+     "path": "images/passaporte-2.jpg"
+    },
+    {
+     "path": "images/passaporte-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-41",
+   "type": "visual-image",
+   "lang": "en",
+   "question": "banknotes",
+   "relevant": [
+    {
+     "path": "images/dinheiro-1.jpg"
+    },
+    {
+     "path": "images/dinheiro-2.jpg"
+    },
+    {
+     "path": "images/dinheiro-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-image-42",
+   "type": "visual-image",
+   "lang": "en",
+   "question": "a police car",
+   "relevant": [
+    {
+     "path": "images/viatura-policia-1.jpg"
+    },
+    {
+     "path": "images/viatura-policia-2.jpg"
+    },
+    {
+     "path": "images/viatura-policia-3.jpg"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-01",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "girafas na savana",
+   "relevant": [
+    {
+     "path": "videos/viagem_africa.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-02",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "manada de elefantes",
+   "relevant": [
+    {
+     "path": "videos/viagem_africa.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-03",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "um leão",
+   "relevant": [
+    {
+     "path": "videos/viagem_africa.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-04",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "uma cachoeira",
+   "relevant": [
+    {
+     "path": "videos/natureza.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-05",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "vulcão em erupção",
+   "relevant": [
+    {
+     "path": "videos/natureza.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-06",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "dunas de areia no deserto",
+   "relevant": [
+    {
+     "path": "videos/natureza.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-07",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "trânsito engarrafado",
+   "relevant": [
+    {
+     "path": "videos/cidade.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-08",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "feira de rua com barracas",
+   "relevant": [
+    {
+     "path": "videos/cidade.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-09",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "guindaste num canteiro de obras",
+   "relevant": [
+    {
+     "path": "videos/cidade.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-10",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "fogos de artifício",
+   "relevant": [
+    {
+     "path": "videos/festa.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-11",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "fantasias de carnaval",
+   "relevant": [
+    {
+     "path": "videos/festa.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-12",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "rodeio com cavaleiro",
+   "relevant": [
+    {
+     "path": "videos/festa.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-13",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "peixes num recife de coral",
+   "relevant": [
+    {
+     "path": "videos/mar.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-14",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "porto com contêineres e guindastes",
+   "relevant": [
+    {
+     "path": "videos/mar.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-15",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "peixes à venda",
+   "relevant": [
+    {
+     "path": "videos/mar.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-16",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "linha de montagem de carros",
+   "relevant": [
+    {
+     "path": "videos/trabalho.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-17",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "sala de aula",
+   "relevant": [
+    {
+     "path": "videos/trabalho.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-18",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "quarto de hospital",
+   "relevant": [
+    {
+     "path": "videos/trabalho.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-19",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "caminhão na estrada",
+   "relevant": [
+    {
+     "path": "videos/transporte.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-20",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "um helicóptero",
+   "relevant": [
+    {
+     "path": "videos/transporte.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-21",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "terminal de aeroporto",
+   "relevant": [
+    {
+     "path": "videos/transporte.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-22",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "raios numa tempestade",
+   "relevant": [
+    {
+     "path": "videos/clima.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-23",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "plantação de trigo",
+   "relevant": [
+    {
+     "path": "videos/clima.mp4"
+    }
+   ]
+  },
+  {
+   "id": "visual-video-24",
+   "type": "visual-video",
+   "lang": "pt",
+   "question": "pessoas esquiando na neve",
+   "relevant": [
+    {
+     "path": "videos/clima.mp4"
+    }
+   ]
+  }
+ ]
+}
