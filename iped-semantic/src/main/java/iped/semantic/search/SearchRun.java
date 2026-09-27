@@ -24,6 +24,36 @@ final class SearchRun {
     private SearchRun() {
     }
 
+    /**
+     * A reference item belongs to one case: its vector is computed there, once, and every case is
+     * searched with it. The owner case must be available; its refusal is the question's.
+     */
+    private static void presetReferenceVector(List<SemanticSearcher> members, List<SemanticSearcher.Plan> plans,
+            Modality modality) throws SemanticUnavailableException, IOException {
+        SemanticRequest.Reference ref = plans.get(0).request.getReference();
+        if (ref == null) {
+            return;
+        }
+        SemanticSearcher.Plan owner = null;
+        for (SemanticSearcher.Plan p : plans) {
+            if (p.searcher().getCaseIndex() == ref.getCaseIndex()) {
+                owner = p;
+            }
+        }
+        if (owner == null) {
+            throw new SemanticUnavailableException(members.get(ref.getCaseIndex()).availability(modality));
+        }
+        float[] v;
+        try {
+            v = owner.searcher().referenceVector(ref, owner.availability.getEmbedder());
+        } catch (iped.semantic.model.EmbeddingException e) {
+            throw new SemanticUnavailableException(Availability.failedNow(owner.availability, e.getMessage()));
+        }
+        for (SemanticSearcher.Plan p : plans) {
+            p.preset = v;
+        }
+    }
+
     static Ordering execute(List<SemanticSearcher> members, List<String> names, Modality modality,
             IntFunction<SemanticRequest> requestFor) throws SemanticUnavailableException, IOException {
         List<SemanticSearcher.Plan> plans = new ArrayList<>();
@@ -44,6 +74,7 @@ final class SearchRun {
         if (plans.isEmpty()) {
             throw new SemanticUnavailableException(firstUnavailable);
         }
+        presetReferenceVector(members, plans, modality);
 
         List<Hit> hits = new ArrayList<>();
         Map<Integer, java.util.BitSet> scopes = new HashMap<>();

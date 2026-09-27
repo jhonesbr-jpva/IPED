@@ -12,6 +12,12 @@ import java.util.PriorityQueue;
 import java.util.regex.Pattern;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
@@ -36,6 +42,7 @@ import iped.semantic.model.EmbeddingException;
 import iped.semantic.model.VectorMath;
 import iped.semantic.search.OrderingEntry.ProximityKind;
 import iped.semantic.search.SemanticRequest.Target;
+import iped.semantic.store.CoverageReason;
 import iped.semantic.store.SemanticFields;
 import iped.semantic.store.SemanticIndexReader;
 import iped.semantic.store.SemanticStore;
@@ -169,12 +176,16 @@ public class SemanticSearcher implements Closeable {
         final List<Notice> notices = new ArrayList<>();
         int lexicalMatches = -1;
         float[] queryVector;
+        /** A vector computed before collection (a reference item, computed once in its own case). */
+        float[] preset;
 
         Plan(SemanticRequest request, Modality modality, Availability availability) {
             this.request = request;
             this.modality = modality;
             this.availability = availability;
-            this.mode = modality == Modality.VISUAL ? TextMode.SEMANTIC : request.getMode();
+            // a reference has no words: "more like this" is semantic only
+            this.mode = modality == Modality.VISUAL || request.getReference() != null ? TextMode.SEMANTIC
+                    : request.getMode();
             this.scope = request.getScope();
             this.scopeSize = scope != null ? scope.cardinality() : caseItems.cardinality();
             this.method = scopeSize <= config.getExactSearchMaxItems() ? Ordering.Method.EXACT
@@ -215,19 +226,27 @@ public class SemanticSearcher implements Closeable {
         }
         SemanticIndexReader index = reader(plan.modality);
         Integer exclude = null;
-        float[] q;
-        try {
-            q = queryVector(plan, index);
-        } catch (EmbeddingException e) {
-            // the configured source failed now: unavailable, and no other model is tried (FR-044)
-            throw new SemanticUnavailableException(Availability.failedNow(plan.availability, e.getMessage()));
+        float[] q = plan.preset;
+        if (q == null) {
+            try {
+                q = queryVector(plan, index);
+            } catch (EmbeddingException e) {
+                // the configured source failed now: unavailable, and no other model is tried (FR-044)
+                throw new SemanticUnavailableException(Availability.failedNow(plan.availability, e.getMessage()));
+            }
         }
-        if (plan.request.getReference() != null) {
-            exclude = plan.request.getReference().getItemId();
+        SemanticRequest.Reference ref = plan.request.getReference();
+        if (ref != null && ref.getCaseIndex() == caseIndex) {
+            exclude = ref.getItemId();
         }
         plan.queryVector = q;
         int k = config.getMaxDepth() * config.getOversampling();
         List<Hit> semantic = semanticHits(index, q, plan.scope, k, plan.method, exclude);
+        if (exclude != null) {
+            // the reference never occupies the ordering (FR-013), not even inside a conversation
+            final int refId = exclude;
+            semantic.removeIf(h -> h.itemId == refId || h.lines.stream().anyMatch(l -> l.getItemId() == refId));
+        }
         if (plan.mode == TextMode.HYBRID && plan.modality == Modality.TEXT) {
             return hybrid(plan, index, semantic, exclude);
         }
@@ -241,7 +260,83 @@ public class SemanticSearcher implements Closeable {
 
     float[] queryVector(Plan plan, SemanticIndexReader index) throws EmbeddingException, IOException {
         Embedder e = plan.availability.getEmbedder();
+        if (plan.request.getReference() != null) {
+            return referenceVector(plan.request.getReference(), e);
+        }
         return e.embedTexts(Embedder.Role.QUERY, List.of(plan.request.getQuery()))[0];
+    }
+
+    /**
+     * The vector of a reference of this case (FR-013): a selected text or a range is embedded as a
+     * passage; a whole item is the normalised mean of its stored vectors - its passages, the
+     * sequences of a chat whose messages were sequenced, or the sequences that contain a message.
+     *
+     * @throws ReferenceNotCoveredException
+     *             with the reason of the item itself when it is not within reach
+     */
+    float[] referenceVector(SemanticRequest.Reference ref, Embedder e) throws EmbeddingException, IOException {
+        CoverageReason reason = table(Modality.TEXT).reasonOf(ref.getItemId());
+        if (!reason.isCovered() && reason != CoverageReason.COVERED_BY_MESSAGES) {
+            throw new ReferenceNotCoveredException(ref.getItemId(), reason);
+        }
+        SemanticIndexReader index = reader(Modality.TEXT);
+        String text = ref.getSelectedText();
+        if (text == null && ref.getCharStart() != null) {
+            text = ContextReader.textRange(index, ref.getItemId(), ref.getCharStart(), ref.getCharEnd());
+        }
+        if (text != null && !text.isBlank()) {
+            if (text.length() > config.getMaxTextCharsPerItem()) {
+                text = text.substring(0, config.getMaxTextCharsPerItem());
+            }
+            return e.embedTexts(Embedder.Role.PASSAGE, List.of(text))[0];
+        }
+        List<float[]> vectors = storedVectors(index, ref.getItemId(), ref.getCharStart(), ref.getCharEnd());
+        if (vectors.isEmpty()) {
+            throw new ReferenceNotCoveredException(ref.getItemId(), reason);
+        }
+        return VectorMath.normalizedMean(vectors.toArray(new float[0][]));
+    }
+
+    /** Stored vectors of an item (or of the sequences holding a message), optionally within a range. */
+    private List<float[]> storedVectors(SemanticIndexReader index, int itemId, Integer start, Integer end)
+            throws IOException {
+        List<float[]> out = new ArrayList<>();
+        Query q = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(SemanticFields.ITEM_ID_KEY, Integer.toString(itemId))), Occur.SHOULD)
+                .add(IntPoint.newExactQuery(SemanticFields.MESSAGE_IDS, itemId), Occur.SHOULD).build();
+        for (ScoreDoc sd : index.searcher().search(q, Integer.MAX_VALUE).scoreDocs) {
+            Document d = index.document(sd.doc);
+            if (SemanticFields.KIND_STATUS.equals(d.get(SemanticFields.KIND))) {
+                continue;
+            }
+            if (start != null && d.getField(SemanticFields.CHAR_START) != null) {
+                int s = SemanticIndexReader.intField(d, SemanticFields.CHAR_START, 0);
+                int en = SemanticIndexReader.intField(d, SemanticFields.CHAR_END, 0);
+                if (en <= start || s >= end) {
+                    continue;
+                }
+            }
+            float[] v = vectorOf(index, sd.doc);
+            if (v != null) {
+                out.add(v);
+            }
+        }
+        return out;
+    }
+
+    private static float[] vectorOf(SemanticIndexReader index, int globalDoc) throws IOException {
+        for (LeafReaderContext ctx : index.reader().leaves()) {
+            int local = globalDoc - ctx.docBase;
+            if (local < 0 || local >= ctx.reader().maxDoc()) {
+                continue;
+            }
+            VectorValues vv = ctx.reader().getVectorValues(SemanticFields.VECTOR);
+            if (vv != null && vv.advance(local) == local) {
+                return vv.vectorValue().clone();
+            }
+            return null;
+        }
+        return null;
     }
 
     Ordering ordering(Plan plan, List<OrderingEntry> entries) throws IOException {
@@ -266,11 +361,23 @@ public class SemanticSearcher implements Closeable {
     public synchronized Coverage.Table table(Modality m) throws IOException {
         Coverage.Table t = tables.get(m);
         if (t == null) {
-            Availability a = availability(m);
-            t = Coverage.Table.load(reader(m), a.getRecord(), caseItems.length());
+            // read the record directly: coverage must not load the model (the menus ask for it)
+            iped.semantic.store.BuildRecord r = iped.semantic.store.BuildRecord.read(store.buildRecord());
+            t = Coverage.Table.load(reader(m), r == null ? null : r.get(m), caseItems.length());
             tables.put(m, t);
         }
         return t;
+    }
+
+    /**
+     * The coverage reason of an item in a modality without loading any model, or {@code null} when
+     * the case has no semantic index for the modality.
+     */
+    public CoverageReason reasonOf(Modality m, int itemId) throws IOException {
+        if (!store.hasIndex(m)) {
+            return null;
+        }
+        return table(m).reasonOf(itemId);
     }
 
     synchronized SemanticIndexReader reader(Modality m) throws IOException {

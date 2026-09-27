@@ -318,6 +318,9 @@ public class MenuClass extends JPopupMenu {
         similarFacesExternal.setEnabled(submenu.isEnabled() && similarFacesExternalEnabled);
         submenu.add(similarFacesExternal);
 
+        // Semantic search (spec 009): "more like this" from the highlighted item.
+        this.add(iped.app.ui.semantic.MoreLikeThisAction.menuItem(item));
+
         this.addSeparator();
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$

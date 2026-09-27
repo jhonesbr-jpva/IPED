@@ -545,6 +545,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         semanticResultFilterer = new iped.app.ui.semantic.SemanticResultFilterer();
         semanticSearchPanel = new iped.app.ui.semantic.SemanticSearchPanel();
         semanticSearchPanel.setResultFilterer(semanticResultFilterer);
+        iped.app.ui.semantic.MoreLikeThisAction.install();
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -1549,6 +1550,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public IMultiSearchResult getResults() {
         return ipedResult;
+    }
+
+    /** Brings the semantic search panel to the front (used by "more like this"). */
+    public void showSemanticSearch() {
+        if (semanticTabDock != null) {
+            selectDockableTab(semanticTabDock);
+        }
     }
 
     /** The gallery model, whose display protections (blur) other image views honour. */

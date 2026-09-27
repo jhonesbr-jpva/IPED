@@ -273,7 +273,7 @@ próximo.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T049 [P] [US4] `iped-semantic/src/test/java/iped/semantic/unit/ReferenceSearchTest.java` cobre:
+- [X] T049 [P] [US4] `iped-semantic/src/test/java/iped/semantic/unit/ReferenceSearchTest.java` cobre:
   - o item de referência nunca está na ordenação;
   - referência não coberta → recusa `REFERENCE_NOT_COVERED` com o motivo do item (E7);
   - referência por intervalo usa o trecho dado, e não o item inteiro.
@@ -281,9 +281,9 @@ próximo.
 
 ### Implementation for User Story 4
 
-- [ ] T051 [US4] Modo de referência em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: item → vetor armazenado do melhor trecho, ou média normalizada dos trechos se não houver ordinal; intervalo ou texto selecionado → embedding com `Role.PASSAGE`. Exclui o item de referência. Só modalidade texto.
-- [ ] T052 [US4] Entrada "Mais como este" em `iped-app/src/main/java/iped/app/ui/MenuClass.java` (mudança aditiva) e `iped-app/src/main/java/iped/app/ui/semantic/MoreLikeThisAction.java`, desabilitada com dica do motivo quando o item não está coberto.
-- [ ] T053 [US4] Ação "Mais como este trecho" em `iped-viewers/iped-viewers-impl/src/main/java/iped/viewers/ATextViewer.java`: item de menu que publica o texto selecionado para um ouvinte registrado, sem efeito na renderização. Ligação do ouvinte em `iped-app/src/main/java/iped/app/ui/semantic/MoreLikeThisAction.java`. Registrar a mudança em `iped-viewers/CLAUDE.md`.
+- [X] T051 [US4] Modo de referência em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: item → vetor armazenado do melhor trecho, ou média normalizada dos trechos se não houver ordinal; intervalo ou texto selecionado → embedding com `Role.PASSAGE`. Exclui o item de referência. Só modalidade texto.
+- [X] T052 [US4] Entrada "Mais como este" em `iped-app/src/main/java/iped/app/ui/MenuClass.java` (mudança aditiva) e `iped-app/src/main/java/iped/app/ui/semantic/MoreLikeThisAction.java`, desabilitada com dica do motivo quando o item não está coberto.
+- [X] T053 [US4] Ação "Mais como este trecho" em `iped-viewers/iped-viewers-impl/src/main/java/iped/viewers/ATextViewer.java`: item de menu que publica o texto selecionado para um ouvinte registrado, sem efeito na renderização. Ligação do ouvinte em `iped-app/src/main/java/iped/app/ui/semantic/MoreLikeThisAction.java`. Registrar a mudança em `iped-viewers/CLAUDE.md`.
 
 **Checkpoint**: US4 funcional.
 
@@ -347,7 +347,7 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
   - BM25 sobre `text`/`seqText` respeita o mesmo recorte e a mesma unidade;
   - a pergunta vira termos com escape, sem interpretar sintaxe do IPED;
   - "ação" casa "acao".
-- [ ] T062 [P] [US7] `iped-semantic/src/test/java/iped/semantic/unit/ContextReaderTest.java` cobre:
+- [X] T062 [P] [US7] `iped-semantic/src/test/java/iped/semantic/unit/ContextReaderTest.java` cobre:
   - texto remendado igual ao intervalo `[charStart, charEnd)` do item, sem repetir a sobreposição (E12);
   - `truncated` em `contextMaxChars`;
   - mensagens vizinhas em sequência.

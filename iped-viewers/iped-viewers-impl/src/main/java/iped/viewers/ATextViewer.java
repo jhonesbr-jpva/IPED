@@ -88,7 +88,61 @@ public abstract class ATextViewer extends AbstractViewer implements KeyListener 
         textTable.setShowGrid(false);
         textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         textTable.addKeyListener(this);
+        textTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                showSelectionMenu(e);
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent e) {
+                showSelectionMenu(e);
+            }
+        });
         this.getPanel().add(viewerScroll);
+    }
+
+    /**
+     * Action offered on the selected text of the viewer, registered by the application (semantic
+     * search, "more like this passage"). It only publishes the selection to the listener; rendering
+     * is not affected. {@code null} while nothing is registered, and then no menu appears.
+     */
+    private static volatile String selectionActionLabel;
+    private static volatile java.util.function.Consumer<String> selectionActionListener;
+
+    /** Registers the action offered on selected text; {@code null} listener removes it. */
+    public static void setSelectionAction(String label, java.util.function.Consumer<String> listener) {
+        selectionActionLabel = label;
+        selectionActionListener = listener;
+    }
+
+    private void showSelectionMenu(java.awt.event.MouseEvent e) {
+        java.util.function.Consumer<String> listener = selectionActionListener;
+        if (!e.isPopupTrigger() || listener == null || textTable.getSelectedRowCount() == 0) {
+            return;
+        }
+        String selected = selectedText();
+        if (selected.isBlank()) {
+            return;
+        }
+        javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+        javax.swing.JMenuItem item = new javax.swing.JMenuItem(selectionActionLabel);
+        item.addActionListener(a -> listener.accept(selected));
+        menu.add(item);
+        menu.show(textTable, e.getX(), e.getY());
+    }
+
+    /** The text of the selected rows, without the highlight markup, as copying produces it. */
+    private String selectedText() {
+        StringBuilder copy = new StringBuilder();
+        for (Integer row : textTable.getSelectedRows()) {
+            String value = textViewerModel.getValueAt(row, 0).toString();
+            value = value.replaceAll("<html><pre>", "").replaceAll("</pre></html>", ""); //$NON-NLS-1$ //$NON-NLS-2$
+            value = value.replaceAll(HIGHLIGHT_START_TAG, "").replaceAll(HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$ //$NON-NLS-2$
+            value = LuceneSimpleHTMLEncoder.htmlDecode(value);
+            copy.append(value + "\r\n"); //$NON-NLS-1$
+        }
+        return copy.toString();
     }
 
     public void setHitsTable(HitsTable hitsTable) {

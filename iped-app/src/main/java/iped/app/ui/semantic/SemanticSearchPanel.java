@@ -306,8 +306,13 @@ public class SemanticSearchPanel extends JPanel {
                 } catch (SemanticUnavailableException e) {
                     unavailableError = e;
                     return null;
+                } catch (iped.semantic.search.ReferenceNotCoveredException e) {
+                    notCovered = e;
+                    return null;
                 }
             }
+
+            iped.semantic.search.ReferenceNotCoveredException notCovered;
 
             @Override
             protected void process(List<String> chunks) {
@@ -321,6 +326,11 @@ public class SemanticSearchPanel extends JPanel {
                 scopeLabel.setText(text.get("SemanticSearch.Scope", String.valueOf(scopeSize)));
                 try {
                     List<Ordering> orderings = get();
+                    if (orderings == null && notCovered != null) {
+                        status.setText(text.get("SemanticSearch.MoreLikeThis.NotCovered",
+                                text.reason(notCovered.getReason())));
+                        return;
+                    }
                     if (orderings == null) {
                         showUnavailable(unavailableError.getAvailability());
                         return;

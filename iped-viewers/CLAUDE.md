@@ -61,7 +61,7 @@ Outros contratos importantes em `iped-viewers-api`:
 | Viewer | MIME types | Tecnologia | Observações |
 |---|---|---|---|
 | [`HexViewerPlus`](iped-viewers-impl/src/main/java/iped/viewers/HexViewerPlus.java) | qualquer (fallback) | DeltaHex 0.1.3-p3 (Swing) | Editor hex/ASCII; lazy loading para arquivos grandes. |
-| [`ATextViewer`](iped-viewers-impl/src/main/java/iped/viewers/ATextViewer.java) | `text/*` | JTable monoespacial | Limite: 100.000 linhas / 100 chars por linha (`MAX_LINES`, `MAX_LINE_SIZE`). |
+| [`ATextViewer`](iped-viewers-impl/src/main/java/iped/viewers/ATextViewer.java) | `text/*` | JTable monoespacial | Limite: 100.000 linhas / 100 chars por linha (`MAX_LINES`, `MAX_LINE_SIZE`). Desde a 009: `setSelectionAction(label, listener)` registra **uma** ação de menu de contexto sobre as linhas selecionadas ("Mais como este trecho" da busca semântica, ligada pelo `iped-app`). A ação só publica o texto selecionado (o mesmo que Ctrl+C copiaria) para o ouvinte; sem ouvinte registrado, o menu não aparece. Nada muda na renderização nem no destaque. |
 | [`HtmlViewer`](iped-viewers-impl/src/main/java/iped/viewers/HtmlViewer.java) | `text/html`, `application/xhtml+xml`, `text/asp` | JavaFX `WebView` em `JFXPanel` | Limite 10 MB. Highlight via JS injection. |
 | `HtmlLinkViewer` | custom `application/x-preview-with-links` | extends `HtmlViewer` | Bridge JS-Java (`window.app`) para abrir anexos do caso via `AttachmentSearcher`. |
 | `EmailViewer` | `message/rfc822`, `message/x-emlx` | mime4j + `HtmlLinkViewer` | Parsing MIME + integração com anexos. |

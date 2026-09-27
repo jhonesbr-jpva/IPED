@@ -19,12 +19,14 @@ public final class SemanticRequest {
 
     /** "More like this" (FR-013): an item, a character range in it, or a selected text. */
     public static final class Reference {
+        private final int caseIndex;
         private final int itemId;
         private final Integer charStart;
         private final Integer charEnd;
         private final String selectedText;
 
-        private Reference(int itemId, Integer charStart, Integer charEnd, String selectedText) {
+        private Reference(int caseIndex, int itemId, Integer charStart, Integer charEnd, String selectedText) {
+            this.caseIndex = caseIndex;
             this.itemId = itemId;
             this.charStart = charStart;
             this.charEnd = charEnd;
@@ -32,18 +34,28 @@ public final class SemanticRequest {
         }
 
         public static Reference item(int itemId) {
-            return new Reference(itemId, null, null, null);
+            return new Reference(0, itemId, null, null, null);
         }
 
         public static Reference range(int itemId, int charStart, int charEnd) {
             if (charStart < 0 || charEnd <= charStart) {
                 throw new IllegalArgumentException("invalid range [" + charStart + ", " + charEnd + ")");
             }
-            return new Reference(itemId, charStart, charEnd, null);
+            return new Reference(0, itemId, charStart, charEnd, null);
         }
 
         public static Reference selectedText(int itemId, String text) {
-            return new Reference(itemId, null, null, text);
+            return new Reference(0, itemId, null, null, text);
+        }
+
+        /** The same reference in another open case (several cases opened together). */
+        public Reference inCase(int index) {
+            return new Reference(index, itemId, charStart, charEnd, selectedText);
+        }
+
+        /** Index of the case the item belongs to, among the cases of the question. */
+        public int getCaseIndex() {
+            return caseIndex;
         }
 
         public int getItemId() {
