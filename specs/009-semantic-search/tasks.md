@@ -481,6 +481,7 @@ pela impressão digital, e não a fonte (emenda A4). Credenciais nunca em arquiv
   
   **Se SC-010 ou SC-013 reprovar só com CPU, parar e levar a revisão para a spec (Assumptions), sem relaxar no plano.**
   - Esta estação não é a bancada de referência (14 núcleos, não 48). Feito aqui, como indicação: SC-008 no `fastmode` sobre a evidência de referência (instalação anterior 54,1 e 50,9 s; nova desligada 51,6 s); SC-009 observado no processamento e na busca (nenhuma conexão); SC-016 observado na verificação da interface. **Pendente na bancada**: SC-008, SC-010, SC-013 e SC-015 no perfil forense.
+  - **Indicação que para a tarefa** (validation-log): no perfil forense, a evidência de referência tem 7,05 bilhões de caracteres de texto; a preparação levaria de 4 h a 20 h conforme a política, contra 17,7 min de base. O SC-010 como escrito não é alcançável em evidência rica em texto: parado aqui e levado à spec, como a tarefa manda.
 - [ ] T097 Decisão de fábrica (research D19 e D20), com os números de T063 e T096: `defaultTextMode` em `SemanticSearchConfig.java`/`SemanticSearchConfig.txt`, e quais perfis em `iped-app/resources/config/profiles/*/IPEDConfig.txt` ligam o quê. Registrar a justificativa no `validation-log.md`.
   - `defaultTextMode = hybrid` confirmado pelos números de T063 (SC-018 100% sem perda no SC-001). Perfis: nenhum liga a capacidade até os números de T096 na bancada (D19).
 - [X] T098 Regressão, com o resultado registrado em `specs/009-semantic-search/validation-log.md`:

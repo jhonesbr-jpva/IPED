@@ -489,3 +489,31 @@ Written by hand.
 
 Also open: US1 acceptance scenario 2 at 4/6 (the text model's limit, research D23), and the
 calibration of `fingerprintTolerance` between two CPUs.
+
+### SC-010, indication on text-heavy evidence — stop and take it to the spec — 2026-09-27
+
+Written by hand. This workstation (14 cores), not the reference bench; the orders of magnitude, not
+the exact numbers, are the finding.
+
+- Evidence `RockPi4.E01` (image of a Linux single-board computer), **forensic** profile. Capability
+  off: **17.7 min**, 781,246 items. With `enableSemanticText`: stopped after 9 min at 7,034 items
+  processed (~6 items/s against ~750 items/s without it), the engine estimating more than 190 h;
+  every worker waited on the full inference queue.
+- Text in that case (sum of `textSize`): **7.05 billion characters** in 781,193 items with text —
+  55% plain-text files (`TextAndCSVParser`: sources, configurations, logs, documentation), 20%
+  strings of executables (`ExecutableParser`), 16% strings of unknown binaries (`RawStringParser`),
+  and unallocated space and slack. What preparation would read, capped at `maxTextCharsPerItem`
+  (200,000): 4.24 billion characters; without the text drawn from binaries: 2.95 billion; and with
+  a cap of 20,000 per item: 1.68 billion.
+- Inference rate measured on the evaluation case: ~113,000 characters of text per second without
+  focus windows (142 passages/s), ~59,000 with them. Hence, for that evidence: about 20 h (all text,
+  focus windows on), 10 h (no focus windows), 7 h (no binary-derived text, no focus windows), 4 h
+  (plus a 20,000 cap). SC-010's budget - doubling 17.7 min - holds about 120 million characters here,
+  roughly 3% of this case's text; on 48 cores, around 10%.
+- On the evaluation corpus (small, documents and chats) the same release takes 1.62× with focus
+  windows and 1.21× without them: the cost follows the volume of text, and a system image is at
+  the far end.
+
+**SC-010 as written (≤ 2× on the reference case, CPU only) is not reachable for text-heavy
+evidence with this model.** Per T096 this goes back to the specification, with the options in the
+completion report; the plan is not relaxed here.
