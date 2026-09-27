@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "corpus": "iped-semantic/tools/eval-corpus",
  "questions": [
   {
@@ -29,7 +29,8 @@
     {
      "path": "docs/pt/bilhete.txt"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "conceptual-02",
@@ -52,7 +53,8 @@
     {
      "message": "numeração raspada, pode ficar tranquilo"
     }
-   ]
+   ],
+   "subject": "arma-de-fogo"
   },
   {
    "id": "conceptual-03",
@@ -66,7 +68,8 @@
     {
      "message": "motor e câmbio vendidos, lataria vai pro ferro-velho"
     }
-   ]
+   ],
+   "subject": "veiculo-furtado"
   },
   {
    "id": "conceptual-04",
@@ -77,7 +80,8 @@
     {
      "message": "já botei a placa fria no outro"
     }
-   ]
+   ],
+   "subject": "veiculo-furtado"
   },
   {
    "id": "conceptual-05",
@@ -91,7 +95,8 @@
     {
      "message": "então paga até sexta. senão a gente faz uma visita"
     }
-   ]
+   ],
+   "subject": "ameaca-por-divida"
   },
   {
    "id": "conceptual-06",
@@ -111,7 +116,8 @@
     {
      "path": "docs/pt/relatorio_auditoria.txt"
     }
-   ]
+   ],
+   "subject": "lavagem-com-parentes"
   },
   {
    "id": "conceptual-07",
@@ -128,7 +134,8 @@
     {
      "path": "docs/pt/relatorio_auditoria.txt"
     }
-   ]
+   ],
+   "subject": "lavagem-com-parentes"
   },
   {
    "id": "conceptual-08",
@@ -145,7 +152,8 @@
     {
      "message": "vai no fundo falso do caminhão frigorífico"
     }
-   ]
+   ],
+   "subject": "contrabando-na-fronteira"
   },
   {
    "id": "conceptual-09",
@@ -165,7 +173,8 @@
     {
      "message": "igualzinho o original, ninguém percebe"
     }
-   ]
+   ],
+   "subject": "documentos-falsos"
   },
   {
    "id": "conceptual-10",
@@ -179,7 +188,8 @@
     {
      "message": "já disparei pra 300 números"
     }
-   ]
+   ],
+   "subject": "golpe-na-internet"
   },
   {
    "id": "conceptual-11",
@@ -190,7 +200,8 @@
     {
      "message": "o site clonado da loja tá no ar até amanhã"
     }
-   ]
+   ],
+   "subject": "golpe-na-internet"
   },
   {
    "id": "conceptual-12",
@@ -210,7 +221,8 @@
     {
      "message": "as ferramentas já tão no galpão"
     }
-   ]
+   ],
+   "subject": "assalto-planejado"
   },
   {
    "id": "conceptual-13",
@@ -224,7 +236,8 @@
     {
      "message": "eu fico, vocês dois no carro de apoio"
     }
-   ]
+   ],
+   "subject": "assalto-planejado"
   },
   {
    "id": "conceptual-14",
@@ -235,7 +248,8 @@
     {
      "path": "docs/pt/relatorio_manutencao_2023.txt"
     }
-   ]
+   ],
+   "subject": "suborno"
   },
   {
    "id": "conceptual-15",
@@ -246,7 +260,8 @@
     {
      "path": "docs/pt/relatorio_manutencao_2023.txt"
     }
-   ]
+   ],
+   "subject": "suborno"
   },
   {
    "id": "conceptual-16",
@@ -260,7 +275,8 @@
     {
      "message": "vou de uber"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "conceptual-17",
@@ -271,7 +287,8 @@
     {
      "message": "chegou, tá guardada no depósito do meu primo"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "conceptual-18",
@@ -282,7 +299,8 @@
     {
      "message": "melhor não falar valor por aqui"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "conceptual-19",
@@ -296,7 +314,8 @@
     {
      "message": "50 unidades, vai junto"
     }
-   ]
+   ],
+   "subject": "arma-de-fogo"
   },
   {
    "id": "conceptual-20",
@@ -307,7 +326,8 @@
     {
      "message": "numeração raspada, pode ficar tranquilo"
     }
-   ]
+   ],
+   "subject": "arma-de-fogo"
   },
   {
    "id": "conceptual-21",
@@ -321,7 +341,8 @@
     {
      "message": "arranquei na hora, joguei no rio"
     }
-   ]
+   ],
+   "subject": "veiculo-furtado"
   },
   {
    "id": "conceptual-22",
@@ -335,7 +356,8 @@
     {
      "message": "então paga até sexta. senão a gente faz uma visita"
     }
-   ]
+   ],
+   "subject": "ameaca-por-divida"
   },
   {
    "id": "conceptual-23",
@@ -346,7 +368,8 @@
     {
      "message": "tô juntando, me dá mais uma semana"
     }
-   ]
+   ],
+   "subject": "ameaca-por-divida"
   },
   {
    "id": "conceptual-24",
@@ -357,7 +380,8 @@
     {
      "message": "saque no caixa de lotérica, sempre pessoa diferente"
     }
-   ]
+   ],
+   "subject": "lavagem-com-parentes"
   },
   {
    "id": "conceptual-25",
@@ -368,7 +392,8 @@
     {
      "message": "o motorista tem nota de carne, tá tudo certo"
     }
-   ]
+   ],
+   "subject": "contrabando-na-fronteira"
   },
   {
    "id": "conceptual-26",
@@ -379,7 +404,8 @@
     {
      "message": "o RG fica pronto em três dias"
     }
-   ]
+   ],
+   "subject": "documentos-falsos"
   },
   {
    "id": "conceptual-27",
@@ -390,7 +416,8 @@
     {
      "message": "a senhora de Campinas caiu, pagou 2.400"
     }
-   ]
+   ],
+   "subject": "golpe-na-internet"
   },
   {
    "id": "conceptual-28",
@@ -404,7 +431,8 @@
     {
      "message": "vou fazer o churrasco, compra picanha"
     }
-   ]
+   ],
+   "subject": "conceptual-28"
   },
   {
    "id": "conceptual-29",
@@ -415,7 +443,8 @@
     {
      "message": "reunião de resultados remarcada pra quinta às 10h"
     }
-   ]
+   ],
+   "subject": "conceptual-29"
   },
   {
    "id": "conceptual-30",
@@ -429,7 +458,8 @@
     {
      "message": "aquele italiano da praça"
     }
-   ]
+   ],
+   "subject": "conceptual-30"
   },
   {
    "id": "conceptual-31",
@@ -443,7 +473,8 @@
     {
      "message": "quem não pagou a quadra acerta comigo"
     }
-   ]
+   ],
+   "subject": "conceptual-31"
   },
   {
    "id": "conceptual-32",
@@ -454,7 +485,8 @@
     {
      "path": "docs/pt/receita_bolo.txt"
     }
-   ]
+   ],
+   "subject": "receitas"
   },
   {
    "id": "conceptual-33",
@@ -465,7 +497,8 @@
     {
      "path": "docs/pt/manual_impressora.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-33"
   },
   {
    "id": "conceptual-34",
@@ -476,7 +509,8 @@
     {
      "path": "docs/pt/carta_cobranca.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-34"
   },
   {
    "id": "conceptual-35",
@@ -487,7 +521,8 @@
     {
      "path": "docs/pt/noticia_chuvas.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-35"
   },
   {
    "id": "conceptual-36",
@@ -498,7 +533,8 @@
     {
      "path": "docs/pt/email_transferencia.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-36"
   },
   {
    "id": "conceptual-37",
@@ -509,7 +545,8 @@
     {
      "path": "docs/pt/bilhete.txt"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "conceptual-38",
@@ -523,7 +560,8 @@
     {
      "message": "ninguém fala Aurora por telefone, só aqui"
     }
-   ]
+   ],
+   "subject": "conceptual-38"
   },
   {
    "id": "conceptual-39",
@@ -534,7 +572,8 @@
     {
      "path": "docs/pt/ata_condominio.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-39"
   },
   {
    "id": "conceptual-40",
@@ -545,7 +584,8 @@
     {
      "path": "docs/pt/diario_viagem.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-40"
   },
   {
    "id": "conceptual-41",
@@ -556,7 +596,8 @@
     {
      "path": "docs/pt/boletim_ocorrencia.txt"
     }
-   ]
+   ],
+   "subject": "veiculo-furtado"
   },
   {
    "id": "conceptual-42",
@@ -567,7 +608,8 @@
     {
      "path": "docs/pt/contrato_aluguel.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-42"
   },
   {
    "id": "conceptual-43",
@@ -578,7 +620,8 @@
     {
      "path": "docs/pt/curriculo.txt"
     }
-   ]
+   ],
+   "subject": "conceptual-43"
   },
   {
    "id": "crosslingual-01",
@@ -589,7 +632,8 @@
     {
      "path": "docs/en/weapon_listing.txt"
     }
-   ]
+   ],
+   "subject": "arma-de-fogo"
   },
   {
    "id": "crosslingual-02",
@@ -600,7 +644,8 @@
     {
      "path": "docs/en/laundering_memo.txt"
     }
-   ]
+   ],
+   "subject": "lavagem-com-parentes"
   },
   {
    "id": "crosslingual-03",
@@ -611,7 +656,8 @@
     {
      "path": "docs/es/amenaza.txt"
     }
-   ]
+   ],
+   "subject": "ameaca-por-divida"
   },
   {
    "id": "crosslingual-04",
@@ -622,7 +668,8 @@
     {
      "path": "docs/es/envio_mercancia.txt"
     }
-   ]
+   ],
+   "subject": "contrabando-na-fronteira"
   },
   {
    "id": "crosslingual-05",
@@ -633,7 +680,8 @@
     {
      "path": "docs/en/shipping_manifest.txt"
     }
-   ]
+   ],
+   "subject": "contrabando-na-fronteira"
   },
   {
    "id": "crosslingual-06",
@@ -644,7 +692,8 @@
     {
      "path": "docs/es/documentos_falsos.txt"
     }
-   ]
+   ],
+   "subject": "documentos-falsos"
   },
   {
    "id": "crosslingual-07",
@@ -655,7 +704,8 @@
     {
      "path": "docs/en/phishing_template.txt"
     }
-   ]
+   ],
+   "subject": "golpe-na-internet"
   },
   {
    "id": "crosslingual-08",
@@ -666,7 +716,8 @@
     {
      "path": "docs/es/receta.txt"
     }
-   ]
+   ],
+   "subject": "receitas"
   },
   {
    "id": "crosslingual-09",
@@ -677,7 +728,8 @@
     {
      "path": "docs/en/meeting_minutes.txt"
     }
-   ]
+   ],
+   "subject": "crosslingual-09"
   },
   {
    "id": "crosslingual-10",
@@ -688,7 +740,8 @@
     {
      "path": "docs/en/security_report.txt"
     }
-   ]
+   ],
+   "subject": "crosslingual-10"
   },
   {
    "id": "crosslingual-11",
@@ -699,7 +752,8 @@
     {
      "path": "docs/es/contrato.txt"
     }
-   ]
+   ],
+   "subject": "crosslingual-11"
   },
   {
    "id": "crosslingual-12",
@@ -710,7 +764,8 @@
     {
      "path": "docs/en/recipe.txt"
     }
-   ]
+   ],
+   "subject": "receitas"
   },
   {
    "id": "mixed-01",
@@ -748,7 +803,8 @@
     {
      "message": "chegando lá manda um áudio que ele desce"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "mixed-02",
@@ -786,7 +842,8 @@
     {
      "message": "chegando lá manda um áudio que ele desce"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "mixed-03",
@@ -812,7 +869,8 @@
     {
      "message": "ninguém fala Aurora por telefone, só aqui"
     }
-   ]
+   ],
+   "subject": "assalto-planejado"
   },
   {
    "id": "mixed-04",
@@ -826,7 +884,8 @@
     {
      "message": "o carro-forte passa na avenida às 5h10"
     }
-   ]
+   ],
+   "subject": "assalto-planejado"
   },
   {
    "id": "mixed-05",
@@ -852,7 +911,8 @@
     {
      "message": "o motorista tem nota de carne, tá tudo certo"
     }
-   ]
+   ],
+   "subject": "contrabando-na-fronteira"
   },
   {
    "id": "mixed-06",
@@ -869,7 +929,8 @@
     {
      "path": "docs/pt/boletim_ocorrencia.txt"
     }
-   ]
+   ],
+   "subject": "veiculo-furtado"
   },
   {
    "id": "mixed-07",
@@ -904,7 +965,8 @@
     {
      "message": "numeração raspada, pode ficar tranquilo"
     }
-   ]
+   ],
+   "subject": "arma-de-fogo"
   },
   {
    "id": "mixed-08",
@@ -921,7 +983,8 @@
     {
      "message": "umas cinco, cada uma recebe um pouco por dia"
     }
-   ]
+   ],
+   "subject": "lavagem-com-parentes"
   },
   {
    "id": "mixed-09",
@@ -935,7 +998,8 @@
     {
      "message": "saca logo antes do banco bloquear"
     }
-   ]
+   ],
+   "subject": "golpe-na-internet"
   },
   {
    "id": "mixed-10",
@@ -958,7 +1022,8 @@
     {
      "message": "então paga até sexta. senão a gente faz uma visita"
     }
-   ]
+   ],
+   "subject": "ameaca-por-divida"
   },
   {
    "id": "mixed-11",
@@ -987,7 +1052,8 @@
     {
      "message": "igualzinho o original, ninguém percebe"
     }
-   ]
+   ],
+   "subject": "documentos-falsos"
   },
   {
    "id": "mixed-12",
@@ -1001,7 +1067,8 @@
     {
      "message": "já botei a placa fria no outro"
     }
-   ]
+   ],
+   "subject": "veiculo-furtado"
   },
   {
    "id": "mixed-13",
@@ -1018,7 +1085,8 @@
     {
      "path": "docs/en/shipping_manifest.txt"
     }
-   ]
+   ],
+   "subject": "contrabando-na-fronteira"
   },
   {
    "id": "mixed-14",
@@ -1029,7 +1097,8 @@
     {
      "path": "docs/pt/relatorio_manutencao_2023.txt"
     }
-   ]
+   ],
+   "subject": "suborno"
   },
   {
    "id": "mixed-15",
@@ -1046,7 +1115,8 @@
     {
      "message": "saque no caixa de lotérica, sempre pessoa diferente"
     }
-   ]
+   ],
+   "subject": "lavagem-com-parentes"
   },
   {
    "id": "mixed-16",
@@ -1057,7 +1127,8 @@
     {
      "path": "docs/pt/bilhete.txt"
     }
-   ]
+   ],
+   "subject": "pagamento-e-entrega"
   },
   {
    "id": "visual-image-01",

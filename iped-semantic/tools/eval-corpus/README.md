@@ -61,9 +61,16 @@ pertinent items:
 
 Items are keyed so any case processed from the corpus resolves them: a file by its path in the
 evidence (`{"path": "docs/pt/bilhete.txt"}`), a message by its exact body
-(`{"message": "5 mil"}`; every body the gabarito cites is unique in the corpus). SC-003 ("more like
-this") uses the questions with two or more pertinent items: from each, another must come in the
-first ten.
+(`{"message": "5 mil"}`; every body the gabarito cites is unique in the corpus).
+
+Text questions carry a `subject` (version 2). SC-003 ("more like this") reads "another item
+pertinent to the **same subject**": a subject's pertinent items are those of all its questions, and
+from an item of one unit (a chat, or a file) another unit's item must come in the first ten.
+
+| Version | Commit | Change |
+|---|---|---|
+| 1 | `acdea125` | First gabarito, closed before the first measurement |
+| 2 | see `validation-log.md` | Adds `subject` to the text questions, because SC-003 speaks of subjects and version 1 had none (its SC-003 attempts used each question alone). Questions and pertinent items unchanged |
 
 To change a question after the first measurement is to change what was measured: add a new version,
 never edit silently.

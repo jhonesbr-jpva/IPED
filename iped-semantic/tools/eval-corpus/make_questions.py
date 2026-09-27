@@ -172,6 +172,27 @@ VIDEOS_PT = {
 }
 
 
+# Version 2 adds the subject of each text question (SC-003 speaks of "another item pertinent to the
+# same subject"; version 1 had no subjects, so its SC-003 attempts used each question alone). Questions
+# and pertinent items are those of version 1, unchanged. A question with no subject here is its own.
+SUBJECTS = {
+    "pagamento-e-entrega": ["conceptual-01", "conceptual-16", "conceptual-17", "conceptual-18", "conceptual-37",
+                            "mixed-01", "mixed-02", "mixed-16"],
+    "arma-de-fogo": ["conceptual-02", "conceptual-19", "conceptual-20", "crosslingual-01", "mixed-07"],
+    "veiculo-furtado": ["conceptual-03", "conceptual-04", "conceptual-21", "conceptual-41", "mixed-06", "mixed-12"],
+    "ameaca-por-divida": ["conceptual-05", "conceptual-22", "conceptual-23", "crosslingual-03", "mixed-10"],
+    "lavagem-com-parentes": ["conceptual-06", "conceptual-07", "conceptual-24", "crosslingual-02", "mixed-08",
+                             "mixed-15"],
+    "contrabando-na-fronteira": ["conceptual-08", "conceptual-25", "crosslingual-04", "crosslingual-05", "mixed-05",
+                                 "mixed-13"],
+    "documentos-falsos": ["conceptual-09", "conceptual-26", "crosslingual-06", "mixed-11"],
+    "golpe-na-internet": ["conceptual-10", "conceptual-11", "conceptual-27", "crosslingual-07", "mixed-09"],
+    "assalto-planejado": ["conceptual-12", "conceptual-13", "mixed-03", "mixed-04"],
+    "suborno": ["conceptual-14", "conceptual-15", "mixed-14"],
+    "receitas": ["conceptual-32", "crosslingual-08", "crosslingual-12"],
+}
+
+
 def main():
     commons = json.load(open(os.path.join(HERE, "commons.json"), encoding="utf-8"))
     images_of = {}
@@ -197,7 +218,16 @@ def main():
     for concept, text in VIDEOS_PT.items():
         add("visual-video", "pt", text, [{"path": "videos/" + VIDEO_OF[concept]}])
 
-    doc = {"version": 1, "corpus": "iped-semantic/tools/eval-corpus", "questions": questions}
+    subject_of = {qid: s for s, ids in SUBJECTS.items() for qid in ids}
+    for q in questions:
+        if q["type"] in ("conceptual", "crosslingual", "mixed"):
+            q["subject"] = subject_of.get(q["id"], q["id"])
+    known = {q["id"] for q in questions}
+    unknown = [qid for qid in subject_of if qid not in known]
+    if unknown:
+        raise SystemExit("SUBJECTS names questions that do not exist: %s" % unknown)
+
+    doc = {"version": 2, "corpus": "iped-semantic/tools/eval-corpus", "questions": questions}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(doc, fh, indent=1, ensure_ascii=False)
