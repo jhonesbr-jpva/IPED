@@ -77,6 +77,11 @@ visualCategories =
 # alone: they are read as conversation sequences of the same chat.
 messageMediaTypes = message/x-whatsapp-message; message/x-telegram-message; message/x-skype-message; message/x-discord-message; message/x-threema-message; message/x-jabber-message; application/x-ufed-instantmessage
 
+# Chat databases IPED decodes into chats and messages. Their own text is a listing
+# of the conversations, which reach semantic search through the messages above, so
+# they are recorded as "covered by the messages" instead of prepared as passages.
+messageContainerMediaTypes = application/x-whatsapp-db; application/x-whatsapp-db-f; application/x-whatsapp-chatstorage; application/x-whatsapp-chatstorage-f; application/x-threema-chatstorage; application/x-threema-chatstorage-f; application/x-telegram-db; application/x-telegram-db-ios; application/x-ios-sms-db
+
 # Text beyond this many characters per item is not prepared; the excess is
 # declared in the item's coverage ("covered up to the limit").
 maxTextCharsPerItem = 200000
@@ -128,8 +133,14 @@ fingerprintTolerance = 0.9995
 # Default ordering mode for text: 'hybrid' (meaning + words, fused by rank
 # position) or 'semantic' (meaning only). Chosen per question in the UI and MCP.
 defaultTextMode = hybrid
-# Rank fusion constant: score = sum of 1/(rrfK + position) over both lists.
+# Rank fusion constant: score = 1/(rrfK + semantic position)
+#                              + rrfLexicalWeight/(rrfK + word position).
 rrfK = 60
+# Weight of the word-based list, in (0, 1]. Below 1, words reorder what meaning
+# already found plausible instead of competing with it one to one. Measured on the
+# evaluation corpus: 1.0 lost 36.6 points on questions with no exact term, 0.5 lost
+# 9.8, 0.4 lost 2.4, 0.3 lost none (validation-log.md).
+rrfLexicalWeight = 0.3
 # Size of the word-based list before fusion; 0 means maxDepth x oversampling.
 lexicalCandidates = 0
 

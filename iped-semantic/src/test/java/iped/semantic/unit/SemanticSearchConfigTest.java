@@ -86,7 +86,7 @@ public class SemanticSearchConfigTest {
             // code reads them rather than ignoring an unknown key.
             boolean stringKey = key.endsWith("LocalModel") || key.endsWith("RemoteProtocol")
                     || key.endsWith("RemoteEndpoint") || key.endsWith("RemoteModel") || key.contains("Credential")
-                    || key.endsWith("Categories") || key.equals("messageMediaTypes") || key.endsWith("Prefix");
+                    || key.endsWith("Categories") || key.endsWith("MediaTypes") || key.endsWith("Prefix");
             if (!stringKey && !reported) {
                 fail("key " + key + " accepted garbage: is it read by SemanticSearchConfig?");
             }

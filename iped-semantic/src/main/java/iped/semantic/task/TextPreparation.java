@@ -119,6 +119,7 @@ public final class TextPreparation implements Closeable {
     private final boolean mismatch;
     private final Set<String> categories = new HashSet<>();
     private final Set<String> messageTypes = new HashSet<>();
+    private final Set<String> containerTypes = new HashSet<>();
     private final long startedAtMillis = System.currentTimeMillis();
     private final AtomicLong taskNanos = new AtomicLong();
     private final AtomicLong itemsSeen = new AtomicLong();
@@ -151,6 +152,9 @@ public final class TextPreparation implements Closeable {
         }
         for (String t : config.getMessageMediaTypes()) {
             messageTypes.add(t.toLowerCase(Locale.ROOT));
+        }
+        for (String t : config.getMessageContainerMediaTypes()) {
+            containerTypes.add(t.toLowerCase(Locale.ROOT));
         }
 
         BuildRecord existing = BuildRecord.read(store.buildRecord());
@@ -263,6 +267,7 @@ public final class TextPreparation implements Closeable {
         p.put("chatShortMessageChars", c.getChatShortMessageChars());
         p.put("categories", new ArrayList<>(c.getTextCategories()));
         p.put("messageMediaTypes", new ArrayList<>(c.getMessageMediaTypes()));
+        p.put("messageContainerMediaTypes", new ArrayList<>(c.getMessageContainerMediaTypes()));
         Map<String, Object> hnsw = new LinkedHashMap<>();
         hnsw.put("maxConn", c.getHnswMaxConn());
         hnsw.put("beamWidth", c.getHnswBeamWidth());
@@ -289,6 +294,11 @@ public final class TextPreparation implements Closeable {
             }
             if (!categorySelected(item)) {
                 status(item.id, CoverageReason.CATEGORY_NOT_SELECTED, null);
+                return;
+            }
+            if (containerTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {
+                // a chat database: its conversations come in through their messages
+                status(item.id, CoverageReason.COVERED_BY_MESSAGES, "message container");
                 return;
             }
             if (item.isMessage() && messageTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {

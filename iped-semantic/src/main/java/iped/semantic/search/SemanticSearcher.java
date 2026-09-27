@@ -278,7 +278,7 @@ public class SemanticSearcher implements Closeable {
             lexical.add(h);
         }
         plan.lexicalMatches = lexical.size();
-        return RankFusion.fuse(semantic, lexical, config.getRrfK());
+        return RankFusion.fuse(semantic, lexical, config.getRrfK(), config.getRrfLexicalWeight());
     }
 
     private transient org.apache.lucene.analysis.Analyzer analyzer;
@@ -301,8 +301,16 @@ public class SemanticSearcher implements Closeable {
 
     /**
      * The vector of a reference of this case (FR-013): a selected text or a range is embedded as a
-     * passage; a whole item is the normalised mean of its stored vectors - its passages, the
-     * sequences of a chat whose messages were sequenced, or the sequences that contain a message.
+     * passage; a message is the normalised mean of the sequences that contain it, embedded again
+     * from what is said, without the senders' names; any other whole item is the normalised mean of
+     * its stored vectors - its passages, or the sequences of a chat whose messages were sequenced.
+     *
+     * <p>
+     * The stored vector of a sequence carries the sender of every line ("who threatens whom" needs
+     * it in a question). Short chat lines leave the names weighing more than the subject, so a
+     * message compared through them finds conversations of the same people before items on the
+     * same subject; "more like this" asks for meaning (research D22).
+     * </p>
      *
      * @throws ReferenceNotCoveredException
      *             with the reason of the item itself when it is not within reach
@@ -323,11 +331,44 @@ public class SemanticSearcher implements Closeable {
             }
             return e.embedTexts(Embedder.Role.PASSAGE, List.of(text))[0];
         }
+        if (ref.getCharStart() == null) {
+            List<String> said = sequencesHoldingMessage(index, ref.getItemId());
+            if (!said.isEmpty()) {
+                return VectorMath.normalizedMean(e.embedTexts(Embedder.Role.PASSAGE, said));
+            }
+        }
         List<float[]> vectors = storedVectors(index, ref.getItemId(), ref.getCharStart(), ref.getCharEnd());
         if (vectors.isEmpty()) {
             throw new ReferenceNotCoveredException(ref.getItemId(), reason);
         }
         return VectorMath.normalizedMean(vectors.toArray(new float[0][]));
+    }
+
+    /**
+     * When {@code itemId} is a message of a sequenced chat, the text of each sequence holding it:
+     * its lines in order, without the senders. Empty for any other item.
+     */
+    private static List<String> sequencesHoldingMessage(SemanticIndexReader index, int itemId) throws IOException {
+        List<String> out = new ArrayList<>();
+        Query q = IntPoint.newExactQuery(SemanticFields.MESSAGE_IDS, itemId);
+        for (ScoreDoc sd : index.searcher().search(q, Integer.MAX_VALUE).scoreDocs) {
+            Document d = index.document(sd.doc);
+            if (!SemanticFields.KIND_SEQUENCE.equals(d.get(SemanticFields.KIND))
+                    || SemanticIndexReader.intField(d, SemanticFields.ITEM_ID, -1) == itemId) {
+                continue;
+            }
+            StringBuilder sb = new StringBuilder();
+            for (iped.semantic.store.SequenceLine l : SemanticIndexReader.lines(d)) {
+                if (sb.length() > 0) {
+                    sb.append('\n');
+                }
+                sb.append(l.getText());
+            }
+            if (sb.length() > 0) {
+                out.add(sb.toString());
+            }
+        }
+        return out;
     }
 
     /** Stored vectors of an item (or of the sequences holding a message), optionally within a range. */

@@ -24,7 +24,10 @@ public enum CoverageReason {
     IMAGE_UNDECODABLE,
     NO_THUMBNAIL,
     VIDEO_NO_FRAMES,
-    /** A chat whose messages were prepared as conversation sequences. */
+    /**
+     * A chat whose messages were prepared as conversation sequences, or a chat database
+     * ({@code messageContainerMediaTypes}) whose conversations come in through their messages.
+     */
     COVERED_BY_MESSAGES,
     /** A video frame extracted as a subitem while videos are prepared from the source video. */
     COVERED_BY_SOURCE_VIDEO,

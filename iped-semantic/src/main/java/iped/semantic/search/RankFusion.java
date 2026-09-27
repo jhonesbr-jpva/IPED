@@ -25,6 +25,18 @@ public final class RankFusion {
      * @return the union with fused scores and both positions recorded, sorted
      */
     public static List<Hit> fuse(List<Hit> semantic, List<Hit> lexical, int k) {
+        return fuse(semantic, lexical, k, 1.0);
+    }
+
+    /**
+     * Weighted fusion: the word list counts {@code lexicalWeight} times its reciprocal rank. Below 1,
+     * a unit found only by words enters below the head of the semantic list (at 0.5, below about the
+     * 60th semantic position with {@code k = 60}), and words reorder what meaning already found
+     * plausible - which is what they are for when the question mixes a concept with an exact term.
+     * Unweighted, the heads of both lists interleave one to one, and on a question with no exact
+     * term the word list is noise that pushes pertinent units out (measured: SC-018, research D20).
+     */
+    public static List<Hit> fuse(List<Hit> semantic, List<Hit> lexical, int k, double lexicalWeight) {
         Map<Long, Hit> byUnit = new LinkedHashMap<>();
         Map<Long, Double> score = new LinkedHashMap<>();
         for (int i = 0; i < semantic.size(); i++) {
@@ -41,7 +53,7 @@ public final class RankFusion {
                 byUnit.put(h.unitKey(), h);
             }
             known.lexicalRank = i + 1;
-            score.merge(h.unitKey(), 1.0 / (k + i + 1), Double::sum);
+            score.merge(h.unitKey(), lexicalWeight / (k + i + 1), Double::sum);
         }
         List<Hit> out = new ArrayList<>(byUnit.size());
         for (Map.Entry<Long, Hit> e : byUnit.entrySet()) {

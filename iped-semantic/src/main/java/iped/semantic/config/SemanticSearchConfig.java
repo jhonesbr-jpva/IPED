@@ -77,6 +77,16 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     static final List<String> DEFAULT_MESSAGE_MEDIA_TYPES = List.of("message/x-whatsapp-message",
             "message/x-telegram-message", "message/x-skype-message", "message/x-discord-message",
             "message/x-threema-message", "message/x-jabber-message", "application/x-ufed-instantmessage");
+    /**
+     * Chat databases IPED decodes into chats and messages. Their own extracted text is a listing of
+     * the conversations they hold, which reach semantic search as the messages' sequences; prepared
+     * as passages, a database would stand close to every question about a conversation and take a
+     * place at the head of the ordering with content already there (measured on the eval case).
+     */
+    static final List<String> DEFAULT_MESSAGE_CONTAINER_MEDIA_TYPES = List.of("application/x-whatsapp-db",
+            "application/x-whatsapp-db-f", "application/x-whatsapp-chatstorage", "application/x-whatsapp-chatstorage-f",
+            "application/x-threema-chatstorage", "application/x-threema-chatstorage-f", "application/x-telegram-db",
+            "application/x-telegram-db-ios", "application/x-ios-sms-db");
 
     private UTF8Properties properties = new UTF8Properties();
 
@@ -106,6 +116,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private ArrayList<String> textCategories = new ArrayList<>();
     private ArrayList<String> visualCategories = new ArrayList<>();
     private ArrayList<String> messageMediaTypes = new ArrayList<>(DEFAULT_MESSAGE_MEDIA_TYPES);
+    private ArrayList<String> messageContainerMediaTypes = new ArrayList<>(DEFAULT_MESSAGE_CONTAINER_MEDIA_TYPES);
     private int maxTextCharsPerItem = 200_000;
     private int passageChars = 1000;
     private int passageOverlapChars = 200;
@@ -125,6 +136,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private double fingerprintTolerance = 0.9995;
     private TextMode defaultTextMode = TextMode.HYBRID;
     private int rrfK = 60;
+    private double rrfLexicalWeight = 0.3;
     private int lexicalCandidates = 0;
     private int contextMaxChars = 8000;
     private int hnswMaxConn = 16;
@@ -196,6 +208,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         textCategories = list(p, "textCategories", textCategories);
         visualCategories = list(p, "visualCategories", visualCategories);
         messageMediaTypes = list(p, "messageMediaTypes", messageMediaTypes);
+        messageContainerMediaTypes = list(p, "messageContainerMediaTypes", messageContainerMediaTypes);
         maxTextCharsPerItem = integer(p, "maxTextCharsPerItem", maxTextCharsPerItem, 1);
         passageChars = integer(p, "passageChars", passageChars, 1);
         passageOverlapChars = integer(p, "passageOverlapChars", passageOverlapChars, 0);
@@ -214,6 +227,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         fingerprintTolerance = decimal(p, "fingerprintTolerance", fingerprintTolerance);
         defaultTextMode = textMode(p, "defaultTextMode", defaultTextMode);
         rrfK = integer(p, "rrfK", rrfK, 1);
+        rrfLexicalWeight = decimal(p, "rrfLexicalWeight", rrfLexicalWeight);
         lexicalCandidates = integer(p, "lexicalCandidates", lexicalCandidates, 0);
         contextMaxChars = integer(p, "contextMaxChars", contextMaxChars, 1);
         hnswMaxConn = integer(p, "hnswMaxConn", hnswMaxConn, 1);
@@ -445,6 +459,11 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         return Collections.unmodifiableList(messageMediaTypes);
     }
 
+    /** Chat databases recorded as {@code COVERED_BY_MESSAGES} instead of prepared as passages. */
+    public List<String> getMessageContainerMediaTypes() {
+        return Collections.unmodifiableList(messageContainerMediaTypes);
+    }
+
     public int getMaxTextCharsPerItem() {
         return maxTextCharsPerItem;
     }
@@ -508,6 +527,11 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
 
     public TextMode getDefaultTextMode() {
         return defaultTextMode;
+    }
+
+    /** Weight of the word list in the fusion, in (0, 1]; see {@code RankFusion}. */
+    public double getRrfLexicalWeight() {
+        return rrfLexicalWeight;
     }
 
     public int getRrfK() {

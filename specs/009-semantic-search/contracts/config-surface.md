@@ -53,6 +53,7 @@ fonte.
 | `textCategories` | *(vazio = todas com texto)* | Lista separada por `;` |
 | `visualCategories` | *(vazio = todas as imagens e vídeos)* | idem |
 | `messageMediaTypes` | tipos de mensagem de WhatsApp, Telegram, Skype, Discord e Threema | Tipos preparados como sequência de conversa (D7) |
+| `messageContainerMediaTypes` | bancos de chat de WhatsApp (Android e iOS), Threema, Telegram e SMS do iOS que o IPED decodifica | O texto próprio desses bancos é a listagem das conversas que eles guardam; não viram trechos, e ficam `COVERED_BY_MESSAGES` (as mensagens já estão nas sequências). Acrescentada na implementação (T050): no caso de avaliação, o `msgstore.db` como trecho era vizinho de toda pergunta sobre conversa e ocupava as primeiras posições |
 | `maxTextCharsPerItem` | `200000` | Excedente declarado (`COVERED_TRUNCATED`) |
 | `passageChars` / `passageOverlapChars` | `1000` / `200` | |
 | `chatWindowMessages` / `chatWindowStride` | `8` / `4` | |
@@ -72,6 +73,7 @@ fonte.
 | `fingerprintTolerance` | `0.9995` | A calibrar na bancada (D10) |
 | `defaultTextMode` | `hybrid` | `hybrid` ou `semantic` (FR-046). O de fábrica é confirmado ou trocado pela medição de SC-018 (D20) |
 | `rrfK` | `60` | Constante da fusão por posição |
+| `rrfLexicalWeight` | `0.3` | Peso da lista por palavra na fusão (a semântica pesa 1). Acrescentada na implementação (T063), calibrada no caso de avaliação: com peso 1 o modo híbrido perdia 36,6 pontos no SC-001; com 0,3, nenhum, e acerta todas as perguntas mistas (D20) |
 | `lexicalCandidates` | `0` (= teto × sobreamostragem) | Tamanho da lista por palavra antes da fusão |
 | `contextMaxChars` | `8000` | Teto de `iped_semantic_context` (FR-048) |
 | `hnswMaxConn` / `hnswBeamWidth` | `16` / `100` | Parâmetros do HNSW no codec dos índices semânticos, registrados em `params.hnsw` (D5). Acrescentadas na implementação: T014 fixa o codec a partir delas e T095 as ajusta |

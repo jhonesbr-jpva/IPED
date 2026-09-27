@@ -62,7 +62,11 @@ public class CoverageTest {
                 c.doc(10, "chat renderizado"),
                 c.message(11, 10, 0, "Ana", "quanto fica a entrega da carga toda?"),
                 c.message(12, 10, 1, "Beto", "cinco mil, fechado para amanhã cedo"),
-                c.message(13, 10, 2, "Ana", ""));
+                c.message(13, 10, 2, "Ana", ""),
+                // the chat database: its text lists the conversations, which come in as messages
+                TextItem.document(9, "application/x-whatsapp-db", java.util.Set.of("WhatsApp"),
+                        () -> new java.io.StringReader("WhatsApp Chat - Ana - quanto fica a entrega"), null));
+        c.items.set(9);
         c.prepareAll(p, items);
         p.finish();
         c.items.set(50); // in the main index, never prepared: an interrupted preparation
@@ -70,11 +74,12 @@ public class CoverageTest {
         try (SemanticSearcher s = c.searcher(E)) {
             Coverage all = s.coverage(Modality.TEXT, null);
             assertInvariant(all);
-            assertEquals(10, all.getRecorteSize());
+            assertEquals(11, all.getRecorteSize());
             Map<CoverageReason, Long> nc = all.getNotCovered();
             assertEquals(Long.valueOf(2), nc.get(CoverageReason.NO_TEXT)); // item 3 and message 13
             assertEquals(Long.valueOf(2), nc.get(CoverageReason.ANALYSIS_NOT_RUN));
-            assertEquals(Long.valueOf(1), nc.get(CoverageReason.COVERED_BY_MESSAGES));
+            assertEquals("the chat and its database", Long.valueOf(2), nc.get(CoverageReason.COVERED_BY_MESSAGES));
+            assertEquals(CoverageReason.COVERED_BY_MESSAGES, s.table(Modality.TEXT).reasonOf(9));
             assertEquals(Long.valueOf(1), nc.get(CoverageReason.PREP_FAILURE));
             assertEquals(4, all.getCovered()); // 1, 2 (truncated), 11, 12
             assertEquals(CoverageReason.COVERED_TRUNCATED, s.table(Modality.TEXT).reasonOf(2));

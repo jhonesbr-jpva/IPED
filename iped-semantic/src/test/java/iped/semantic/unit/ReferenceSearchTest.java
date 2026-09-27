@@ -89,6 +89,33 @@ public class ReferenceSearchTest {
         assertEquals(2, payment.getAll().get(0).getItemId());
     }
 
+    /**
+     * A message is compared by what is said, not by who says it: the same people talking about
+     * something else come after a document on the message's subject (research D22).
+     */
+    @Test
+    public void aMessageIsComparedByWhatIsSaidNotByTheSenders() throws Exception {
+        SyntheticCase chats = new SyntheticCase("reference-chat");
+        TextPreparation p = chats.open(E, null);
+        String[] people = { "Baiano Tavares Moreira", "Neguinho Albuquerque Siqueira" };
+        String[] payment = { "5 mil em dinheiro", "fechado na portaria", "amanhã cedo o acerto", "leva o dinheiro" };
+        String[] weather = { "chuva forte hoje", "vento na serra", "frio de noite", "leva o casaco" };
+        List<TextItem> items = new ArrayList<>();
+        items.add(chats.doc(10, "chat"));
+        items.add(chats.doc(20, "chat"));
+        for (int m = 0; m < 4; m++) {
+            items.add(chats.message(11 + m, 10, m, people[m % 2], payment[m]));
+            items.add(chats.message(21 + m, 20, 100 + m, people[m % 2], weather[m]));
+        }
+        items.add(chats.doc(30, "Recibo: 5 mil em dinheiro, acerto na portaria amanhã cedo."));
+        chats.prepareAll(p, items);
+        p.finish();
+        try (SemanticSearcher s = chats.searcher(E)) {
+            Ordering o = s.search(SemanticRequest.builder().reference(Reference.item(11)).build(chats.config)).get(0);
+            assertEquals("the receipt, not the same people's other chat", 30, o.getAll().get(0).getItemId());
+        }
+    }
+
     @Test
     public void aSelectedTextIsTheReference() throws Exception {
         Ordering o = like(Reference.selectedText(4, "chuva forte e tempo ruim"));

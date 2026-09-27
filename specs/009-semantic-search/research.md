@@ -645,6 +645,16 @@ sequência, combinada com a ordenação semântica por **Reciprocal Rank Fusion*
 **Custo**: o índice de texto cresce com os postings dos trechos, na ordem do tamanho do próprio
 texto armazenado. Medido no Cenário 3 do quickstart.
 
+**Calibração (T063, 2026-09-27)**: com as duas listas de peso igual, o modo híbrido acertou todas
+as perguntas mistas, mas perdeu 36,6 pontos no SC-001: nas perguntas conceituais, as palavras
+comuns da pergunta ("dinheiro", "conta") puxavam trechos que só as repetem. A fusão passou a
+`Σ peso/(rrfK + posição)`, com peso 1 para a lista semântica e `rrfLexicalWeight` para a lista por
+palavra. Medido no caso de avaliação (`validation-log.md`): peso 0,7 → 14,6 pontos perdidos; 0,5 →
+9,8; 0,4 → 2,4; 0,3 e 0,2 → nenhum, e as perguntas mistas seguem todas acertadas. O de fábrica é
+0,3, o maior sem perda. Com ele, o modo padrão de fábrica que os números favorecem é `hybrid`.
+O peso foi escolhido **no próprio caso de avaliação**: o número de SC-018 depois dele não é uma
+medição cega, e a bancada com evidência real (T096) é quem o confirma.
+
 ---
 
 ## D21 — RAG no harness, e o que o IPED entrega a ele (FR-040, FR-048)
@@ -671,6 +681,39 @@ fora seja bom e verificável, o MCP entrega:
 - *Acrescentar intervalo à `iped_item_text`* — mudaria ferramenta existente. E reextrair texto de
   item é caro (`SnippetBuilder` já trabalha sob orçamento por isso), enquanto o trecho já está
   armazenado.
+
+---
+
+## D22 — O vetor de uma mensagem como referência (FR-013, SC-003)
+
+**Decisão**: quando a referência do "mais como este" é uma mensagem, o vetor é a média normalizada
+das sequências que a contêm, **recalculadas na hora a partir do que foi dito**, sem o nome do
+remetente de cada linha. Qualquer outra referência continua como em D5: trecho selecionado ou
+intervalo embutido como trecho; item inteiro pela média dos vetores armazenados.
+
+**Por quê**: o vetor armazenado de uma sequência leva `remetente: texto` em cada linha (D7), porque
+"quem ameaça quem" precisa do remetente numa pergunta. Em linhas curtas de chat, os nomes pesam mais
+que o assunto: partindo de uma mensagem, as primeiras posições eram outras conversas das mesmas
+pessoas, e não os itens do mesmo assunto. O "mais como este" pede significado (FR-013), não
+interlocutor.
+
+**Como se chegou**: pela primeira medição de SC-003 no caso de avaliação (54,2%, por assunto),
+comparando, nas mesmas 24 tentativas, a média armazenada (13 acertos), o texto das sequências como
+pergunta, com e sem remetentes (14 e 10), a soma das duas (15) e as sequências como trecho, sem
+remetentes (18). Partindo de documentos, nada muda: o ganho vem só das mensagens. A escolha foi
+feita **olhando o caso de avaliação**: o número de SC-003 depois dela não é uma medição cega.
+
+**Resultado** (corpus versão 2, `validation-log.md`): SC-003 em 79,2% (19/24); com a média
+armazenada, no mesmo caso, 58,3% (14/24).
+
+**Custo**: uma ou duas inferências por pergunta (uma mensagem está em até
+`chatWindowMessages / chatWindowStride` sequências), na fonte configurada, como a própria pergunta.
+
+**Descartado**:
+- *Centralizar o vetor de referência* (subtrair a média do índice) — não melhorou (12 a 11
+  acertos).
+- *Tirar o remetente do texto embutido das sequências* — mexe no índice, exige reprocessar, e tira
+  da pergunta a informação de quem fala. Fica como observação para a medição na bancada.
 
 ---
 
