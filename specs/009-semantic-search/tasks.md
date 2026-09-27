@@ -471,6 +471,7 @@ pela impressão digital, e não a fonte (emenda A4). Credenciais nunca em arquiv
   - calibrar `fingerprintTolerance` entre duas CPUs diferentes.
   
   Registrar tudo no `validation-log.md`.
+  - Feito nesta estação (14 núcleos): índice sintético de 1 M pelo caminho de produção (`ScaleAndRecallEval`); sem recorte, frio 1,5 s e morno ~0,55 s; recorte de 10 mil, frio 0,37 s e morno 0,13 s; revocação do aproximado 1,000 nos 100 primeiros. No caso de avaliação a revocação é trivial (o HNSW devolve todas as unidades). **Pendente**: calibrar `fingerprintTolerance` entre duas CPUs diferentes (precisa de outra máquina).
 - [ ] T096 Medições na bancada (quickstart, Cenários 2, 3 e 8), registradas no `validation-log.md`:
   - SC-008 (±5% desligada);
   - SC-010 (≤ 2× só texto);
@@ -479,14 +480,18 @@ pela impressão digital, e não a fonte (emenda A4). Credenciais nunca em arquiv
   - SC-009 e SC-016 (observação de tráfego).
   
   **Se SC-010 ou SC-013 reprovar só com CPU, parar e levar a revisão para a spec (Assumptions), sem relaxar no plano.**
+  - Esta estação não é a bancada de referência (14 núcleos, não 48). Feito aqui, como indicação: SC-008 no `fastmode` sobre a evidência de referência (instalação anterior 54,1 e 50,9 s; nova desligada 51,6 s); SC-009 observado no processamento e na busca (nenhuma conexão); SC-016 observado na verificação da interface. **Pendente na bancada**: SC-008, SC-010, SC-013 e SC-015 no perfil forense.
 - [ ] T097 Decisão de fábrica (research D19 e D20), com os números de T063 e T096: `defaultTextMode` em `SemanticSearchConfig.java`/`SemanticSearchConfig.txt`, e quais perfis em `iped-app/resources/config/profiles/*/IPEDConfig.txt` ligam o quê. Registrar a justificativa no `validation-log.md`.
-- [ ] T098 Regressão, com o resultado registrado em `specs/009-semantic-search/validation-log.md`:
+  - `defaultTextMode = hybrid` confirmado pelos números de T063 (SC-018 100% sem perda no SC-001). Perfis: nenhum liga a capacidade até os números de T096 na bancada (D19).
+- [X] T098 Regressão, com o resultado registrado em `specs/009-semantic-search/validation-log.md`:
   - `mvn -pl iped-semantic -am install`;
   - `mvn -pl iped-mcp test` com `-Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe -Diped.mcp.test.referenceCase=<caso>` (todas as suítes existentes, mais as novas);
   - `mvn -pl iped-engine test`;
   - roteiro de buscas por palavra do SC-007 contra o release anterior;
   - SHA-256 da evidência antes e depois.
+  - Feito (`validation-log.md`): `-am install` limpo (parsers 183, engine 90, semantic 151); integração 22/22; `iped-mcp` 368 testes com as 18 falhas já conhecidas da bancada, nenhuma nas ferramentas semânticas; SC-007 28/28 idênticas contra a instalação anterior (`iped-semantic/tools/keyword-regression`); SHA-256 do E01 igual antes e depois.
 - [ ] T099 Rodar o [quickstart.md](quickstart.md) inteiro e preencher o checklist de encerramento em `specs/009-semantic-search/validation-log.md`. Atualizar o **Status** de `specs/009-semantic-search/spec.md` com a evidência.
+  - Checklist de encerramento preenchido e **Status** da spec atualizado. Fica aberta: os cenários 2, 3 e 8 na bancada de referência (T096) e a decisão de perfis (T097).
 
 ---
 

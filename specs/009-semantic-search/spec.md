@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-26
 
-**Status**: Draft — clarificações de escopo resolvidas e emendas A1–A4 do plano aceitas em 2026-09-26 (ver [Clarifications](#clarifications))
+**Status**: Implementada, com validação pendente na estação de referência (2026-09-27). Evidência em [validation-log.md](validation-log.md): SC-001 92,7%, SC-002 91,7%, SC-003 79,2%, SC-004 dentro dos limites em índice sintético de 1 M, SC-005/006/007/009/011/016/017 conferidos, SC-012 100%, SC-014 87,5%, SC-018 100% sem perda. **Pendentes**: SC-008, SC-010, SC-013 e SC-015 na estação de referência (perfil forense), a decisão de perfis de fábrica que depende deles (research D19), a calibração de `fingerprintTolerance` entre duas CPUs, e o cenário 2 da História 1 em 4 de 6 perguntas (limite do modelo de texto, research D23). Clarificações de escopo resolvidas e emendas A1–A4 do plano aceitas em 2026-09-26 (ver [Clarifications](#clarifications))
 
 **Input**: User description: "Vamos adicionar ao IPED a capacidade de fazer busca semântica nos artefatos por ele interpretados."
 

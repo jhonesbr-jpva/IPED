@@ -1,0 +1,31 @@
+# SC-007 fixed keyword-search script for the reference case (a Linux single-board computer image,
+# processed before semantic search existed). IPED search syntax, one query per line; lines starting
+# with # are comments. Written before the first run and not changed after it.
+*:*
+root
+password
+passwd
+ssh
+"ssh-rsa"
+kernel
+debian
+wifi
+wlan0
+network
+config
+error
+usb
+firmware
+rockchip
+python
+home
+password OR passwd
+root AND ssh
+"authorized_keys"
+kern*
+passw~1
+type:txt
+ext:conf
+name:*.log
+category:"Plain Texts"
+size:[1000000 TO *]

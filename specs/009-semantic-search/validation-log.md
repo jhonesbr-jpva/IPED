@@ -383,3 +383,109 @@ Evaluation corpus (423 items, 36 MB), release as built, whole run including the 
 without the capability 39 s (twice); text only without focus windows 47 s (1.21×); text only with
 focus windows 63 s (1.62×). The semantic text preparation itself took 23 s without and 38 s with
 focus windows. SC-010 (≤ 2×) is measured on the reference bench (T096), on a larger case.
+
+### ScaleAndRecallEval — SC-004 and recall — 2026-09-27
+
+Synthetic text index of 60,000 covered items (one passage each, 1000 clusters of synthetic vectors, built by TextPreparation with the HNSW codec); questions of the gabarito embedded by the local model; 28 cores.
+- Build: 0.7 min (reused on later runs).
+- Model load in this JVM: 1635 ms (not part of the times below).
+- **SC-004, no scope** (≤ 5 s, approximate): cold 653 ms; warm median 151 ms, max 249 ms (20 questions).
+- **SC-004, scope of 10,000 items** (≤ 2 s, exact): cold 274 ms; warm median 106 ms, max 152 ms (20 questions).
+- **Recall of the approximate search**, first 100 entries against the exact search over the same 60,000 units: mean 1.000, worst 1.000 (20 questions; HNSW maxConn 16, beamWidth 100, oversampling 4).
+
+### SC-007, SC-008 and the evidence, on the reference case — 2026-09-27
+
+Written by hand. This workstation has 14 cores (28 threads); the reference bench of SC-008, SC-010
+and SC-013 had 48, so the times below are indications, not those criteria (T096).
+
+- **SC-007**: reference case `rockpi4-smoke` (319,641 items, processed on 2026-09-08 by the
+  installation without semantic search). The fixed script
+  `iped-semantic/tools/keyword-regression/reference-case-script.txt` (28 queries, written before the
+  first run) through IPED's own searcher (`KeywordScriptRunner`, same tool folder) with the previous
+  installation and with the new release: **28 of 28 identical** — number of results and SHA-256 over
+  every id and score in result order. Outside `iped-semantic`, `iped-app` and `iped-mcp`, the feature
+  changes only `ATextViewer` (an added menu action); `iped-engine` is untouched.
+- **Evidence unchanged**: SHA-256 of `RockPi4.E01` (8.57 GB) before and after the four processings
+  below, one of them with semantic text on:
+  `8088F2A91F6939719027C03E4C873F5279678D2E869ECA11C903D5416913559E` both times.
+- **SC-008, indication**: `fastmode` on the same evidence — previous installation 54.1 s and 50.9 s
+  (first and last run); new release with the capability off 51.6 s, inside the spread of the
+  previous installation's two runs.
+- `fastmode` with `enableSemanticText`: 55.3 s, but `fastmode` extracts no text, so nothing was
+  covered (37,653 `ANALYSIS_NOT_RUN`, 281,988 `NO_TEXT`): about 3 s are the task's own cost on
+  319,641 items. **Not** an SC-010 measurement, which needs the forensic profile.
+
+### ScaleAndRecallEval — SC-004 and recall — 2026-09-27
+
+Synthetic text index of 1,000,000 covered items (one passage each, 1000 clusters of synthetic vectors, built by TextPreparation with the HNSW codec); questions of the gabarito embedded by the local model; 28 cores.
+- Build: 10.2 min (reused on later runs).
+- Model load in this JVM: 1617 ms (not part of the times below).
+- **SC-004, no scope** (≤ 5 s, approximate): cold 1529 ms; warm median 548 ms, max 655 ms (20 questions).
+- **SC-004, scope of 10,000 items** (≤ 2 s, exact): cold 369 ms; warm median 133 ms, max 182 ms (20 questions).
+- **Recall of the approximate search**, first 100 entries against the exact search over the same 1,000,000 units: mean 1.000, worst 1.000 (20 questions; HNSW maxConn 16, beamWidth 100, oversampling 4).
+
+### SC-009 and scenario 9, notes — 2026-09-27
+
+Written by hand.
+
+- **SC-009** (no connection with local models), observed on this workstation: the TCP connections and
+  UDP endpoints owned by the IPED Java processes were sampled every ~0.5 s (`Get-NetTCPConnection`,
+  `Get-NetUDPEndpoint`) while (a) the evaluation corpus was processed with text, pictures and videos
+  on (103 samples over 67 s) and (b) the analysis application answered three questions, text and
+  both modalities (33 samples). **None was seen**, not even on loopback. The same watcher, as a
+  positive control, saw a loopback connection held for 6 s by a test program. Sampling can miss a
+  connection shorter than the interval; a firewall log on the bench closes that gap.
+- **SC-016** (remote source), from the interface check above: the only destination reached was the
+  one configured and shown (`127.0.0.1:8765`), and declining sent nothing.
+- **Scenario 9, recall on the evaluation case**: not informative there — the approximate search asks
+  HNSW for `maxDepth × oversampling` = 4,000 units, more than the case's text index holds, so it
+  returns what the exact one does. The recall that matters was measured on the million-item index
+  (above): 1.000 over the first 100 entries.
+- **`fingerprintTolerance` between two CPUs**: not measured — it needs a second machine with another
+  CPU. The value stays at 0.9995; on this CPU every availability check of this session passed
+  it (cases prepared and searched here, and the case prepared through the reference server).
+
+### Regression (T098) — 2026-09-27
+
+Written by hand.
+
+- `mvn -o install -pl iped-semantic -am`: BUILD SUCCESS in 1 min 41 s — `iped-parsers-impl` 183 tests,
+  `iped-engine` 90, `iped-semantic` 151 (14 skipped: they need a case, a model or a scale size).
+- `iped-semantic` integration suites against the release (`-Dtest=*IT`, all parameters given): 22
+  tests, none skipped, all pass.
+- `mvn -pl iped-mcp test` with `referenceCase = rockpi4-smoke` and `semanticCase = eval-case`: 368
+  tests, 36 skipped, **18 failures, the same 18 recorded before this feature's MCP work on this
+  bench** — the thumbnail suites (`ImageBlockContractTest`, `ThumbnailImageBlockTest`,
+  `TransportParityTest`: `fastmode` generates no thumbnails), `InvestigationBatteryTest` (written for
+  the recipe case of 001), `PaginationTest`, `VocabularyTest` (two), `ArtifactIntegrityTest` (the
+  `NUL` destination on this Windows build) and `CaseOpenTest` (lock left by the case's `sleuth.db`).
+  None is in the semantic tools. The reference case's `bookmarks.iped`, written by the curation
+  suites, was restored from a copy taken before the run.
+- SC-007 script against the previous release, and the evidence's SHA-256 before and after: see
+  "SC-007, SC-008 and the evidence" above — identical, and unchanged.
+
+## Closing checklist (quickstart) — 2026-09-27
+
+- [x] Scenario 0 approved before the dependent code (research D2, spike T002).
+- [x] SC-001 92.7% · SC-002 91.7% · SC-003 79.2% (after D22, chosen on the evaluation case).
+- [x] SC-004 1.5 s cold / 0.55 s warm (1 M, no scope) · 0.37 s / 0.13 s (10 thousand) · recall of the
+      approximate search 1.000 — on this workstation (14 cores), with a synthetic index.
+- [ ] SC-005 · SC-006 · SC-007 · SC-008 (___%) · SC-009 — SC-005 (`DeterminismIT`), SC-006
+      (`TextPreparationIT`, `FocusWindowTest`), SC-007 (28/28) and SC-009 (no connection observed)
+      pass; **SC-008 is pending on the reference bench** (indication here: inside the noise).
+- [ ] SC-010 ___× · SC-013 ___× · SC-015 ±___% — **pending on the reference bench**, forensic
+      profile.
+- [x] SC-011 (`SemanticParityTest`, 40 orderings) · SC-012 100% (PT) · English 100% (FR-036) ·
+      SC-014 87.5%.
+- [x] FR-014 (build details) · FR-017 (`MultiCaseIT`, `CASES_EXCLUDED`) · FR-007 (`ceiling_reached`,
+      `SemanticToolsContractTest`).
+- [x] SC-016 (interface check with the reference server; `SourceSwapIT`) · SC-017 (`FailFastIT`).
+- [x] SC-018 100% (mixed) · loss on the conceptual questions 0.0 points · factory
+      `defaultTextMode`: `hybrid`.
+- [ ] Factory profiles decided with the numbers above (research D19) — waits for SC-010 and SC-013
+      on the bench; until then no profile turns the capability on.
+- [x] `iped-semantic/CLAUDE.md` created; `CLAUDE.md` of `iped-app`, `iped-mcp` and `iped-viewers`
+      updated; `ThirdParty.txt` and `licenses/` updated.
+
+Also open: US1 acceptance scenario 2 at 4/6 (the text model's limit, research D23), and the
+calibration of `fingerprintTolerance` between two CPUs.
