@@ -72,9 +72,11 @@ public final class EvalCase implements AutoCloseable {
         public final Set<Integer> relevant;
         /** Pertinent items grouped by unit: a chat (its messages) or a file. */
         public final Map<Integer, Set<Integer>> units;
+        /** Version 3: words the excerpt shown for the pertinent item must contain; {@code null} if none. */
+        public final String excerpt;
 
         Question(String id, String type, String lang, String text, String subject, Set<Integer> relevant,
-                Map<Integer, Set<Integer>> units) {
+                Map<Integer, Set<Integer>> units, String excerpt) {
             this.id = id;
             this.type = type;
             this.lang = lang;
@@ -82,6 +84,7 @@ public final class EvalCase implements AutoCloseable {
             this.subject = subject;
             this.relevant = relevant;
             this.units = units;
+            this.excerpt = excerpt;
         }
     }
 
@@ -195,7 +198,8 @@ public final class EvalCase implements AutoCloseable {
                 }
             }
             questions.add(new Question(q.path("id").asText(), q.path("type").asText(), q.path("lang").asText(),
-                    q.path("question").asText(), q.path("subject").asText(q.path("id").asText()), relevant, units));
+                    q.path("question").asText(), q.path("subject").asText(q.path("id").asText()), relevant, units,
+                    q.hasNonNull("excerpt") ? q.path("excerpt").asText() : null));
         }
         if (!unresolved.isEmpty()) {
             throw new AssertionError("the gabarito does not resolve in " + caseDir + ": " + unresolved);

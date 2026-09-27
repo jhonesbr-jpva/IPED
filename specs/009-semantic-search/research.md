@@ -485,6 +485,27 @@ visualizadores. O visualizador de texto passa a destacar o trecho e a lista de a
 até ele. A próxima busca por palavra substitui a consulta de destaque, como já faz. Não foi
 preciso o fallback de rolar até `charStart`, nem tocar em `iped-viewers`.
 
+**Conferido na interface (2026-09-27)**, abrindo a interface de análise sobre o caso de avaliação e
+dirigindo-a por um agente de teste dentro da JVM dela (capturas do próprio frame; a tela da estação
+não estava disponível para captura). A frase é destacada, e o visualizador vai à **primeira**
+ocorrência dela. No relatório longo, as primeiras palavras do trecho se repetem todo mês, e o
+visualizador abria em janeiro, longe do parágrafo de junho. A frase passou a ser a primeira sequência
+de oito palavras do trecho que o item não repete (`SemanticSearcher.distinctPhrase`, research D23),
+e o visualizador abre em junho, com o destaque logo antes do parágrafo.
+
+Também conferido, e corrigido quando falhou:
+- o painel nascia na pilha da esquerda (246 px), onde a lista de resultados ficava com 2 px; passou
+  à pilha das relações do item, ao lado do visualizador, e o aviso fixo de rodapé virou o estado
+  vazio da área de abas (a declaração de cada ordenação já abre com a mesma ressalva);
+- as linhas de controles quebram e crescem em vez de serem cortadas (`WrapLayout`);
+- o estado do painel (recorte e modalidades) só aparecia depois da primeira pergunta; passa a vir
+  no fim do carregamento do caso, e o rótulo do recorte acompanha a tabela;
+- o caso sem a capacidade mostra a declaração de indisponibilidade antes de qualquer pergunta, com
+  as modalidades desabilitadas e o motivo como dica;
+- o caso aberto pelo `IPED-SearchApp` dele próprio não tinha o modelo: o motor copia `lib`, `jre`,
+  `tools` e `conf` para o caso, mas não `models`. A tarefa semântica passou a copiar para o caso o
+  modelo local da modalidade preparada (`CaseModels`; D17).
+
 ---
 
 ## D14 — Agente (MCP)
@@ -571,6 +592,13 @@ atingidos só com CPU, a revisão volta para a spec (Assumptions), não para o p
   (identidade, dimensões, prefixos, sondas) e licença.
 - Modelo visual: pacote `zip` separado, **fora** do release, extraído em
   `models/semantic/visual/<id>/`. As instruções de instalação ficam no manual.
+- **No caso** (acréscimo de 2026-09-27): o modelo é usado na hora da busca, e o caso é aberto pela
+  cópia do aplicativo que o motor põe dentro dele (`lib`, `jre`, `tools`, `conf`; não `models`).
+  Sem o modelo ali, o painel do próprio caso ficava sempre indisponível. A tarefa de cada modalidade
+  preparada com fonte local copia o modelo para o mesmo caminho relativo dentro do caso, e pula a
+  cópia quando o mesmo modelo já está lá (`CaseModels`). São 118 MB de texto e 467 MB do visual,
+  na mesma ordem do que o caso já leva (cerca de 900 MB entre `jre`, `lib` e `tools`). Fonte
+  remota e modelo configurado por caminho absoluto não copiam nada.
 - `ThirdParty.txt` e `licenses/` recebem ONNX Runtime (MIT), ONNX Runtime Extensions (MIT) e os
   modelos.
 
@@ -714,6 +742,49 @@ armazenada, no mesmo caso, 58,3% (14/24).
   acertos).
 - *Tirar o remetente do texto embutido das sequências* — mexe no índice, exige reprocessar, e tira
   da pergunta a informação de quem fala. Fica como observação para a medição na bancada.
+
+---
+
+## D23 — Trecho exibido: janelas de foco (FR-004, História 1 cenário 2)
+
+**Decisão**: duas granularidades no índice de texto. Os **trechos** (D6, ~1000 caracteres)
+continuam sendo as unidades que ordenam os itens. Os itens com mais de um trecho ganham também
+**janelas de foco** de `focusChars` (padrão 400) com `focusOverlapChars` (100), cada uma ligada ao
+trecho onde começa. Elas não entram em ordenação, recorte nem parte por palavra: o vetor fica em
+doc values binários, fora do grafo HNSW, e não há campo `text`. Na busca, depois da consolidação,
+o primeiro trecho de cada entrada de texto passa a ser a janela do item mais próxima da pergunta
+(ou da referência). A posição, a proximidade e o ordinal da entrada não mudam, e um caso preparado
+sem janelas responde como antes. A janela é intervalo literal do texto do item (SC-006), e seu
+`ordinal` é o do trecho que a contém, para que `iped_semantic_context` funcione sobre ela.
+
+**Por quê**: o cenário 2 da História 1 pede que, num documento de quarenta páginas com um único
+parágrafo pertinente, o trecho exibido seja aquele parágrafo. Com trechos de 1000 caracteres, o
+parágrafo (~220) fica diluído na rotina em volta, e o modelo, que faz a média dos tokens, o coloca
+em 7º dentro do próprio documento: o item é achado, mas o trecho exibido é outro (0/6 no caso de
+avaliação, gabarito v3). Trechos menores acham o parágrafo, mas pioram a ordenação dos itens,
+porque documentos longos ganham mais chances de um casamento espúrio. Medido no caso de avaliação:
+
+| Trecho | SC-001 | SC-002 | SC-003 | custo SC-018 | cenário 2 |
+|---|---|---|---|---|---|
+| 1000/200 | 92,7% | 91,7% | 79,2% | 0,0 | 0/6 |
+| 600/150 | 90,2% | 91,7% | 75,0% | 2,4 | 2/6 |
+| 400/100 | 75,6% | 83,3% | 66,7% | 4,9 | 5/6 |
+
+A granularidade que acha o item não é a que acha o parágrafo, e as janelas de foco separam as duas.
+
+**Destaque no visualizador** (complementa D13): o visualizador de texto destaca a frase e vai à
+primeira ocorrência dela. As primeiras palavras de um trecho costumam repetir cabeçalho ou cláusula
+padrão, e levavam à ocorrência errada (no relatório longo, a de janeiro). A frase destacada passa a
+ser a primeira sequência de oito palavras do trecho que ocorre uma única vez no texto do item,
+comparada como o índice por palavra compara (sem caixa e sem acento).
+
+**Custo**: as janelas cobrem o texto dos itens longos mais uma vez, com sequências mais curtas.
+
+**Descartado**:
+- *Trechos menores para tudo* — os números acima.
+- *Recalcular janelas na hora da busca* — centenas de inferências por documento longo exibido.
+- *Segundo campo KNN para as janelas* — um segundo grafo HNSW no processamento, para um uso que só
+  compara as janelas de um item.
 
 ---
 

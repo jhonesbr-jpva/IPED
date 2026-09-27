@@ -85,6 +85,11 @@ final class SearchRun {
         SemanticSearcher.Plan first = plans.get(0);
         int ceiling = first.searcher().getConfig().getMaxDepth();
         List<OrderingEntry> entries = Consolidator.consolidate(hits, ceiling, first.proximityKind(), scopes);
+        // the excerpt shown: each case picks, for its own text entries, the focus window closest to
+        // the question (research D23); the ordering is already fixed
+        for (SemanticSearcher.Plan p : plans) {
+            entries = p.searcher().withFocus(entries, p.queryVector, modality);
+        }
 
         if (plans.size() == 1 && excluded.isEmpty()) {
             return first.searcher().ordering(first, entries);

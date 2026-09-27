@@ -99,10 +99,20 @@ public final class ContextReader {
         }
     }
 
-    /** Stored documents keyed by an item, by kind; empty when the item has none. */
+    /**
+     * Stored documents keyed by an item, by kind; empty when the item has none. Focus windows are
+     * left out: they only choose which excerpt to show, and context is read from the passages.
+     */
     static List<Document> documentsOf(SemanticIndexReader index, int itemId) throws IOException {
-        TopDocs td = index.searcher().search(new TermQuery(new Term(SemanticFields.ITEM_ID_KEY, Integer.toString(itemId))),
-                Integer.MAX_VALUE);
+        org.apache.lucene.search.Query q = new org.apache.lucene.search.BooleanQuery.Builder()
+                .add(new TermQuery(new Term(SemanticFields.ITEM_ID_KEY, Integer.toString(itemId))),
+                        org.apache.lucene.search.BooleanClause.Occur.FILTER)
+                .add(new TermQuery(new Term(SemanticFields.KIND, SemanticFields.KIND_FOCUS)),
+                        org.apache.lucene.search.BooleanClause.Occur.MUST_NOT)
+                .add(new TermQuery(new Term(SemanticFields.KIND, SemanticFields.KIND_TRANSCRIPT_FOCUS)),
+                        org.apache.lucene.search.BooleanClause.Occur.MUST_NOT)
+                .build();
+        TopDocs td = index.searcher().search(q, Integer.MAX_VALUE);
         List<Document> out = new ArrayList<>();
         for (ScoreDoc sd : td.scoreDocs) {
             out.add(index.document(sd.doc));

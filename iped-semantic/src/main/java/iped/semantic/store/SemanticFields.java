@@ -36,6 +36,16 @@ public final class SemanticFields {
     public static final String DETAIL = "detail";
     /** Normalised vector, {@code DOT_PRODUCT}. */
     public static final String VECTOR = "v";
+    /**
+     * Focus window (data-model E3b): its normalised vector as little-endian floats in binary doc
+     * values. Not a KNN field: focus windows are never searched as units, only compared inside the
+     * item of an entry, so they need no graph.
+     */
+    public static final String FOCUS_VECTOR = "vf";
+    /** Focus window: its literal text, stored only (never in the word part of the hybrid mode). */
+    public static final String FOCUS_TEXT = "focusText";
+    /** Focus window: ordinal of the passage its first character belongs to. */
+    public static final String PASSAGE_ORDINAL = "passageOrdinal";
 
     public static final String KIND_PASSAGE = "passage";
     public static final String KIND_TRANSCRIPT = "transcript";
@@ -43,6 +53,19 @@ public final class SemanticFields {
     public static final String KIND_IMAGE = "image";
     public static final String KIND_VIDEO_FRAME = "video_frame";
     public static final String KIND_STATUS = "status";
+    /** A focus window of an item's text, and of its transcript (data-model E3b, research D23). */
+    public static final String KIND_FOCUS = "focus";
+    public static final String KIND_TRANSCRIPT_FOCUS = "transcript_focus";
+
+    /** Whether documents of this kind are focus windows, which are never units of an ordering. */
+    public static boolean isFocus(String kind) {
+        return KIND_FOCUS.equals(kind) || KIND_TRANSCRIPT_FOCUS.equals(kind);
+    }
+
+    /** The focus kind for passages of {@code kind}: {@code passage} or {@code transcript}. */
+    public static String focusOf(String kind) {
+        return KIND_TRANSCRIPT.equals(kind) ? KIND_TRANSCRIPT_FOCUS : KIND_FOCUS;
+    }
 
     private SemanticFields() {
     }

@@ -95,6 +95,23 @@ teste de integração recalcula e compara.
 
 ---
 
+## E3b — Janela de foco (`FOCUS`, `TRANSCRIPT_FOCUS`)
+
+Só em itens com mais de um trecho (research D23). Escolhe o trecho exibido; não ordena nada.
+
+| Campo | Regra |
+|---|---|
+| `itemId` | Id do item no índice principal. **Sem** âncora: nunca entra em recorte |
+| `ordinal` | Posição da janela no item, a partir de 0; desempata janelas de mesma proximidade |
+| `passageOrdinal` | Ordinal do trecho (E3) onde a janela começa. É o `ordinal` do trecho exibido, para ler o contexto |
+| `charStart`, `charEnd` | Como em E3 |
+| `focusText` | Texto literal, só armazenado: não entra na parte por palavra |
+| vetor | Normalizado, em doc values binários (`vf`), fora do grafo HNSW |
+
+**Invariante (SC-006)**: `focusText` é igual ao intervalo `[charStart, charEnd)` do texto do item.
+
+---
+
 ## E4 — Sequência de conversa (`SEQUENCE`)
 
 | Campo | Regra |
@@ -193,7 +210,7 @@ anterior à preparação.
 | `ranks` | Só no híbrido: posição da unidade na lista semântica e na por palavra (ausente = não estava na lista), para o perito ver de onde veio a relevância |
 | `kind` | `passage`, `transcript`, `sequence`, `image`, `video` |
 | `itemId` | Item da entrada; em sequência, o chat |
-| `excerpts` | Texto: até 3 trechos `{text, charStart, charEnd}` |
+| `excerpts` | Texto: até 3 trechos `{text, charStart, charEnd}`. Em item com janelas de foco (E3b), o primeiro é a janela mais próxima da pergunta, com o `ordinal` do trecho que a contém |
 | `sequence` | `{messages: [{itemId, sender, date, text, inRecorte}], absorbedWindows}` |
 | `frame` | Vídeo: `{frameIndex, instantApproxMs}` |
 

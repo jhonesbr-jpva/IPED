@@ -29,19 +29,22 @@ tocados.
 
 | Campo | Tipo Lucene | Em | Conteúdo |
 |---|---|---|---|
-| `kind` | `StringField` + `SortedDocValues` | todos | `passage`, `transcript`, `sequence`, `image`, `video_frame`, `status` |
+| `kind` | `StringField` + `SortedDocValues` | todos | `passage`, `transcript`, `sequence`, `image`, `video_frame`, `status`, e as janelas de foco `focus` e `transcript_focus` (data-model E3b, research D23) |
 | `itemId` | `IntPoint` + `NumericDocValues` + stored | todos | Id no índice principal. Em `sequence`, o id do chat |
 | `itemIdKey` | `StringField` (não armazenado) | todos | O mesmo id como termo, para `updateDocuments`. Em sequência, a chave é o id do chat: substituir o chat troca, numa operação só, seus trechos de documento pelas sequências e pelo status `COVERED_BY_MESSAGES` |
-| `ordinal` | `NumericDocValues` + stored | trecho, sequência | Desempate (FR-015) |
-| `charStart`, `charEnd` | stored | trecho | Deslocamentos no texto do item |
+| `ordinal` | `NumericDocValues` + stored | trecho, sequência, janela | Desempate (FR-015; na janela, entre janelas do item) |
+| `charStart`, `charEnd` | stored | trecho, janela | Deslocamentos no texto do item |
+| `passageOrdinal` | stored | janela | Ordinal do trecho onde a janela começa |
+| `focusText` | stored | janela | Texto literal da janela; não indexado, fora da parte por palavra |
+| `vf` | `BinaryDocValues` (floats little-endian) | janela | Vetor normalizado da janela, fora do grafo HNSW: só é comparado com as outras janelas do mesmo item |
 | `text` | `TextField` (`AppAnalyzer`) | trecho, sequência | Trecho: armazenado **e indexado**, é o texto literal exibido. Sequência: o texto das linhas, só indexado (o exibido vem de `lines`). Um campo só, para a parte por palavra do modo híbrido (research D20): o BM25 calcula IDF e tamanho médio **por campo**, e com campos separados trecho e sequência seriam pontuados em escalas diferentes. Na implementação, o campo `seqText` do desenho original foi fundido neste (2026-09-27) |
-| `anchorIds` | `SortedNumericDocValues` (múltiplo) | todos | Ids pelos quais o documento pertence a um recorte: o próprio item, ou as mensagens de uma sequência (entra no recorte se ao menos uma estiver nele, D7). Acrescentado na implementação para o filtro de recorte |
+| `anchorIds` | `SortedNumericDocValues` (múltiplo) | todos menos janela | Ids pelos quais o documento pertence a um recorte: o próprio item, ou as mensagens de uma sequência (entra no recorte se ao menos uma estiver nele, D7). Acrescentado na implementação para o filtro de recorte |
 | `messageIds` | stored (múltiplo) + `IntPoint` | sequência | Âncoras, na ordem da conversa |
 | `lines` | stored (múltiplo, JSON por linha) | sequência | `{sender, date, text}` literais |
 | `frameIndex`, `frameCount`, `instantApproxMs` | stored | quadro | D8 |
 | `reason` | `SortedDocValues` + stored | status | Código de E7 |
 | `detail` | stored | status | Opcional |
-| `v` | `KnnVectorField`, `DOT_PRODUCT` | todos menos status | Vetor normalizado |
+| `v` | `KnnVectorField`, `DOT_PRODUCT` | todos menos status e janela | Vetor normalizado |
 
 **Substituição**: toda gravação de um item usa `updateDocuments(new Term("itemIdKey", id), docs)`.
 Isso substitui trechos **e** status numa operação só, e é o que torna `--continue` idempotente

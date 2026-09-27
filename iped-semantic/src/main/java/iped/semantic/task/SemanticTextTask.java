@@ -84,6 +84,7 @@ public class SemanticTextTask extends AbstractTask {
                     .transcriptionEnabled(transcriptionEnabled(configurationManager))
                     .capabilityStartId(capabilityStartId(output)).ipedVersion(Version.APP_VERSION);
             TextPreparation prep = TextPreparation.open(output, config, source, settings);
+            CaseModels.copyIntoCase(config, Modality.TEXT, output);
             preparation = prep;
             String commitStarted = iped.engine.localization.Messages.getString("Manager.CommitStarted");
             UIPropertyListenerProvider.getInstance().addPropertyChangeListener(evt -> {

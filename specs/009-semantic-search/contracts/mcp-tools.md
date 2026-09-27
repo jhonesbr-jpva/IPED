@@ -242,6 +242,9 @@ fixava:
 - **Citação**: cada trecho de `excerpts` traz o próprio `ordinal`, além de `char_start`/`char_end`
   — uma entrada consolidada pode juntar trechos de ordinais diferentes, e é o ordinal que
   `iped_semantic_context` pede.
+- **Primeiro trecho**: num item com janelas de foco (research D23), o primeiro de `excerpts` é a
+  janela de ~400 caracteres mais próxima da pergunta, com o `ordinal` do trecho que a contém; é o
+  que se cita. Os demais são os trechos que ordenaram o item.
 - **Egresso em sequência**: a linha bloqueada perde `text` e ganha `text_withheld` com a regra; a
   entrada ganha `excerpt_withheld` com a primeira regra que bloqueou. Item que não pode ser lido
   para conferir a política tem o texto retido (`policy_rule: "unverifiable"`).

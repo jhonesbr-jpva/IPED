@@ -120,6 +120,8 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private int maxTextCharsPerItem = 200_000;
     private int passageChars = 1000;
     private int passageOverlapChars = 200;
+    private int focusChars = 400;
+    private int focusOverlapChars = 100;
     private int chatWindowMessages = 8;
     private int chatWindowStride = 4;
     private int chatWindowMaxChars = 1500;
@@ -212,6 +214,8 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         maxTextCharsPerItem = integer(p, "maxTextCharsPerItem", maxTextCharsPerItem, 1);
         passageChars = integer(p, "passageChars", passageChars, 1);
         passageOverlapChars = integer(p, "passageOverlapChars", passageOverlapChars, 0);
+        focusChars = integer(p, "focusChars", focusChars, 0);
+        focusOverlapChars = integer(p, "focusOverlapChars", focusOverlapChars, 0);
         chatWindowMessages = integer(p, "chatWindowMessages", chatWindowMessages, 1);
         chatWindowStride = integer(p, "chatWindowStride", chatWindowStride, 1);
         chatWindowMaxChars = integer(p, "chatWindowMaxChars", chatWindowMaxChars, 1);
@@ -241,6 +245,10 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         if (passageOverlapChars >= passageChars) {
             parseProblems.add("passageOverlapChars (" + passageOverlapChars + ") must be smaller than passageChars ("
                     + passageChars + ")");
+        }
+        if (focusChars > 0 && focusOverlapChars >= focusChars) {
+            parseProblems.add("focusOverlapChars (" + focusOverlapChars + ") must be smaller than focusChars ("
+                    + focusChars + ")");
         }
     }
 
@@ -474,6 +482,18 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
 
     public int getPassageOverlapChars() {
         return passageOverlapChars;
+    }
+
+    /**
+     * Size of the focus windows of long items (research D23): the excerpt shown for an entry is the
+     * focus window closest to the question. 0 turns them off.
+     */
+    public int getFocusChars() {
+        return focusChars;
+    }
+
+    public int getFocusOverlapChars() {
+        return focusOverlapChars;
     }
 
     public int getChatWindowMessages() {

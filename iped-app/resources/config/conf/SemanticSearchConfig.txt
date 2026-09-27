@@ -91,6 +91,14 @@ maxTextCharsPerItem = 200000
 passageChars = 1000
 passageOverlapChars = 200
 
+# Focus windows: smaller windows of items longer than one passage. They do not
+# rank anything; the excerpt shown for an entry is the focus window of its item
+# closest to the question, so a single paragraph of a long document is what the
+# examiner sees. Passages of passageChars find the item, windows of focusChars
+# find the paragraph (measured on the evaluation case). 0 turns them off.
+focusChars = 400
+focusOverlapChars = 100
+
 # Conversation sequences: messages per window, step between windows,
 # maximum characters per window, and the gap (minutes) that breaks a window.
 chatWindowMessages = 8

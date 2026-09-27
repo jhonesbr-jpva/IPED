@@ -45,6 +45,7 @@ import iped.semantic.search.SemanticRequest.Target;
 import iped.semantic.store.CoverageReason;
 import iped.semantic.store.SemanticFields;
 import iped.semantic.store.SemanticIndexReader;
+import iped.semantic.store.SemanticIndexWriter;
 import iped.semantic.store.SemanticStore;
 
 /**
@@ -345,6 +346,161 @@ public class SemanticSearcher implements Closeable {
     }
 
     /**
+     * The excerpt shown for each text entry of this case (research D23): the focus window of the
+     * entry's item closest to {@code q} comes first, before the passages that ranked the item. The
+     * ordering itself is not touched - rank, proximity and ordinal stay those of the passages - so a
+     * case prepared without focus windows answers exactly as before.
+     */
+    List<OrderingEntry> withFocus(List<OrderingEntry> entries, float[] q, Modality modality) throws IOException {
+        if (q == null || modality != Modality.TEXT) {
+            return entries;
+        }
+        SemanticIndexReader index = reader(Modality.TEXT);
+        List<OrderingEntry> out = new ArrayList<>(entries.size());
+        for (OrderingEntry e : entries) {
+            OrderingEntry.Excerpt focus = null;
+            if (e.getCaseIndex() == caseIndex && e.getSequence() == null
+                    && (SemanticFields.KIND_PASSAGE.equals(e.getKind()) || SemanticFields.KIND_TRANSCRIPT.equals(e.getKind()))) {
+                focus = bestFocus(index, e.getItemId(), SemanticFields.focusOf(e.getKind()), q);
+            }
+            if (focus == null) {
+                out.add(e);
+                continue;
+            }
+            List<OrderingEntry.Excerpt> excerpts = new ArrayList<>();
+            excerpts.add(focus);
+            for (OrderingEntry.Excerpt x : e.getExcerpts()) {
+                if (excerpts.size() == MAX_EXCERPTS) {
+                    break;
+                }
+                if (x.getCharStart() != focus.getCharStart() || x.getCharEnd() != focus.getCharEnd()) {
+                    excerpts.add(x);
+                }
+            }
+            out.add(new OrderingEntry(e.getRank(), e.getProximity(), e.getProximityKind(), e.getSemanticRank(),
+                    e.getLexicalRank(), e.getKind(), e.getCaseIndex(), e.getItemId(), e.getOrdinal(), excerpts, null,
+                    e.getFrame()));
+        }
+        return out;
+    }
+
+    /**
+     * Words of an excerpt that occur only once in the item's text (research D13): the viewers
+     * highlight a phrase and go to its first occurrence, so a phrase the item repeats - a heading, a
+     * clause of boilerplate - would open the item somewhere else. Words are compared as the keyword
+     * index compares them, without case or accents.
+     *
+     * @return the first run of {@code words} consecutive words of the excerpt that occurs once in the
+     *         item; its first words when every run repeats; {@code null} when the item has no stored
+     *         passages of that kind
+     */
+    public String distinctPhrase(int itemId, String kind, int charStart, int charEnd, int words) throws IOException {
+        List<ContextReader.Stored> passages = ContextReader.passagesOf(reader(Modality.TEXT), itemId, kind);
+        if (passages.isEmpty()) {
+            return null;
+        }
+        int[] range = new int[2];
+        String text = ContextReader.stitch(passages, range);
+        List<int[]> spans = new ArrayList<>();
+        List<String> tokens = new ArrayList<>();
+        java.util.regex.Matcher m = WORD.matcher(text);
+        while (m.find()) {
+            spans.add(new int[] { m.start() + range[0], m.end() + range[0] });
+            tokens.add(fold(m.group()));
+        }
+        List<Integer> inExcerpt = new ArrayList<>();
+        for (int i = 0; i < spans.size(); i++) {
+            if (spans.get(i)[0] >= charStart && spans.get(i)[1] <= charEnd) {
+                inExcerpt.add(i);
+            }
+        }
+        if (inExcerpt.isEmpty()) {
+            return null;
+        }
+        int n = Math.min(words, inExcerpt.size());
+        int first = inExcerpt.get(0);
+        for (int k = 0; k + n <= inExcerpt.size(); k++) {
+            int at = inExcerpt.get(k);
+            if (occurrences(tokens, at, n) == 1) {
+                return String.join(" ", tokens.subList(at, at + n));
+            }
+        }
+        return String.join(" ", tokens.subList(first, first + n));
+    }
+
+    private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}]+");
+
+    private static String fold(String word) {
+        String d = java.text.Normalizer.normalize(word, java.text.Normalizer.Form.NFD);
+        return d.replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /** How many times the run {@code tokens[from, from + n)} occurs in {@code tokens}. */
+    private static int occurrences(List<String> tokens, int from, int n) {
+        int count = 0;
+        outer: for (int i = 0; i + n <= tokens.size(); i++) {
+            for (int j = 0; j < n; j++) {
+                if (!tokens.get(i + j).equals(tokens.get(from + j))) {
+                    continue outer;
+                }
+            }
+            if (++count > 1) {
+                return count;
+            }
+        }
+        return count;
+    }
+
+    /** Excerpts per text entry (data-model, {@code OrderingEntry.excerpts}). */
+    static final int MAX_EXCERPTS = 3;
+
+    /** The focus window of an item closest to {@code q}; ties go to the earlier window. */
+    private static OrderingEntry.Excerpt bestFocus(SemanticIndexReader index, int itemId, String focusKind, float[] q)
+            throws IOException {
+        Query query = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(SemanticFields.ITEM_ID_KEY, Integer.toString(itemId))), Occur.FILTER)
+                .add(new TermQuery(new Term(SemanticFields.KIND, focusKind)), Occur.FILTER).build();
+        IndexSearcher searcher = index.searcher();
+        Weight weight = searcher.createWeight(searcher.rewrite(query), ScoreMode.COMPLETE_NO_SCORES, 1f);
+        int bestDoc = -1;
+        double best = Double.NEGATIVE_INFINITY;
+        long bestOrdinal = Long.MAX_VALUE;
+        for (LeafReaderContext ctx : index.reader().leaves()) {
+            Scorer scorer = weight.scorer(ctx);
+            if (scorer == null) {
+                continue;
+            }
+            LeafReader leaf = ctx.reader();
+            org.apache.lucene.index.BinaryDocValues vectors = leaf.getBinaryDocValues(SemanticFields.FOCUS_VECTOR);
+            NumericDocValues ordinals = leaf.getNumericDocValues(SemanticFields.ORDINAL);
+            if (vectors == null) {
+                continue;
+            }
+            Bits live = leaf.getLiveDocs();
+            DocIdSetIterator it = scorer.iterator();
+            for (int doc = it.nextDoc(); doc != DocIdSetIterator.NO_MORE_DOCS; doc = it.nextDoc()) {
+                if ((live != null && !live.get(doc)) || !vectors.advanceExact(doc)) {
+                    continue;
+                }
+                double score = VectorMath.dot(q, SemanticIndexWriter.bytesToFloats(vectors.binaryValue()));
+                long ordinal = ordinals != null && ordinals.advanceExact(doc) ? ordinals.longValue() : Long.MAX_VALUE;
+                if (score > best || (score == best && ordinal < bestOrdinal)) {
+                    best = score;
+                    bestOrdinal = ordinal;
+                    bestDoc = ctx.docBase + doc;
+                }
+            }
+        }
+        if (bestDoc < 0) {
+            return null;
+        }
+        Document d = index.document(bestDoc);
+        return new OrderingEntry.Excerpt(SemanticIndexReader.intField(d, SemanticFields.PASSAGE_ORDINAL, 0),
+                SemanticIndexReader.intField(d, SemanticFields.CHAR_START, 0),
+                SemanticIndexReader.intField(d, SemanticFields.CHAR_END, 0), d.get(SemanticFields.FOCUS_TEXT));
+    }
+
+    /**
      * When {@code itemId} is a message of a sequenced chat, the text of each sequence holding it:
      * its lines in order, without the senders. Empty for any other item.
      */
@@ -380,7 +536,8 @@ public class SemanticSearcher implements Closeable {
                 .add(IntPoint.newExactQuery(SemanticFields.MESSAGE_IDS, itemId), Occur.SHOULD).build();
         for (ScoreDoc sd : index.searcher().search(q, Integer.MAX_VALUE).scoreDocs) {
             Document d = index.document(sd.doc);
-            if (SemanticFields.KIND_STATUS.equals(d.get(SemanticFields.KIND))) {
+            String kind = d.get(SemanticFields.KIND);
+            if (SemanticFields.KIND_STATUS.equals(kind) || SemanticFields.isFocus(kind)) {
                 continue;
             }
             if (start != null && d.getField(SemanticFields.CHAR_START) != null) {

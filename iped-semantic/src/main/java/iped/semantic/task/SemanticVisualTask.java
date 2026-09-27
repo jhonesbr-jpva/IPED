@@ -91,6 +91,7 @@ public class SemanticVisualTask extends AbstractTask {
                     .videoThumbs(videoThumbs != null && videoThumbs.isEnabled())
                     .capabilityStartId(SemanticTextTask.capabilityStartId(output)).ipedVersion(Version.APP_VERSION);
             VisualPreparation prep = VisualPreparation.open(output, config, source, settings);
+            CaseModels.copyIntoCase(config, Modality.VISUAL, output);
             preparation = prep;
             String commitStarted = iped.engine.localization.Messages.getString("Manager.CommitStarted");
             UIPropertyListenerProvider.getInstance().addPropertyChangeListener(evt -> {

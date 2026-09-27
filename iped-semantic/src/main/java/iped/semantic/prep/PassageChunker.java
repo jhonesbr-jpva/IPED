@@ -76,10 +76,17 @@ public final class PassageChunker {
     public static final class Result {
         private final List<Passage> passages;
         private final long excessChars;
+        private final String content;
 
-        Result(List<Passage> passages, long excessChars) {
+        Result(List<Passage> passages, long excessChars, String content) {
             this.passages = Collections.unmodifiableList(passages);
             this.excessChars = excessChars;
+            this.content = content;
+        }
+
+        /** The text the passages were cut from: after the header cut, up to the limit. Offsets refer to it. */
+        public String content() {
+            return content;
         }
 
         public List<Passage> passages() {
@@ -149,7 +156,7 @@ public final class PassageChunker {
         }
         String content = head.substring(0, (int) Math.min(contentEnd, maxChars));
         long excess = Math.max(0, contentEnd - maxChars);
-        return new Result(split(content), excess);
+        return new Result(split(content), excess, content);
     }
 
     /** Chunks an in-memory text that has no header. */

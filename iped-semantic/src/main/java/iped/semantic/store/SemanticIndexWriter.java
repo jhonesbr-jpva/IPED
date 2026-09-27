@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntPoint;
@@ -156,6 +157,44 @@ public final class SemanticIndexWriter implements Closeable {
         d.add(new TextField(TEXT, text, Field.Store.YES));
         vector(d, v);
         return d;
+    }
+
+    /**
+     * A focus window of an item's text or transcript (data-model E3b, research D23): the excerpt shown
+     * for an entry is chosen among them. Not anchored and without {@code text}, so it never enters a
+     * scope, an ordering or the word part; the vector is kept outside the KNN graph.
+     */
+    public static Document focus(String kind, int itemId, int ordinal, int passageOrdinal, int charStart, int charEnd,
+            String text, float[] v) {
+        Document d = base(kind, itemId);
+        ordinal(d, ordinal);
+        d.add(new StoredField(PASSAGE_ORDINAL, passageOrdinal));
+        d.add(new StoredField(CHAR_START, charStart));
+        d.add(new StoredField(CHAR_END, charEnd));
+        d.add(new StoredField(FOCUS_TEXT, text));
+        d.add(new BinaryDocValuesField(FOCUS_VECTOR, new BytesRef(floatsToBytes(v))));
+        return d;
+    }
+
+    /** Little-endian IEEE 754 floats. */
+    public static byte[] floatsToBytes(float[] v) {
+        java.nio.ByteBuffer b = java.nio.ByteBuffer.allocate(v.length * Float.BYTES)
+                .order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        for (float f : v) {
+            b.putFloat(f);
+        }
+        return b.array();
+    }
+
+    /** The inverse of {@link #floatsToBytes}. */
+    public static float[] bytesToFloats(BytesRef ref) {
+        java.nio.ByteBuffer b = java.nio.ByteBuffer.wrap(ref.bytes, ref.offset, ref.length)
+                .order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        float[] v = new float[ref.length / Float.BYTES];
+        for (int i = 0; i < v.length; i++) {
+            v[i] = b.getFloat();
+        }
+        return v;
     }
 
     /**

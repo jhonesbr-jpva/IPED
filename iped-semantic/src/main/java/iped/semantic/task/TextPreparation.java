@@ -115,6 +115,8 @@ public final class TextPreparation implements Closeable {
     private final StagingStore staging;
     private final EmbeddingService<Pending> service;
     private final PassageChunker chunker;
+    /** Focus windows of items longer than one passage (research D23); {@code null} when off. */
+    private final PassageChunker focusChunker;
     private final ChatSequenceBuilder sequences;
     private final boolean mismatch;
     private final Set<String> categories = new HashSet<>();
@@ -214,6 +216,10 @@ public final class TextPreparation implements Closeable {
         this.staging = new StagingStore(store.staging());
         this.chunker = new PassageChunker(config.getPassageChars(), config.getPassageOverlapChars(),
                 config.getMaxTextCharsPerItem());
+        this.focusChunker = config.getFocusChars() > 0
+                ? new PassageChunker(config.getFocusChars(), config.getFocusOverlapChars(),
+                        config.getMaxTextCharsPerItem())
+                : null;
         this.sequences = new ChatSequenceBuilder(config.getChatWindowMessages(), config.getChatWindowStride(),
                 config.getChatWindowMaxChars(), config.getChatMaxGapMinutes(), config.getChatShortMessageChars());
         this.service = new EmbeddingService<>("semantic-text", embedder, Embedder.Role.PASSAGE,
@@ -259,6 +265,8 @@ public final class TextPreparation implements Closeable {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("passageChars", c.getPassageChars());
         p.put("passageOverlapChars", c.getPassageOverlapChars());
+        p.put("focusChars", c.getFocusChars());
+        p.put("focusOverlapChars", c.getFocusOverlapChars());
         p.put("maxTextCharsPerItem", c.getMaxTextCharsPerItem());
         p.put("chatWindowMessages", c.getChatWindowMessages());
         p.put("chatWindowStride", c.getChatWindowStride());
@@ -366,6 +374,7 @@ public final class TextPreparation implements Closeable {
                         units.add(new Unit(job, units.size(), SemanticFields.KIND_PASSAGE, p.ordinal(), p.start(),
                                 p.end(), p.text()));
                     }
+                    focusWindows(job, units, SemanticFields.KIND_FOCUS, res.content(), res.passages(), 0);
                 }
             }
         }
@@ -375,16 +384,37 @@ public final class TextPreparation implements Closeable {
                     ? item.transcript.substring(0, config.getMaxTextCharsPerItem())
                     : item.transcript;
             excess += Math.max(0, item.transcript.length() - t.length());
-            for (PassageChunker.Passage p : chunker.split(t)) {
+            List<PassageChunker.Passage> ps = chunker.split(t);
+            for (PassageChunker.Passage p : ps) {
                 units.add(new Unit(job, units.size(), SemanticFields.KIND_TRANSCRIPT, offset + p.ordinal(), p.start(),
                         p.end(), p.text()));
             }
+            focusWindows(job, units, SemanticFields.KIND_TRANSCRIPT_FOCUS, t, ps, offset);
         }
         if (units.isEmpty()) {
             return null;
         }
         job.init(units, excess);
         return job;
+    }
+
+    /**
+     * Focus windows of a text longer than one passage (research D23), each tied to the passage its
+     * first character belongs to. A text of one passage needs none: that passage is the excerpt.
+     */
+    private void focusWindows(ItemJob job, List<Unit> units, String kind, String content,
+            List<PassageChunker.Passage> passages, int ordinalOffset) {
+        if (focusChunker == null || content == null || passages.size() < 2) {
+            return;
+        }
+        int p = 0;
+        for (PassageChunker.Passage w : focusChunker.split(content)) {
+            while (p + 1 < passages.size() && passages.get(p + 1).start() <= w.start()) {
+                p++;
+            }
+            units.add(new Unit(job, units.size(), kind, w.ordinal(), w.start(), w.end(), w.text(),
+                    ordinalOffset + passages.get(p).ordinal()));
+        }
     }
 
     private void status(int id, CoverageReason reason, String detail) throws IOException {
@@ -434,8 +464,11 @@ public final class TextPreparation implements Closeable {
                 }
                 List<Document> docs = new ArrayList<>(units.size() + 1);
                 for (Unit u : units) {
-                    docs.add(SemanticIndexWriter.passage(u.kind, itemId, u.ordinal, u.start, u.end, u.text,
-                            vectors[u.index]));
+                    docs.add(SemanticFields.isFocus(u.kind)
+                            ? SemanticIndexWriter.focus(u.kind, itemId, u.ordinal, u.passageOrdinal, u.start, u.end,
+                                    u.text, vectors[u.index])
+                            : SemanticIndexWriter.passage(u.kind, itemId, u.ordinal, u.start, u.end, u.text,
+                                    vectors[u.index]));
                 }
                 docs.add(excess > 0
                         ? SemanticIndexWriter.status(itemId, CoverageReason.COVERED_TRUNCATED, String.valueOf(excess))
@@ -456,8 +489,14 @@ public final class TextPreparation implements Closeable {
         final int start;
         final int end;
         final String text;
+        /** Focus windows only: the passage the window starts in. */
+        final int passageOrdinal;
 
         Unit(ItemJob job, int index, String kind, int ordinal, int start, int end, String text) {
+            this(job, index, kind, ordinal, start, end, text, ordinal);
+        }
+
+        Unit(ItemJob job, int index, String kind, int ordinal, int start, int end, String text, int passageOrdinal) {
             this.job = job;
             this.index = index;
             this.kind = kind;
@@ -465,6 +504,7 @@ public final class TextPreparation implements Closeable {
             this.start = start;
             this.end = end;
             this.text = text;
+            this.passageOrdinal = passageOrdinal;
         }
 
         @Override
