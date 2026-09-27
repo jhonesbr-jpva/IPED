@@ -184,6 +184,7 @@ specs/009-semantic-search/
 │   ├── remote-model-protocol.md # openai-embeddings e iped-embed/1
 │   └── ui-surface.md            # painel, filtro, menus, declarações
 ├── checklists/requirements.md
+├── validation-log.md            # implementação — números medidos, gabarito fechado, decisões de fábrica
 └── tasks.md                     # /speckit-tasks — ainda não criado
 ```
 
@@ -194,9 +195,12 @@ iped-semantic/                                   # NOVO módulo
 ├── pom.xml
 ├── CLAUDE.md
 ├── src/main/java/iped/semantic/
-│   ├── config/      SemanticSearchConfig        # Configurable<UTF8Properties>, conf/SemanticSearchConfig.txt
-│   │                SemanticEnableProperties    # enableSemanticText / Images / Videos
+│   ├── config/      SemanticSearchConfig        # extends AbstractTaskPropertiesConfig (como AudioTranscriptConfig):
+│   │                                            # enableSemanticText + conf/SemanticSearchConfig.txt; a task visual
+│   │                                            # devolve EnableTaskProperty para enableSemanticImages/Videos —
+│   │                                            # sem tocar Configuration.java
 │   ├── model/       Embedder                    # contrato comum: texto→vetor, imagem→vetor, identidade
+│   │                VectorMath                  # normalização L2, produto escalar
 │   │                LocalOnnxEmbedder           # ONNX Runtime + extensões, sessão compartilhada
 │   │                RemoteOpenAiEmbedder        # openai-embeddings (texto)
 │   │                RemoteIpedEmbedder          # iped-embed/1 (texto e imagem)
@@ -205,18 +209,22 @@ iped-semantic/                                   # NOVO módulo
 │   │                CredentialResolver          # variável de ambiente ou arquivo, nunca valor em conf
 │   ├── prep/        PassageChunker, ChatSequenceBuilder, VideoMosaicSplitter, FrameInstant
 │   ├── store/       SemanticStore               # caminhos em <caso>/iped/semantic
-│   │                SemanticIndexWriter/Reader, StatusRecord, BuildRecord, StagingStore
+│   │                SemanticIndexWriter/Reader, SemanticCodec, BuildRecord, StagingStore
+│   │                CoverageReason              # motivos de E7; o estado por item é documento `status` no índice
 │   ├── search/      SemanticSearcher            # o ÚNICO buscador — interface e MCP chamam este
 │   │                SemanticRequest, Ordering, OrderingEntry, Coverage, Consolidator,
-│   │                ItemIdFilterQuery, Compatibility
+│   │                ItemIdFilterQuery, Compatibility, Availability
+│   │                DeclarationText             # textos de declaração, compartilhados por painel e testes
+│   │                MultiCaseSearch             # vários casos abertos: só os compatíveis (FR-017)
 │   │                LexicalPassageSearcher      # BM25 sobre os trechos, no índice semântico (D20)
 │   │                RankFusion                  # RRF por posição, desempate determinístico
 │   │                ContextReader               # texto literal em volta de uma entrada (D21)
-│   └── task/        SemanticTextTask, SemanticVisualTask
+│   └── task/        SemanticTextTask, SemanticVisualTask, SourceValidator
 ├── src/main/resources/iped/semantic/probes/     # sondas da impressão digital (texto e imagens sintéticas)
 ├── src/test/java/iped/semantic/{unit,integration,eval}/
 └── tools/
     ├── export-models/                           # exportação reprodutível para ONNX (Python, fora do release)
+    ├── eval-corpus/                             # gerador do conjunto de avaliação, sem evidência real (D18)
     └── semantic-server/                         # servidor remoto de referência (iped-embed/1)
 
 iped-app/
@@ -227,6 +235,7 @@ iped-app/
 │   ├── MoreLikeThisAction, RemoteDestinationNotice
 ├── src/main/java/iped/app/ui/App.java           # registro (aditivo)
 ├── src/main/java/iped/app/ui/MenuClass.java     # "Mais como este" (aditivo)
+├── resources/root/tools/onnxruntime/README.txt  # NOVO — documentação da dependência nativa (constituição)
 ├── resources/config/IPEDConfig.txt              # +3 chaves, desligadas
 ├── resources/config/conf/SemanticSearchConfig.txt  # NOVO
 ├── resources/config/conf/TaskInstaller.xml      # +2 tasks

@@ -132,6 +132,15 @@ No chat do conjunto de avaliação com "quanto?" / "5 mil" / "fechado, amanhã n
 4. Pergunte sobre um assunto ausente do conjunto: a lista aparece, e nada nela se lê como
    ausência.
 5. Com a tabela vazia, pergunte: "recorte vazio", e não "nada encontrado".
+6. **Detalhes da construção** (FR-014): no painel, para cada modalidade, aparecem modelo e versão,
+   fonte e destino da preparação, data, parâmetros, estado e contagens por motivo, e batem com
+   `build-record.json`. `iped_semantic_status` traz os mesmos dados (`built_at`, `params`,
+   `state`, `counts`).
+7. **Vários casos abertos juntos** (FR-017): abra juntos dois casos preparados com o mesmo modelo e
+   um terceiro processado sem a capacidade (ou com outro modelo). A ordenação traz entradas dos
+   dois compatíveis intercaladas pela proximidade. O terceiro aparece em "casos participantes"
+   como excluído, com o motivo (`CASES_EXCLUDED` no MCP), e a cobertura soma só os recortes dos
+   incluídos.
 
 ---
 
@@ -168,7 +177,9 @@ No chat do conjunto de avaliação com "quanto?" / "5 mil" / "fechado, amanhã n
 
 1. Processe com `enableSemanticImages = true` e `enableSemanticVideos = false`. Tempo **≤ 3×** o
    do Cenário 2 (SC-013).
-2. SC-012: ≥ 30 descrições em PT, pertinente entre as 10 primeiras em **≥ 70%**.
+2. SC-012: ≥ 30 descrições em PT, pertinente entre as 10 primeiras em **≥ 70%**. Registre à
+   parte o acerto das ≥ 5 descrições em inglês (FR-036): a pergunta em inglês tem de funcionar
+   sobre o mesmo modelo, sem tradução.
 3. A ordenação visual traz só imagens, e a cobertura declara os vídeos como não cobertos, com o
    motivo (cenário 7 da História 6).
 4. Reprocesse com `enableSemanticVideos = true`. O registro separa o tempo de imagens e de vídeos
@@ -203,6 +214,10 @@ No chat do conjunto de avaliação com "quanto?" / "5 mil" / "fechado, amanhã n
    entrada, e nenhum trecho aparece em campo algum.
 3. Toda resposta traz `ordering_notice`. Entradas visuais não trazem imagem, e
    `iped_item_thumbnail` sobre elas devolve o bloco de imagem da 008.
+3b. **Teto na paginação** (FR-007): pagine com `next_cursor` até o fim. A última página sai sem
+   `next_cursor` e com `ceiling_reached: true`, e o aviso diz que o teto é limite de
+   profundidade, não de relevância. Não existe argumento de profundidade, e nenhuma chamada é
+   recusada por profundidade.
 4. A trilha de auditoria registra cada chamada, sem campo novo.
 5. `iped_semantic_status` num caso antigo: indisponível, com o remédio.
 6. **Contexto para RAG** (FR-048): para um trecho do meio de um documento longo,
@@ -259,7 +274,8 @@ No chat do conjunto de avaliação com "quanto?" / "5 mil" / "fechado, amanhã n
 - [ ] SC-004 ___ s (1 M) · ___ s (10 mil) · revocação do aproximado ___
 - [ ] SC-005 · SC-006 · SC-007 · SC-008 (___%) · SC-009
 - [ ] SC-010 ___× · SC-013 ___× · SC-015 ±___%
-- [ ] SC-011 · SC-012 ___% · SC-014 ___%
+- [ ] SC-011 · SC-012 ___% (PT) · inglês ___% (FR-036) · SC-014 ___%
+- [ ] FR-014 (detalhes da construção) · FR-017 (vários casos, `CASES_EXCLUDED`) · FR-007 (`ceiling_reached` no MCP)
 - [ ] SC-016 · SC-017
 - [ ] SC-018 ___% (misto) · perda no conceitual ___ pp · `defaultTextMode` de fábrica decidido: ___
 - [ ] Decisão de perfis de fábrica tomada com os números acima (research D19)

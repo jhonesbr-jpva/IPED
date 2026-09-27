@@ -25,6 +25,8 @@ caso, mostra só a declaração de indisponibilidade.
 | Entrada de sequência | As mensagens em ordem, com remetente e hora. As fora do recorte aparecem esmaecidas e marcadas "fora do recorte" |
 | Entrada visual | Miniatura com o desfoque global da galeria respeitado (FR-037). Vídeo com "≈ mm:ss" |
 | "Mais resultados" | Estende até o teto, mantendo a ordem já exibida. No teto, o botão desabilita e a dica nomeia a chave `maxDepth` |
+| "Detalhes da construção" | Por modalidade: modelo e versão, fonte e destino da preparação, data, parâmetros, estado e contagens por motivo, lidos do registro do caso (FR-014) |
+| Casos participantes | Com vários casos abertos juntos: quais participaram e quais ficaram de fora, com o motivo (FR-017) |
 | "Aplicar à tabela" | Instala o `SemanticResultFilterer`: a tabela passa a mostrar a ordenação da aba ativa, com a proximidade na coluna de pontuação |
 | "Marcar" | Leva as entradas selecionadas (numa sequência, as mensagens) a um marcador. O comentário do marcador recebe pergunta, recorte, profundidade, modelo e data (FR-011) |
 

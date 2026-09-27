@@ -54,7 +54,9 @@ O que o caso oferece de busca semântica, sem executar busca.
   "case_id": "c1",
   "modalities": {
     "text":   { "available": true,  "state": "COMPLETE", "model": "intfloat/multilingual-e5-small@<rev>+onnx-int8-ortx",
-                "source": "local", "prepared_with": "remote", "covered": 812344, "not_covered": { "NO_TEXT": 90211, "COVERED_BY_MESSAGES": 1120 } },
+                "source": "local", "prepared_with": "remote", "covered": 812344, "not_covered": { "NO_TEXT": 90211, "COVERED_BY_MESSAGES": 1120 },
+                "built_at": "2026-10-02T14:31:07Z", "ipedVersion": "4.3.1",
+                "params": { "passageChars": 1000, "passageOverlapChars": 200, "chatWindowMessages": 8, "…": "…" } },
     "visual": { "available": false, "reason": "MODALITY_OFF",
                 "remedy": "The case was processed with semantic image and video search off. Reprocess with enableSemanticImages/enableSemanticVideos on to use it." }
   },
@@ -150,10 +152,14 @@ já entrega bloco de imagem (008) e passa pela política de egresso da classe `t
 - Com modelo remoto, `model.sent_to` informa para onde a pergunta foi enviada.
 - Página parcial não existe: a lista do teto já está calculada, então paginar não reexecuta a
   busca e não depende de tempo.
+- Não há argumento de profundidade: o agente pagina. A última página da lista do teto sai **sem**
+  `next_cursor` e com `ceiling_reached: true`, e o aviso diz que o teto (`maxDepth`) é limite de
+  profundidade, não de relevância — além dele pode haver itens pertinentes.
+- Com vários casos abertos juntos (FR-017), só os compatíveis participam, e os demais vêm em
+  `notices` como `CASES_EXCLUDED`, com caso e motivo.
 
 **Recusas**: `SEMANTIC_UNAVAILABLE` (com o motivo de [data-model.md](../data-model.md), E2), a
-modalidade e o remédio), `MODALITY_NOT_PREPARED`, `DEPTH_ABOVE_CEILING` (com o teto e a chave
-`maxDepth`), `QUERY_SYNTAX`/`UNKNOWN_FIELD` no recorte (os mesmos de `iped_search`, com a correção
+modalidade e o remédio), `MODALITY_NOT_PREPARED`, `QUERY_SYNTAX`/`UNKNOWN_FIELD` no recorte (os mesmos de `iped_search`, com a correção
 já verificada) e `MODEL_INCOMPATIBLE` (FR-016, com os dois modelos nomeados).
 
 ---

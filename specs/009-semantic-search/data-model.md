@@ -18,7 +18,7 @@ Este documento fixa **o que** cada entidade guarda e **quais invariantes** valem
 | `query` | texto | Obrigatório, a menos que haja `reference`. Até `maxQueryChars` (padrão 2000); o excedente é **truncado e declarado** |
 | `reference` | `{itemId}` ou `{itemId, charStart, charEnd}` ou `{itemId, selectedText}` | "Mais como este" (FR-013). Só em `TEXT`. O item precisa estar coberto; se não estiver, a recusa diz o motivo dele |
 | `recorte` | conjunto de ids do índice principal | Interface: o resultado corrente. MCP: `query`/`bookmark`, resolvidos pelo buscador de palavra. Vazio → resultado "recorte vazio", nunca "nada encontrado" |
-| `depth` | inteiro | Padrão `defaultDepth`; `1 ≤ depth ≤ maxDepth`. Acima do teto → recusa com teto e chave |
+| `depth` | inteiro | Padrão `defaultDepth`; `1 ≤ depth ≤ maxDepth`. Acima do teto é rejeitado na validação interna do pedido; nenhuma superfície permite pedi-lo — a interface desabilita "mais resultados" e o MCP encerra a paginação com `ceiling_reached` (ver [contracts/ui-surface.md](contracts/ui-surface.md) e [contracts/mcp-tools.md](contracts/mcp-tools.md)) |
 | `cursor` | opaco | Só no MCP; aponta uma posição **dentro da lista do teto** (D11) |
 
 ---
@@ -178,7 +178,7 @@ anterior à preparação.
 | `mode` | `SEMANTIC` ou `HYBRID` (FR-046) |
 | `method` | `EXACT` ou `APPROXIMATE`, da parte semântica (D5, emenda A3) |
 | `lexicalMatches` | Só no híbrido: unidades que a parte por palavra trouxe. `0` declara que a ordenação é a semântica |
-| `depth`, `ceiling` | Profundidade exibida e teto |
+| `depth`, `ceiling`, `ceilingReached` | Profundidade exibida, teto, e se a lista revelada já chegou ao teto (limite de profundidade, não de relevância) |
 | `entries` | Lista ordenada de `OrderingEntry` |
 | `coverage` | E9 |
 | `model` | Identidade, fonte, destino remoto (`sent_to`) quando houver |

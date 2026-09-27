@@ -328,8 +328,11 @@ pode variar em quase-empates" fica declarado em vez de escondido.
 
 **Decisão**: `defaultDepth = 100` e `maxDepth = 1000`, em configuração (FR-019). A interface
 mostra a profundidade padrão e tem "mais resultados" até o teto. O MCP pagina com cursor sobre a
-lista do teto, com o tamanho de página já governado pelo `McpServerConfig`. Pedido além do teto é
-recusado com o teto e a chave que o governa, e a mensagem não sugere que além dele não haja nada.
+lista do teto, com o tamanho de página já governado pelo `McpServerConfig`. No teto, a interface
+desabilita "mais resultados", e o MCP encerra a paginação sem `next_cursor` e com
+`ceiling_reached: true`. Nos dois casos, a mensagem nomeia o teto e a chave que o governa e não
+sugere que além dele não haja nada. Como o MCP não tem argumento de profundidade, não existe
+recusa por profundidade (achado I2 da análise).
 
 ---
 
