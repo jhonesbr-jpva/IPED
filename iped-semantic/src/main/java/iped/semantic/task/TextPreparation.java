@@ -276,6 +276,7 @@ public final class TextPreparation implements Closeable {
         p.put("categories", new ArrayList<>(c.getTextCategories()));
         p.put("messageMediaTypes", new ArrayList<>(c.getMessageMediaTypes()));
         p.put("messageContainerMediaTypes", new ArrayList<>(c.getMessageContainerMediaTypes()));
+        p.put("prepareBinaryText", c.isPrepareBinaryText());
         Map<String, Object> hnsw = new LinkedHashMap<>();
         hnsw.put("maxConn", c.getHnswMaxConn());
         hnsw.put("beamWidth", c.getHnswBeamWidth());
@@ -307,6 +308,11 @@ public final class TextPreparation implements Closeable {
             if (containerTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {
                 // a chat database: its conversations come in through their messages
                 status(item.id, CoverageReason.COVERED_BY_MESSAGES, "message container");
+                return;
+            }
+            if (item.binaryText && !config.isPrepareBinaryText()) {
+                // strings of a binary: large, and rarely worth a question by meaning (research D6)
+                status(item.id, CoverageReason.BINARY_TEXT, null);
                 return;
             }
             if (item.isMessage() && messageTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {

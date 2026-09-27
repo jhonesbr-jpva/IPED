@@ -40,7 +40,9 @@ Every answer carries `ordering_notice`, and it is not boilerplate. What follows 
   list was cut by depth, not by relevance.
 - **An item that is not covered was never compared.** `coverage.not_covered` counts them by reason:
   an image with no text, a document that was never processed with OCR, an item from before the
-  capability existed in this case. Their absence from the ranking says nothing about their content.
+  capability existed in this case, and - by default - text drawn from binaries (`BINARY_TEXT`:
+  strings of executables and libraries, unknown binaries, unallocated space, slack), which keyword
+  search still reaches. Their absence from the ranking says nothing about their content.
   If the scope matters, read the coverage before reading the entries, and say in the answer what
   part of the scope was not compared.
 - **`proximity` is relative, and it comes with `proximity_kind`.** It orders entries within one

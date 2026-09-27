@@ -82,6 +82,13 @@ messageMediaTypes = message/x-whatsapp-message; message/x-telegram-message; mess
 # they are recorded as "covered by the messages" instead of prepared as passages.
 messageContainerMediaTypes = application/x-whatsapp-db; application/x-whatsapp-db-f; application/x-whatsapp-chatstorage; application/x-whatsapp-chatstorage-f; application/x-threema-chatstorage; application/x-threema-chatstorage-f; application/x-telegram-db; application/x-telegram-db-ios; application/x-ios-sms-db
 
+# Text IPED draws from binaries by strings extraction: executables and libraries,
+# unknown binaries, unallocated space and file slack. It is often most of the text
+# of a system image (a Linux image measured 7 billion characters, 45% from binaries)
+# and rarely worth a question by meaning, so it is not prepared unless this is true.
+# Such items are recorded as "text drawn from a binary". Keyword search is unaffected.
+prepareBinaryText = false
+
 # Text beyond this many characters per item is not prepared; the excess is
 # declared in the item's coverage ("covered up to the limit").
 maxTextCharsPerItem = 200000

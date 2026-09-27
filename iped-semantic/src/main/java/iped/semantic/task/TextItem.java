@@ -26,6 +26,8 @@ public final class TextItem {
     final Integer position;
     final String sender;
     final String body;
+    /** The text was drawn from a binary by strings extraction ({@link #binaryText()}). */
+    boolean binaryText;
 
     private TextItem(int id, String mediaType, Set<String> categories, TextSource text, String transcript,
             Integer chatId, Long date, Integer position, String sender, String body) {
@@ -65,6 +67,15 @@ public final class TextItem {
             throw new IOException(reason);
         };
         return new TextItem(id, mediaType, categories, broken, null, null, null, null, null, null);
+    }
+
+    /**
+     * Marks the item's text as drawn from a binary by strings extraction; such text is prepared
+     * only with {@code prepareBinaryText} on. Returns this item.
+     */
+    public TextItem binaryText() {
+        this.binaryText = true;
+        return this;
     }
 
     public boolean isMessage() {

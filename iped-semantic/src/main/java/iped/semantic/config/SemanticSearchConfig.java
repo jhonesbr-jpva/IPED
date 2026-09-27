@@ -117,6 +117,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private ArrayList<String> visualCategories = new ArrayList<>();
     private ArrayList<String> messageMediaTypes = new ArrayList<>(DEFAULT_MESSAGE_MEDIA_TYPES);
     private ArrayList<String> messageContainerMediaTypes = new ArrayList<>(DEFAULT_MESSAGE_CONTAINER_MEDIA_TYPES);
+    private boolean prepareBinaryText = false;
     private int maxTextCharsPerItem = 200_000;
     private int passageChars = 1000;
     private int passageOverlapChars = 200;
@@ -211,6 +212,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         visualCategories = list(p, "visualCategories", visualCategories);
         messageMediaTypes = list(p, "messageMediaTypes", messageMediaTypes);
         messageContainerMediaTypes = list(p, "messageContainerMediaTypes", messageContainerMediaTypes);
+        prepareBinaryText = bool(p, "prepareBinaryText", prepareBinaryText);
         maxTextCharsPerItem = integer(p, "maxTextCharsPerItem", maxTextCharsPerItem, 1);
         passageChars = integer(p, "passageChars", passageChars, 1);
         passageOverlapChars = integer(p, "passageOverlapChars", passageOverlapChars, 0);
@@ -470,6 +472,15 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     /** Chat databases recorded as {@code COVERED_BY_MESSAGES} instead of prepared as passages. */
     public List<String> getMessageContainerMediaTypes() {
         return Collections.unmodifiableList(messageContainerMediaTypes);
+    }
+
+    /**
+     * Whether text IPED draws from binaries by strings extraction (executables, libraries, unknown
+     * binaries, unallocated space, file slack) is prepared. Off by default: that text is large and
+     * rarely worth a question by meaning (research D6, amended 2026-09-27).
+     */
+    public boolean isPrepareBinaryText() {
+        return prepareBinaryText;
     }
 
     public int getMaxTextCharsPerItem() {

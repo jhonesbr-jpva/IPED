@@ -176,7 +176,33 @@ public class SemanticTextTask extends AbstractTask {
             return TextItem.message(evidence.getId(), mediaType, categories, textSource(evidence),
                     transcript(evidence), parent, date == null ? null : date.getTime(), position, sender, body);
         }
-        return TextItem.document(evidence.getId(), mediaType, categories, textSource(evidence), transcript(evidence));
+        TextItem item = TextItem.document(evidence.getId(), mediaType, categories, textSource(evidence),
+                transcript(evidence));
+        return isBinaryText(mediaType, md) ? item.binaryText() : item;
+    }
+
+    private static final String RAW_STRINGS = "iped.parsers.standard.RawStringParser";
+    private static final Set<String> BINARY_AREAS = Set.of("application/x-unallocated", "application/x-fileslack");
+
+    /**
+     * Whether IPED drew the item's text from a binary: its parser chain holds the strings extractor,
+     * which {@code ParserConfig.xml} uses for executables and libraries (with the metadata-only
+     * {@code ExecutableParser}) and as the fallback for unknown binaries, unallocated space and file
+     * slack. Unallocated space and slack count by type too, whatever parsed them.
+     */
+    static boolean isBinaryText(String mediaType, Metadata md) {
+        if (BINARY_AREAS.contains(mediaType.toLowerCase(java.util.Locale.ROOT))) {
+            return true;
+        }
+        if (md == null) {
+            return false;
+        }
+        for (String parser : md.getValues(org.apache.tika.metadata.TikaCoreProperties.TIKA_PARSED_BY)) {
+            if (RAW_STRINGS.equals(parser)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

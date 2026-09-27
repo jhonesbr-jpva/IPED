@@ -60,6 +60,7 @@ próprios, codec HNSW) e `staging/` (mensagens à espera de virar sequência). C
 | Modo híbrido por RRF ponderado | D20 | `rrfLexicalWeight` 0,3, calibrado no caso de avaliação |
 | Referência de mensagem sem remetentes | D22 | "Mais como este" pede significado, não interlocutor |
 | Modelo copiado para o caso | D17 | O app do próprio caso precisa dele na hora da busca (`CaseModels`) |
+| Texto de binários fora do padrão | D6 (revisão de 2026-09-27) | Cadeia de parsers com o `RawStringParser`, espaço não alocado e slack ficam `BINARY_TEXT`; `prepareBinaryText = true` inclui. Era 45% do texto de uma imagem Linux medida |
 
 ## 4. Configuração
 
@@ -125,5 +126,8 @@ log registra a sobreposição. JDK de build: Liberica 11 Full (o runtime do rele
   exibem o parágrafo certo do relatório longo.
 - As janelas de foco quase dobram a inferência de texto nos itens longos (no corpus de avaliação,
   preparação de 23 s para 38 s).
+- O custo segue o volume de texto: ~113 mil caracteres por segundo em 14 núcleos, sem janelas de
+  foco. Uma imagem de sistema rica em texto (código, documentação, configurações) leva horas mesmo
+  sem o texto de binários; SC-010 (≤ 3×) e SC-013 (≤ 4×) são medidos no caso de avaliação.
 - O vetor de uma sequência leva os remetentes; entre conversas, os nomes ainda pesam do lado dos
   candidatos (D22).

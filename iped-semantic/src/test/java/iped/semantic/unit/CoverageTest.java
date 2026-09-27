@@ -65,7 +65,9 @@ public class CoverageTest {
                 c.message(13, 10, 2, "Ana", ""),
                 // the chat database: its text lists the conversations, which come in as messages
                 TextItem.document(9, "application/x-whatsapp-db", java.util.Set.of("WhatsApp"),
-                        () -> new java.io.StringReader("WhatsApp Chat - Ana - quanto fica a entrega"), null));
+                        () -> new java.io.StringReader("WhatsApp Chat - Ana - quanto fica a entrega"), null),
+                // strings of a library: not prepared by default
+                binary(c, 14));
         c.items.set(9);
         c.prepareAll(p, items);
         p.finish();
@@ -74,8 +76,10 @@ public class CoverageTest {
         try (SemanticSearcher s = c.searcher(E)) {
             Coverage all = s.coverage(Modality.TEXT, null);
             assertInvariant(all);
-            assertEquals(11, all.getRecorteSize());
+            assertEquals(12, all.getRecorteSize());
             Map<CoverageReason, Long> nc = all.getNotCovered();
+            assertEquals(Long.valueOf(1), nc.get(CoverageReason.BINARY_TEXT));
+            assertEquals(CoverageReason.BINARY_TEXT, s.table(Modality.TEXT).reasonOf(14));
             assertEquals(Long.valueOf(2), nc.get(CoverageReason.NO_TEXT)); // item 3 and message 13
             assertEquals(Long.valueOf(2), nc.get(CoverageReason.ANALYSIS_NOT_RUN));
             assertEquals("the chat and its database", Long.valueOf(2), nc.get(CoverageReason.COVERED_BY_MESSAGES));
@@ -93,6 +97,28 @@ public class CoverageTest {
             assertInvariant(part);
             assertEquals(3, part.getRecorteSize());
             assertEquals(1, part.getCovered());
+        }
+    }
+
+    private static TextItem binary(SyntheticCase c, int id) {
+        c.items.set(id);
+        return TextItem.document(id, "application/x-sharedlib", java.util.Set.of("Other files"),
+                () -> new java.io.StringReader("GLIBC_2.17 __cxa_finalize libpthread.so.0 malloc free"), null)
+                .binaryText();
+    }
+
+    @Test
+    public void textDrawnFromABinaryIsPreparedOnlyWhenAskedFor() throws Exception {
+        UTF8Properties props = new UTF8Properties();
+        props.setProperty("prepareBinaryText", "true");
+        SemanticSearchConfig cfg = new SemanticSearchConfig();
+        cfg.processProperties(props);
+        SyntheticCase c = new SyntheticCase("covbinary", cfg);
+        TextPreparation p = c.open(E, null);
+        c.prepareAll(p, List.of(binary(c, 1)));
+        p.finish();
+        try (SemanticSearcher s = c.searcher(E)) {
+            assertEquals(CoverageReason.COVERED, s.table(Modality.TEXT).reasonOf(1));
         }
     }
 

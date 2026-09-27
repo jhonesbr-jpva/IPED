@@ -32,6 +32,12 @@ public enum CoverageReason {
     /** A video frame extracted as a subitem while videos are prepared from the source video. */
     COVERED_BY_SOURCE_VIDEO,
     CATEGORY_NOT_SELECTED,
+    /**
+     * The item's text was drawn from a binary by strings extraction (IPED's {@code RawStringParser}:
+     * executables and libraries, unknown binaries, unallocated space, file slack), which is not
+     * prepared unless {@code prepareBinaryText} is on.
+     */
+    BINARY_TEXT,
     REMOTE_UNAVAILABLE,
     /** Appended evidence whose model fingerprint does not match the case's (research D16). */
     MODEL_MISMATCH,
