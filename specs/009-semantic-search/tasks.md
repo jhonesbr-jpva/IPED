@@ -381,12 +381,13 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
 
 - [X] T071 [P] [US6] `iped-semantic/src/test/java/iped/semantic/unit/VideoMosaicSplitterTest.java`: leitura de `Frames=RxC` e geometria de célula igual à de `ImageUtil.getBestFramesFit` (borda de 2 px), sobre um mosaico sintético.
 - [X] T072 [P] [US6] `iped-semantic/src/test/java/iped/semantic/unit/FrameInstantTest.java`: fórmula igual à de `VideoThumbsMaker` (`-ss 1`, `-sstep` com `frequency = (duração − 1000) × 0,00095 / (maxThumbs + 2)`), resultado sempre marcado como aproximado e formatado "≈ mm:ss".
-- [ ] T073 [P] [US6] `iped-semantic/src/test/java/iped/semantic/integration/VisualPreparationIT.java` cobre:
+- [X] T073 [P] [US6] `iped-semantic/src/test/java/iped/semantic/integration/VisualPreparationIT.java` cobre:
   - imagens ligadas e vídeos desligados → vídeos `MODALITY_OFF`;
   - quadros-subitem com vídeos ligados → `COVERED_BY_SOURCE_VIDEO`;
   - imagem abaixo de `minImageSize = 48` → `IMAGE_TOO_SMALL`;
   - vídeos ligados sem miniatura de vídeo → `VIDEO_NO_FRAMES` e conflito `VIDEOS_ON_WITHOUT_VIDEO_THUMBS` no registro;
   - `timing` separado em `images`/`videos`.
+  - Implementado sobre `VisualPreparation` com itens sintéticos e o `FakeEmbedder` (hermético, sem parâmetro), cobrindo também a busca de T080: um vídeo por entrada pelo melhor quadro, com instante aproximado, e `BOTH` em duas ordenações. Um item que não é imagem nem vídeo recebe `CATEGORY_NOT_SELECTED`, e o de uma chave desligada recebe `MODALITY_OFF` gravado, para a cobertura de qualquer recorte fechar. O teste achou um defeito: o cache de impressão digital do `Compatibility` não separava as sondas de imagem, e o mesmo modelo nas duas modalidades acusava incompatibilidade.
 - [ ] T074 [P] [US6] `iped-semantic/src/test/java/iped/semantic/eval/VisualQualityEval.java`: SC-012 (≥ 70%) e SC-014 (≥ 70%), e, em separado, o acerto das descrições em inglês (FR-036), tudo gravado no `validation-log.md`.
 
 ### Implementation for User Story 6
@@ -394,15 +395,15 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
 - [X] T075 [US6] Estender `iped-semantic/tools/export-models/export_models.py` para `sentence-transformers/clip-ViT-B-32-multilingual-v1`, com dois grafos (codificador de texto com tokenizador embutido e codificador de imagem) e o pré-processamento (224 px, recorte central, normalização) declarado em `model.json`. Empacotar como zip separado, **fora do release**, no leiaute `models/semantic/visual/<id>/`, com instruções de instalação no `README.md` da ferramenta.
 - [X] T076 [US6] Caminho de imagem em `iped-semantic/src/main/java/iped/semantic/model/LocalOnnxEmbedder.java`: `embedImages` com o pré-processamento de `model.json` em Java2D, e `embedTexts` pelo codificador de texto do modelo visual.
 - [X] T077 [P] [US6] `iped-semantic/src/main/java/iped/semantic/prep/VideoMosaicSplitter.java` e `prep/FrameInstant.java` (regras de T071 e T072). A leitura do mosaico segue o `VideoThumbTask` (preview e `ImageUtil.readJpegWithMetaData`), só leitura.
-- [ ] T078 [US6] `iped-semantic/src/main/java/iped/semantic/task/SemanticVisualTask.java`:
+- [X] T078 [US6] `iped-semantic/src/main/java/iped/semantic/task/SemanticVisualTask.java`:
   - habilitação e config: `getConfigurables()` devolve `SemanticSearchConfig` mais `new EnableTaskProperty("enableSemanticImages")` e `new EnableTaskProperty("enableSemanticVideos")`; `isEnabled()` = imagens ∨ vídeos;
   - imagens: pela miniatura do item (`getThumb()`); `minImageSize` sobre as dimensões originais; `NO_THUMBNAIL` e `IMAGE_UNDECODABLE`;
   - vídeos: pelo mosaico, com o melhor quadro por vídeo, `frameIndex`/`frameCount`/`instantApproxMs`, e `VIDEO_NO_FRAMES`;
   - quadros-subitem excluídos com vídeos ligados;
   - registro: conflitos, e `timing` separado em `images`/`videos` (FR-021, SC-015);
   - `SourceValidator` para a fonte visual (FR-042).
-- [ ] T079 [US6] Registrar `<task class="iped.semantic.task.SemanticVisualTask"></task>` logo depois de `ImageSimilarityTask` em `iped-app/resources/config/conf/TaskInstaller.xml` e em `iped-app/resources/config/profiles/triage/conf/TaskInstaller.xml`.
-- [ ] T080 [US6] Modalidade visual em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: pergunta pelo codificador de texto do modelo visual (PT e EN, FR-036); um vídeo por entrada, pelo melhor quadro; `BOTH` → **duas** ordenações, nunca mescladas (FR-034); sempre `mode: SEMANTIC`.
+- [X] T079 [US6] Registrar `<task class="iped.semantic.task.SemanticVisualTask"></task>` logo depois de `ImageSimilarityTask` em `iped-app/resources/config/conf/TaskInstaller.xml` e em `iped-app/resources/config/profiles/triage/conf/TaskInstaller.xml`.
+- [X] T080 [US6] Modalidade visual em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: pergunta pelo codificador de texto do modelo visual (PT e EN, FR-036); um vídeo por entrada, pelo melhor quadro; `BOTH` → **duas** ordenações, nunca mescladas (FR-034); sempre `mode: SEMANTIC`.
 - [ ] T081 [US6] Aba visual no painel: `iped-app/src/main/java/iped/app/ui/semantic/VisualEntryRenderer.java`, com a miniatura desenhada respeitando o desfoque global (`GalleryModel.getBlurFilter()` e `ImageUtil.blur`, como a galeria, FR-037) e "≈ mm:ss" nos vídeos; escolha Texto/Visual/Ambas em `SemanticSearchPanel.java`, com as modalidades não preparadas desabilitadas e com dica.
 - [ ] T082 [US6] Entradas visuais em `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java`: `kind` `image`/`video`, `frame.frame_index`, `frame.instant_approx`, `instant_is_approximate: true`, **sem** imagem (FR-039). Acrescentar a `semantic-search.md` que o exame é por `iped_item_thumbnail`.
 

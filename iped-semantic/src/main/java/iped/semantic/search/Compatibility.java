@@ -22,7 +22,12 @@ import iped.semantic.store.BuildRecord.ModalityRecord;
  */
 public final class Compatibility {
 
-    private final Map<Embedder, Fingerprint> computed = new ConcurrentHashMap<>();
+    /**
+     * By embedder and by probe set: the same model can serve both modalities, and the visual
+     * fingerprint has the image probes the text one has not.
+     */
+    private final Map<Embedder, Fingerprint> computedText = new ConcurrentHashMap<>();
+    private final Map<Embedder, Fingerprint> computedWithImages = new ConcurrentHashMap<>();
 
     /**
      * @param record
@@ -38,6 +43,7 @@ public final class Compatibility {
      */
     public Fingerprint.Comparison check(ModalityRecord record, Embedder embedder, boolean withImages,
             double tolerance) throws EmbeddingException {
+        Map<Embedder, Fingerprint> computed = withImages ? computedWithImages : computedText;
         Fingerprint current = computed.get(embedder);
         if (current == null) {
             current = Fingerprint.compute(embedder, withImages, tolerance);
@@ -55,6 +61,7 @@ public final class Compatibility {
 
     /** Forgets the computed probes (a new session). */
     public void reset() {
-        computed.clear();
+        computedText.clear();
+        computedWithImages.clear();
     }
 }

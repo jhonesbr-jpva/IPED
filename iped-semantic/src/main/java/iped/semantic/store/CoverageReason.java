@@ -33,7 +33,11 @@ public enum CoverageReason {
     /** Appended evidence whose model fingerprint does not match the case's (research D16). */
     MODEL_MISMATCH,
     PREP_FAILURE,
-    /** Derived, never stored: the modality or key was off when the item was processed. */
+    /**
+     * The modality or key was off when the item was processed. Derived from the build record when
+     * the whole modality was off; stored by the visual preparation for the items of a key that was
+     * off while the other was on (images on and videos off, or the reverse).
+     */
     MODALITY_OFF,
     /** Derived, never stored: the item predates the capability in this case (appended case). */
     BEFORE_CAPABILITY;
@@ -55,7 +59,7 @@ public enum CoverageReason {
         return this == COVERED || this == COVERED_TRUNCATED;
     }
 
-    /** Derived reasons have no status document; they come from the build record (research D12). */
+    /** Reasons the build record can give an item that has no status document (research D12). */
     public boolean isDerived() {
         return this == MODALITY_OFF || this == BEFORE_CAPABILITY;
     }

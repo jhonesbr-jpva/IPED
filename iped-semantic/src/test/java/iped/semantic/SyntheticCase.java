@@ -1,5 +1,7 @@
 package iped.semantic;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.StringReader;
 import java.nio.file.Path;
@@ -19,6 +21,8 @@ import iped.semantic.search.SemanticSearcher;
 import iped.semantic.task.SourceValidator;
 import iped.semantic.task.TextItem;
 import iped.semantic.task.TextPreparation;
+import iped.semantic.task.VisualItem;
+import iped.semantic.task.VisualPreparation;
 
 /**
  * A case built in the test JVM: the text preparation of the processing, driven directly with a
@@ -107,6 +111,66 @@ public final class SyntheticCase {
         for (TextItem t : list) {
             p.prepare(t);
         }
+    }
+
+    /** Opens a visual processing of this case with an embedder and the keys in {@code s}. */
+    public VisualPreparation openVisual(Embedder e, VisualPreparation.Settings s) throws Exception {
+        SourceValidator.Validated v;
+        try {
+            v = SourceValidator.validate(config, Modality.VISUAL, SemanticSearchConfig.ENABLE_IMAGES, provider(e));
+        } catch (SemanticConfigException ex) {
+            throw new IllegalStateException(ex);
+        }
+        return VisualPreparation.open(moduleDir, config, v, s.ipedVersion("test"));
+    }
+
+    /** A solid-colour picture, PNG-encoded as a thumbnail would be stored. */
+    public static byte[] png(Color color, int w, int h) {
+        BufferedImage img = picture(color, w, h);
+        try {
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(img, "png", out);
+            return out.toByteArray();
+        } catch (java.io.IOException ex) {
+            throw new java.io.UncheckedIOException(ex);
+        }
+    }
+
+    public static BufferedImage picture(Color color, int w, int h) {
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g = img.createGraphics();
+        g.setColor(color);
+        g.fillRect(0, 0, w, h);
+        g.dispose();
+        return img;
+    }
+
+    /** An image item of original size {@code w x h} whose thumbnail is a solid colour. */
+    public VisualItem image(int id, Color color, int w, int h) {
+        items.set(id);
+        byte[] thumb = png(color, Math.min(w, 160), Math.min(h, 160));
+        return VisualItem.image(id, Set.of("Imagens"), w, h, () -> thumb);
+    }
+
+    /** A video whose mosaic has one solid-colour frame per colour; no colours means no mosaic. */
+    public VisualItem video(int id, long durationMs, Color... frames) {
+        items.set(id);
+        List<BufferedImage> list = new java.util.ArrayList<>();
+        for (Color c : frames) {
+            list.add(picture(c, 64, 48));
+        }
+        return VisualItem.video(id, Set.of("Vídeos"), () -> list.isEmpty() ? null : list, durationMs);
+    }
+
+    public VisualItem frameSubitem(int id, Color color) {
+        items.set(id);
+        byte[] thumb = png(color, 64, 48);
+        return VisualItem.videoFrameSubitem(id, Set.of("Imagens"), 64, 48, () -> thumb);
+    }
+
+    public VisualItem other(int id) {
+        items.set(id);
+        return VisualItem.other(id, Set.of("Documentos"));
     }
 
     public SemanticSearcher searcher(Embedder e) {

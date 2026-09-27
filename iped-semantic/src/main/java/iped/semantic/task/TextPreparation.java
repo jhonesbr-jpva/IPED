@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,12 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +28,6 @@ import iped.semantic.config.SemanticSearchConfig;
 import iped.semantic.config.SemanticSearchConfig.Modality;
 import iped.semantic.config.SemanticSearchConfig.Source;
 import iped.semantic.model.Embedder;
-import iped.semantic.model.EmbeddingException;
 import iped.semantic.model.EmbeddingService;
 import iped.semantic.model.Fingerprint;
 import iped.semantic.model.RemoteEmbedders;
@@ -387,9 +379,7 @@ public final class TextPreparation implements Closeable {
     }
 
     private static CoverageReason failureReason(Exception e) {
-        return e instanceof EmbeddingException && ((EmbeddingException) e).isRemoteUnavailable()
-                ? CoverageReason.REMOTE_UNAVAILABLE
-                : CoverageReason.PREP_FAILURE;
+        return PreparationSupport.failureReason(e);
     }
 
     /** All passages of one item; written in one operation when the last vector arrives. */
@@ -658,28 +648,7 @@ public final class TextPreparation implements Closeable {
 
     /** Status documents per reason code, over the whole committed index (so appends add up). */
     private Map<String, Long> countReasons() throws IOException {
-        Map<CoverageReason, Long> byReason = new EnumMap<>(CoverageReason.class);
-        try (DirectoryReader reader = DirectoryReader.open(FSDirectory.open(store.index(Modality.TEXT)))) {
-            for (LeafReaderContext ctx : reader.leaves()) {
-                SortedDocValues dv = ctx.reader().getSortedDocValues(SemanticFields.REASON);
-                if (dv == null) {
-                    continue;
-                }
-                Bits live = ctx.reader().getLiveDocs();
-                for (int doc = dv.nextDoc(); doc != DocIdSetIterator.NO_MORE_DOCS; doc = dv.nextDoc()) {
-                    if (live != null && !live.get(doc)) {
-                        continue;
-                    }
-                    CoverageReason r = CoverageReason.fromCode(dv.lookupOrd(dv.ordValue()).utf8ToString());
-                    if (r != null) {
-                        byReason.merge(r, 1L, Long::sum);
-                    }
-                }
-            }
-        }
-        Map<String, Long> out = new LinkedHashMap<>();
-        byReason.forEach((k, v) -> out.put(k.code(), v));
-        return out;
+        return PreparationSupport.countReasons(store.index(Modality.TEXT));
     }
 
     /**
