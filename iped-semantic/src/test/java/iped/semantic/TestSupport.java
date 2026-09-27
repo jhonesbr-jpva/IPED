@@ -22,6 +22,7 @@ import iped.semantic.config.SemanticSearchConfig;
 public final class TestSupport {
 
     public static final String TEXT_MODEL_PROPERTY = "iped.semantic.test.textModel";
+    public static final String VISUAL_MODEL_PROPERTY = "iped.semantic.test.visualModel";
     public static final String REFERENCE_CASE_PROPERTY = "iped.semantic.test.referenceCase";
     public static final String EVAL_CASE_PROPERTY = "iped.semantic.test.evalCase";
 
@@ -72,6 +73,15 @@ public final class TestSupport {
     public static Path requireTextModel() {
         String dir = System.getProperty(TEXT_MODEL_PROPERTY);
         Assume.assumeTrue("text model not given; pass -D" + TEXT_MODEL_PROPERTY + "=<model folder>", dir != null);
+        Path p = Paths.get(dir);
+        Assume.assumeTrue("no model.json in " + p, Files.isRegularFile(p.resolve("model.json")));
+        return p;
+    }
+
+    /** The exported visual model folder, or skips the test when not given. */
+    public static Path requireVisualModel() {
+        String dir = System.getProperty(VISUAL_MODEL_PROPERTY);
+        Assume.assumeTrue("visual model not given; pass -D" + VISUAL_MODEL_PROPERTY + "=<model folder>", dir != null);
         Path p = Paths.get(dir);
         Assume.assumeTrue("no model.json in " + p, Files.isRegularFile(p.resolve("model.json")));
         return p;

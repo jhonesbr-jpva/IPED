@@ -85,6 +85,77 @@ of preparing anything. Once the artifact is published, the execution moves into 
 
 ## Visual model
 
-`python export_models.py visual --out <dir>` exports
-`sentence-transformers/clip-ViT-B-32-multilingual-v1`. See the section **Visual model** below,
-filled in by T075.
+| | |
+|---|---|
+| Text encoder | [`sentence-transformers/clip-ViT-B-32-multilingual-v1`](https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1) at revision `58edf8cada9e398793dca955574a48cbb7f18be2` (DistilBERT multilingual, distilled against the CLIP text tower), file `onnx/model.onnx` plus `2_Dense` |
+| Image encoder | [`openai/clip-vit-base-patch32`](https://huggingface.co/openai/clip-vit-base-patch32) at revision `3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268`: the CLIP ViT-B/32 vision tower and visual projection, the image side the multilingual text encoder was trained to match |
+| Licenses | Apache-2.0 (text, model card) and MIT (CLIP image encoder, [openai/CLIP](https://github.com/openai/CLIP/blob/main/LICENSE)); both in `LICENSE` |
+| Identity | `sentence-transformers/clip-ViT-B-32-multilingual-v1@58edf8c…+openai/clip-vit-base-patch32@3d74acf…+onnx-textint8-imagefp32-ortx` |
+| Artifact sha256 | `2062849932983c06aae99cde572d5cd2fde50aa5291f9e403a86695713a47911` (2026-09-27): sha256 of the lines `image:<sha256 of image.onnx>` and `text:<sha256 of text.onnx>`, as `LocalOnnxEmbedder` computes it |
+| Size | `text.onnx` 132 MB, `image.onnx` 335 MB; 295 MB zipped |
+| Input / output | `text.onnx`: `text` string `[1]` → `embedding` float `[1, 512]`; `image.onnx`: `pixel_values` float `[N, 3, 224, 224]` → `image_embedding` float `[N, 512]`; both unit norm |
+
+What the graphs do:
+
+- **`text.onnx`**: `BertTokenizer` (ONNX Runtime Extensions, cased WordPiece, generated from the
+  upstream tokenizer) → truncation to 128 tokens, keeping the first 127 ids and ending in `[SEP]`
+  as the reference tokenizer truncates → DistilBERT → masked mean pooling → the `Dense` 768→512
+  projection (no bias, identity activation) → L2. That is `SentenceTransformer.encode` for the
+  upstream model. One text per run, as IPED calls it. No prefixes.
+- **`image.onnx`**: exported from torch (`CLIPVisionModelWithProjection`, opset 17) with the L2
+  normalisation in the graph. Pixels are prepared by the caller, as declared in `model.json` →
+  `image`: shortest side to 224 with bicubic resampling, centre crop to 224×224, scale to [0, 1],
+  CLIP mean and standard deviation. In IPED that is `ImagePreprocessor`, a Java2D port of what
+  `CLIPImageProcessor` does with Pillow.
+
+Verification done by the export (recorded in `model.json` → `export.verification`):
+
+- The in-graph ids are **identical** to the reference tokenizer's (`truncation=True,
+  max_length=128`), for PT, EN, ES, the empty string and a text well above 128 tokens.
+- The fp32 graphs reproduce the torch/sentence-transformers reference at cosine 1.0000.
+- **Quantization was decided by measurement.** Dynamic int8 (U8U8, per channel, as the text
+  model) is kept only when every verification input stays at cosine ≥ 0.99 from the fp32
+  reference. Text: 0.9986–0.9998, kept in int8. Image: 0.93–0.99 on the probe pictures, so the
+  image encoder stays **fp32**.
+- `verify/probe-*.png` are three synthetic pictures (drawn by the script, nothing downloaded) with
+  the embeddings this export gives them, in `export.verification.imageProbes`. An installation
+  checks its own pre-processing against them (`LocalOnnxEmbedderVisualTest`).
+- Sanity of the pairing, on the probes: "uma praia ao pôr do sol" and "a beach with the sun in the
+  sky" rank the beach first; "um quadrado vermelho" and "a red square on a white background" rank
+  the red square first.
+
+### Running it
+
+```powershell
+# Python 3.11, separate from the text environment: the visual export needs torch
+python -m venv .venv-visual
+.venv-visual\Scripts\pip install -r requirements-visual.txt
+.venv-visual\Scripts\python export_models.py visual --out <dir>
+```
+
+Output:
+
+```text
+<dir>/models/semantic/visual/clip-vit-b-32-multilingual-v1/
+├── text.onnx
+├── image.onnx
+├── model.json      # identity, artifact sha256, files by role, pre-processing, verification
+├── LICENSE
+└── verify/probe-1.png, probe-2.png, probe-3.png
+<dir>/semantic-visual-clip-vit-b-32-multilingual-v1.zip
+```
+
+### Installing it
+
+The visual model is **not** in the IPED release: it is a separate package, installed by whoever
+turns the visual modality on (FR-041 only requires the text model in the package). Unzip it into
+the installation so that the folder above lands at
+
+```text
+<IPED>/models/semantic/visual/clip-vit-b-32-multilingual-v1/
+```
+
+which is the default `visualLocalModel` in `conf/SemanticSearchConfig.txt`. Without it, turning
+`enableSemanticImages` or `enableSemanticVideos` on fails at start-up with "local model missing"
+(FR-042), and the analysis UI and the MCP declare the visual modality unavailable with that
+reason.

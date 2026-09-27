@@ -379,8 +379,8 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T071 [P] [US6] `iped-semantic/src/test/java/iped/semantic/unit/VideoMosaicSplitterTest.java`: leitura de `Frames=RxC` e geometria de célula igual à de `ImageUtil.getBestFramesFit` (borda de 2 px), sobre um mosaico sintético.
-- [ ] T072 [P] [US6] `iped-semantic/src/test/java/iped/semantic/unit/FrameInstantTest.java`: fórmula igual à de `VideoThumbsMaker` (`-ss 1`, `-sstep` com `frequency = (duração − 1000) × 0,00095 / (maxThumbs + 2)`), resultado sempre marcado como aproximado e formatado "≈ mm:ss".
+- [X] T071 [P] [US6] `iped-semantic/src/test/java/iped/semantic/unit/VideoMosaicSplitterTest.java`: leitura de `Frames=RxC` e geometria de célula igual à de `ImageUtil.getBestFramesFit` (borda de 2 px), sobre um mosaico sintético.
+- [X] T072 [P] [US6] `iped-semantic/src/test/java/iped/semantic/unit/FrameInstantTest.java`: fórmula igual à de `VideoThumbsMaker` (`-ss 1`, `-sstep` com `frequency = (duração − 1000) × 0,00095 / (maxThumbs + 2)`), resultado sempre marcado como aproximado e formatado "≈ mm:ss".
 - [ ] T073 [P] [US6] `iped-semantic/src/test/java/iped/semantic/integration/VisualPreparationIT.java` cobre:
   - imagens ligadas e vídeos desligados → vídeos `MODALITY_OFF`;
   - quadros-subitem com vídeos ligados → `COVERED_BY_SOURCE_VIDEO`;
@@ -391,9 +391,9 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
 
 ### Implementation for User Story 6
 
-- [ ] T075 [US6] Estender `iped-semantic/tools/export-models/export_models.py` para `sentence-transformers/clip-ViT-B-32-multilingual-v1`, com dois grafos (codificador de texto com tokenizador embutido e codificador de imagem) e o pré-processamento (224 px, recorte central, normalização) declarado em `model.json`. Empacotar como zip separado, **fora do release**, no leiaute `models/semantic/visual/<id>/`, com instruções de instalação no `README.md` da ferramenta.
-- [ ] T076 [US6] Caminho de imagem em `iped-semantic/src/main/java/iped/semantic/model/LocalOnnxEmbedder.java`: `embedImages` com o pré-processamento de `model.json` em Java2D, e `embedTexts` pelo codificador de texto do modelo visual.
-- [ ] T077 [P] [US6] `iped-semantic/src/main/java/iped/semantic/prep/VideoMosaicSplitter.java` e `prep/FrameInstant.java` (regras de T071 e T072). A leitura do mosaico segue o `VideoThumbTask` (preview e `ImageUtil.readJpegWithMetaData`), só leitura.
+- [X] T075 [US6] Estender `iped-semantic/tools/export-models/export_models.py` para `sentence-transformers/clip-ViT-B-32-multilingual-v1`, com dois grafos (codificador de texto com tokenizador embutido e codificador de imagem) e o pré-processamento (224 px, recorte central, normalização) declarado em `model.json`. Empacotar como zip separado, **fora do release**, no leiaute `models/semantic/visual/<id>/`, com instruções de instalação no `README.md` da ferramenta.
+- [X] T076 [US6] Caminho de imagem em `iped-semantic/src/main/java/iped/semantic/model/LocalOnnxEmbedder.java`: `embedImages` com o pré-processamento de `model.json` em Java2D, e `embedTexts` pelo codificador de texto do modelo visual.
+- [X] T077 [P] [US6] `iped-semantic/src/main/java/iped/semantic/prep/VideoMosaicSplitter.java` e `prep/FrameInstant.java` (regras de T071 e T072). A leitura do mosaico segue o `VideoThumbTask` (preview e `ImageUtil.readJpegWithMetaData`), só leitura.
 - [ ] T078 [US6] `iped-semantic/src/main/java/iped/semantic/task/SemanticVisualTask.java`:
   - habilitação e config: `getConfigurables()` devolve `SemanticSearchConfig` mais `new EnableTaskProperty("enableSemanticImages")` e `new EnableTaskProperty("enableSemanticVideos")`; `isEnabled()` = imagens ∨ vídeos;
   - imagens: pela miniatura do item (`getThumb()`); `minImageSize` sobre as dimensões originais; `NO_THUMBNAIL` e `IMAGE_UNDECODABLE`;
