@@ -1,0 +1,148 @@
+########################################################################
+# Semantic search configuration
+########################################################################
+# Semantic search finds items by meaning: extracted text, OCR, audio
+# transcripts, chat messages read as conversation sequences, images and
+# video frames. It is OFF by default. Turn it on in IPEDConfig.txt:
+#   enableSemanticText   - text modality
+#   enableSemanticImages - visual modality, images
+#   enableSemanticVideos - visual modality, videos (by the frames already
+#                          extracted for the video thumbnail)
+#
+# A semantic result is a RANKING, not a set: it never says "no results"
+# and low proximity is not absence. Keyword search remains the authority
+# for identifiers and for claims that something does not occur.
+#
+# Everything this capability stores lives in <case>/iped/semantic/. The
+# main index is never changed.
+
+########################################################################
+# Model source, per modality (text / visual)
+########################################################################
+# 'local' runs the model on this workstation, with no network access.
+# 'remote' sends content to a service you declare below. There is NO
+# default destination. A case records the MODEL it was prepared with;
+# questions may use another source as long as the model fingerprint
+# confirms it is the same model.
+
+textModelSource = local
+# Relative to the IPED installation folder. Shipped with IPED.
+textLocalModel = models/semantic/text/multilingual-e5-small-int8
+
+# Remote text model. Protocol: openai-embeddings or iped-embed/1.
+textRemoteProtocol =
+# Base URL, for example https://gpu-lab.example/iped. HTTPS is required
+# unless the host is loopback or remoteAllowPlainHttp = true.
+textRemoteEndpoint =
+# Model name requested from the service.
+textRemoteModel =
+# Where the credential is found. NEVER write the credential itself here:
+# name an environment variable, or a file that contains only the credential.
+textRemoteCredentialEnv = IPED_SEMANTIC_TEXT_CREDENTIAL
+textRemoteCredentialFile =
+
+visualModelSource = local
+# The visual model is distributed as a separate package; unzip it into the
+# IPED installation folder so this path exists.
+visualLocalModel = models/semantic/visual/clip-vit-b-32-multilingual-v1
+# Remote visual model: only iped-embed/1 carries images.
+visualRemoteProtocol =
+visualRemoteEndpoint =
+visualRemoteModel =
+visualRemoteCredentialEnv = IPED_SEMANTIC_VISUAL_CREDENTIAL
+visualRemoteCredentialFile =
+
+# Plain HTTP is refused except for loopback, unless set to true here.
+remoteAllowPlainHttp = false
+# Timeout of each remote request, in seconds.
+remoteTimeoutSeconds = 60
+# Retries (with growing waits) before items are marked "remote model unavailable".
+remoteMaxRetries = 5
+
+########################################################################
+# What enters the semantic indexes
+########################################################################
+# Categories to prepare, separated by ';'. Empty means every category
+# (text: every item with text; visual: every image and video).
+textCategories =
+visualCategories =
+
+# Media types of chat messages. Messages of these types are not prepared
+# alone: they are read as conversation sequences of the same chat.
+messageMediaTypes = message/x-whatsapp-message; message/x-telegram-message; message/x-skype-message; message/x-discord-message; message/x-threema-message
+
+# Text beyond this many characters per item is not prepared; the excess is
+# declared in the item's coverage ("covered up to the limit").
+maxTextCharsPerItem = 200000
+
+# Passages: window size and overlap, in characters. Windows end at a
+# sentence boundary when there is one nearby.
+passageChars = 1000
+passageOverlapChars = 200
+
+# Conversation sequences: messages per window, step between windows,
+# maximum characters per window, and the gap (minutes) that breaks a window.
+chatWindowMessages = 8
+chatWindowStride = 4
+chatWindowMaxChars = 1500
+chatMaxGapMinutes = 720
+# A message shorter than this ("ok", an emoji) is never a sequence on its own: when a
+# gap isolates it, it joins the neighbouring window of the same chat.
+chatShortMessageChars = 20
+
+# Images whose larger side is below this many pixels (icons, emoji) are not
+# prepared, and appear in coverage with that reason.
+minImageSize = 48
+
+########################################################################
+# Search
+########################################################################
+# Depth shown by default, and the ceiling the examiner (UI) or the agent
+# (MCP, by paging) can extend to. The ceiling is a depth limit, not a
+# relevance threshold. There is no proximity floor, by design.
+defaultDepth = 100
+maxDepth = 1000
+
+# Passages retrieved per result entry before consolidation.
+oversampling = 4
+
+# A scope (current result) with up to this many items is searched exactly,
+# comparing every item. Above it the search is approximate (HNSW), which is
+# reproducible but may leave out an item an exhaustive comparison would
+# include. The method used is declared in every result.
+exactSearchMaxItems = 50000
+
+# Questions longer than this are truncated, and the truncation is declared.
+maxQueryChars = 2000
+
+# Minimum cosine between the probes computed now and those recorded in the
+# case for the model to count as the same model.
+fingerprintTolerance = 0.9995
+
+# Default ordering mode for text: 'hybrid' (meaning + words, fused by rank
+# position) or 'semantic' (meaning only). Chosen per question in the UI and MCP.
+defaultTextMode = hybrid
+# Rank fusion constant: score = sum of 1/(rrfK + position) over both lists.
+rrfK = 60
+# Size of the word-based list before fusion; 0 means maxDepth x oversampling.
+lexicalCandidates = 0
+
+# Maximum characters returned by the MCP tool iped_semantic_context.
+contextMaxChars = 8000
+
+# HNSW graph parameters of the semantic indexes (recorded in the case).
+hnswMaxConn = 16
+hnswBeamWidth = 100
+
+########################################################################
+# Processing cost
+########################################################################
+# Inference threads; 0 means half of the available processors.
+inferenceThreads = 0
+# Passages embedded per model call.
+batchSize = 32
+# Pending passages. When the queue is full, processing workers wait: this
+# bounds the memory the capability uses.
+queueCapacity = 1024
+# Commit interval of the semantic indexes during processing, in minutes.
+commitIntervalMinutes = 10

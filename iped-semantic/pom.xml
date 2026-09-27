@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>iped</groupId>
+        <artifactId>iped-parent</artifactId>
+        <version>4.3.1</version>
+    </parent>
+
+    <artifactId>iped-semantic</artifactId>
+    <packaging>jar</packaging>
+
+    <name>iped-semantic</name>
+    <description>Semantic (meaning-based) search over the text, images and video frames IPED already interprets.</description>
+
+    <properties>
+        <!-- Aligned with iped-mcp, which aligns with what Tika 2.4.0 brings transitively. -->
+        <jackson.core.version>2.13.2</jackson.core.version>
+        <jackson.databind.version>2.13.4.2</jackson.databind.version>
+        <!--
+            Pinned by the D2 gate (OrtBaselineSpikeTest, research.md "Resultado do spike"): every
+            class in both jars is class file 52, the Windows x64 and Linux x64 natives are inside,
+            sessions load with the network denied and run() is stable from four threads on the
+            release's Java 11. Changing either version means running the spike again.
+        -->
+        <onnxruntime.version>1.30.0</onnxruntime.version>
+        <onnxruntime.extensions.version>0.13.0</onnxruntime.extensions.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.databind.version}</version>
+        </dependency>
+        <!-- MVStore for the chat staging area; the same artifact and version iped-engine uses for previews. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.3.232</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>${onnxruntime.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime-extensions</artifactId>
+            <version>${onnxruntime.extensions.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- Native libraries are unpacked here in tests, never in the system temp folder. -->
+                        <iped.semantic.test.nativeDir>${project.build.directory}/onnxruntime</iped.semantic.test.nativeDir>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

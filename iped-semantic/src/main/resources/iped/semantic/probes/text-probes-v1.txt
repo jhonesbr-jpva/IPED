@@ -1,0 +1,21 @@
+# Fingerprint probes, version 1 (research D10). Sixteen fixed sentences in Portuguese, English and
+# Spanish. Their vectors are recorded in the build record of every prepared case and recomputed at
+# each search session: a model that answers differently is not the model the case was built with.
+# NEVER edit this file: a changed probe is a new probe set, published as text-probes-v2.txt with a
+# new probesVersion, and v1 must stay available for the cases that recorded it.
+O pagamento será feito em dinheiro vivo na entrega da mercadoria.
+Apaga todas as mensagens depois de ler, não deixa rastro.
+A reunião do conselho foi adiada para a próxima semana.
+Ele ameaçou a testemunha de morte caso ela falasse com a polícia.
+O relatório financeiro mostra queda de receita no terceiro trimestre.
+Vamos sair do país antes que o mandado seja expedido.
+The shipment will be left at the gate and paid for tomorrow.
+Please delete the chat history before anyone checks your phone.
+The quarterly earnings report was published this morning.
+A photograph of an identity card lying on a wooden table.
+Weather forecast: heavy rain expected over the weekend.
+El dinero fue transferido a una cuenta en el extranjero.
+Nos vemos mañana en la portería a las ocho.
+La receta lleva harina, huevos y un poco de azúcar.
+quanto? 5 mil. fechado, amanhã na portaria.
+Contrato de locação de imóvel residencial, cláusula de rescisão.

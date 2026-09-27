@@ -171,3 +171,19 @@ enableHTMLReport = true
 # It performs classification of image and video files.
 # Advanced settings can be modified in file "conf/RemoteImageClassifierConfig.txt"
 enableRemoteImageClassifier = false
+
+# Enables semantic (meaning-based) search over the text of items: extracted text, OCR,
+# audio transcripts and chat messages read as conversation sequences. Results are a ranking,
+# not a set: keyword search remains the authority for identifiers and for absence.
+# The text model ships with IPED and runs locally. Settings in conf/SemanticSearchConfig.txt.
+enableSemanticText = false
+
+# Enables semantic search over images, found by describing their content in words.
+# Uses the image thumbnails ("enableImageThumbs" must be enabled). The visual model is a
+# separate package. Settings in conf/SemanticSearchConfig.txt.
+enableSemanticImages = false
+
+# Enables semantic search over videos, by the frames already extracted for the video
+# thumbnail ("enableVideoThumbs" must be enabled). Independent of "enableSemanticImages".
+# Settings in conf/SemanticSearchConfig.txt.
+enableSemanticVideos = false

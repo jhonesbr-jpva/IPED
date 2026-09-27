@@ -56,6 +56,7 @@ fonte.
 | `passageChars` / `passageOverlapChars` | `1000` / `200` | |
 | `chatWindowMessages` / `chatWindowStride` | `8` / `4` | |
 | `chatWindowMaxChars` / `chatMaxGapMinutes` | `1500` / `720` | |
+| `chatShortMessageChars` | `20` | Mensagem mais curta que isto nunca forma sequência sozinha: quando um intervalo a isola, ela entra na janela vizinha do mesmo chat (caso de borda "mensagem curta isolada"). Acrescentada na implementação (T019/T025) |
 | `minImageSize` | `48` | Pixels no maior lado da imagem original |
 
 ### Busca (FR-007, D5, D10, D11)
@@ -72,6 +73,7 @@ fonte.
 | `rrfK` | `60` | Constante da fusão por posição |
 | `lexicalCandidates` | `0` (= teto × sobreamostragem) | Tamanho da lista por palavra antes da fusão |
 | `contextMaxChars` | `8000` | Teto de `iped_semantic_context` (FR-048) |
+| `hnswMaxConn` / `hnswBeamWidth` | `16` / `100` | Parâmetros do HNSW no codec dos índices semânticos, registrados em `params.hnsw` (D5). Acrescentadas na implementação: T014 fixa o codec a partir delas e T095 as ajusta |
 
 ### Custo (D15)
 

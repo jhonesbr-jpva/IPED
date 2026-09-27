@@ -83,6 +83,29 @@ presentes no jar, (c) carregamento sem acesso à rede, (d) sessão `run()` conco
 Java 11. A documentação consultada não afirma o baseline Java das extensões, e a constituição
 proíbe adotar dependência que não rode no JRE 11 **mesmo que compile**.
 
+### Resultado do spike (T002, 2026-09-26) — **aprovado**
+
+Versões fixadas em `iped-semantic/pom.xml`: **`onnxruntime` 1.30.0** e **`onnxruntime-extensions`
+0.13.0**. Teste: `iped-semantic/src/test/java/iped/semantic/spike/OrtBaselineSpikeTest.java`,
+rodado com Liberica JDK 11.0.31 em Windows 11 x64.
+
+| Critério | Resultado |
+|---|---|
+| (a) class file ≤ 55 | Todas as classes dos dois jars são **major 52** (Java 8): 64 no `onnxruntime`, 2 no `onnxruntime-extensions`. Conferido também em 1.20.0, 1.22.0 e 0.12.4, com o mesmo resultado |
+| (b) nativos Windows x64 e Linux x64 | Presentes nos dois jars (`ai/onnxruntime/native/{win-x64,linux-x64}/…` e `ai/onnxruntime/extensions/native/{win-x64,linux-x64}/…`). O de Linux não foi **carregado** aqui; isso fica para o CI Ubuntu |
+| (c) carga sem rede | Sessão com operador padrão e sessão com operador das extensões (`StringUpper`, domínio `ai.onnx.contrib`, via `registerCustomOpLibrary`) criadas e executadas com um `SecurityManager` que recusa toda `SocketPermission`: **nenhum pedido**. O único pedido observado vinha da inicialização do Log4j (resolução do nome da própria máquina), que o IPED já faz; o teste inicializa o log antes de erguer o guarda. Código nativo não é observável por esse meio, e o Cenário 0 do quickstart repete a verificação com a máquina fora da rede |
+| (d) `run()` concorrente | Uma sessão compartilhada por 4 threads, 500 execuções cada, todas corretas |
+
+Consequências para o desenho:
+- O `OrtxLibrary` do jar das extensões **sempre** extrai o nativo para `java.io.tmpdir`. O IPED não
+  o usa: `iped.semantic.model.OrtNatives` copia os nativos dos dois jars para
+  `tools/onnxruntime/<os-arch>/`, define `onnxruntime.native.path` antes do primeiro uso do runtime
+  e passa o caminho da biblioteca das extensões a `registerCustomOpLibrary` (D17).
+- A 1.30.0 é a menor das três avaliadas (55 MB, contra 139 MB da 1.22.0, que embute símbolos de
+  depuração do macOS) e traz `onnxruntime_providers_shared.dll` no Windows, extraído junto.
+- Os modelos ainda não haviam sido exportados quando o portão rodou. A carga do modelo real, com o
+  tokenizador no grafo, é verificada pelos testes do `LocalOnnxEmbedder` (T011).
+
 ---
 
 ## D3 — Modelos
@@ -419,6 +442,17 @@ selecionada", "coberto pelas mensagens", "coberto pelo vídeo de origem", "sem m
 - O registro de construção e o log recebem tempo e contagens por modalidade, com imagens e vídeos
   separados (FR-021, SC-015).
 
+**Verificação do `Manager` (T016, 2026-09-26, só leitura) — a ordem é garantida.** Em
+`iped-engine/.../core/Manager.java`, `process()` executa, nesta ordem: `prepareOutputFolder()`,
+`openIndex()` (índice principal do caso, não a evidência), `initWorkers()` e só então cria e inicia
+os dois `ItemProducer` (`counter` e `producer`), que são quem abre as fontes de dados e carrega o
+Sleuthkit. `initWorkers()` chama `Worker.init()` de todos os workers, e cada um chama
+`task.init(ConfigurationManager.get())` de todas as suas tasks antes de qualquer `start()`. Uma
+exceção no `init()` sobe até o `catch (Exception e)` de `process()`, que chama
+`interruptProcessing()` e relança. Os produtores nunca são criados. Portanto, a validação de fonte
+de FR-042 fica no `init()` da task (`SourceValidator`), sem desvio para o `Bootstrap`. O que já
+existe no disco antes dela é a pasta de saída e o índice principal vazio, não leitura da evidência.
+
 **Meta de custo não medida**: nenhum número de SC-010, SC-013 ou SC-015 pode ser afirmado agora. A
 primeira medição na bancada é tarefa com critério de parada: se o dobro ou o triplo não forem
 atingidos só com CPU, a revisão volta para a spec (Assumptions), não para o plano.
@@ -566,3 +600,4 @@ fora seja bom e verificável, o MCP entrega:
 | HNSW com revocação baixa em recortes grandes | Item pertinente fora da lista | Medir (Cenário 9). Subir sobreamostragem ou `beamWidth` do codec próprio do índice semântico |
 | Instante de quadro muito impreciso | Perito não acha o trecho do vídeo | Declarado como aproximado (A2). Melhoria separada no `VideoThumbTask` |
 | Híbrido pior que semântico em perguntas só conceituais | Modo padrão errado | SC-018 exige no máximo 5 pontos de perda; o padrão de fábrica sai da medição (D20) |
+| Viés de idioma do modelo de texto (observado em 2026-09-26) | Item em outro idioma abaixo de itens irrelevantes do idioma da pergunta, o que ameaça SC-002 | No fp32 de referência, "entrega de mercadoria e pagamento combinado" dá 0,801 ao trecho pertinente em inglês e 0,834 a uma receita de bolo em português; o int8 reproduz a ordem. Entre trechos do mesmo idioma, o pertinente vence. SC-002 é medido no conjunto de avaliação (T022); se reprovar, o alternativo de D3 entra na comparação |
