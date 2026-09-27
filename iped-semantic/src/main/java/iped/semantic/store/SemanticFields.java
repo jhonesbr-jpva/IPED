@@ -21,10 +21,11 @@ public final class SemanticFields {
     public static final String ORDINAL = "ordinal";
     public static final String CHAR_START = "charStart";
     public static final String CHAR_END = "charEnd";
-    /** Literal passage text: stored and indexed (hybrid mode). */
+    /**
+     * Literal passage text, stored and indexed; for a sequence, the text of its lines, indexed only
+     * (what is shown comes from {@link #LINES}). One field, so BM25 ranks both units on one scale.
+     */
     public static final String TEXT = "text";
-    /** Text of a sequence's lines, indexed only (hybrid mode). */
-    public static final String SEQ_TEXT = "seqText";
     public static final String MESSAGE_IDS = "messageIds";
     /** One stored JSON object per line: {sender, date, text}. */
     public static final String LINES = "lines";

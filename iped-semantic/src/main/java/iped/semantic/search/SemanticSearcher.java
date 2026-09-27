@@ -253,9 +253,42 @@ public class SemanticSearcher implements Closeable {
         return semantic;
     }
 
-    /** Hook for the hybrid mode (US7); the plain semantic list otherwise. */
+    /**
+     * Hybrid mode (FR-046, research D20): the word list over the same index, scope and units,
+     * fused with the semantic list by position. When the word part brings nothing, the ordering is
+     * the semantic one, and {@code lexicalMatches = 0} declares it (FR-047 edge case).
+     */
     List<Hit> hybrid(Plan plan, SemanticIndexReader index, List<Hit> semantic, Integer exclude) throws IOException {
-        return semantic;
+        List<ScoreDoc> docs = LexicalPassageSearcher.search(index.searcher(), analyzer(), plan.request.getQuery(),
+                plan.scope, config.getLexicalCandidates());
+        java.util.Map<Long, Hit> known = new java.util.HashMap<>();
+        for (Hit h : semantic) {
+            known.put(h.unitKey(), h);
+        }
+        List<Hit> lexical = new ArrayList<>(docs.size());
+        for (ScoreDoc sd : docs) {
+            long key = ((long) caseIndex << 40) ^ ((long) sd.doc & 0xFFFFFFFFFFL);
+            Hit h = known.get(key);
+            if (h == null) {
+                h = load(index, sd.doc, 0);
+            }
+            if (exclude != null && h.itemId == exclude) {
+                continue;
+            }
+            lexical.add(h);
+        }
+        plan.lexicalMatches = lexical.size();
+        return RankFusion.fuse(semantic, lexical, config.getRrfK());
+    }
+
+    private transient org.apache.lucene.analysis.Analyzer analyzer;
+
+    /** IPED's {@code AppAnalyzer}, as the passages were indexed with it (used, never modified). */
+    synchronized org.apache.lucene.analysis.Analyzer analyzer() {
+        if (analyzer == null) {
+            analyzer = iped.engine.lucene.analysis.AppAnalyzer.get();
+        }
+        return analyzer;
     }
 
     float[] queryVector(Plan plan, SemanticIndexReader index) throws EmbeddingException, IOException {

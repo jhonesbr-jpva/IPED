@@ -35,8 +35,9 @@ import static iped.semantic.store.SemanticFields.*;
  *
  * <p>
  * The text index uses {@link BM25Similarity} (k1 = 1.2, b = 0.75) for the hybrid mode's word part,
- * and the analyzer handed in - IPED's {@code AppAnalyzer}, used as is - for {@code text} and
- * {@code seqText}. That similarity is set here and in {@link SemanticIndexReader} only; the main
+ * and the analyzer handed in - IPED's {@code AppAnalyzer}, used as is - for {@code text} (passages
+ * stored and indexed, sequences indexed only, one field so BM25 statistics are shared). That
+ * similarity is set here and in {@link SemanticIndexReader} only; the main
  * index's {@code IndexerSimilarity} is untouched (FR-047).
  * </p>
  *
@@ -55,7 +56,7 @@ public final class SemanticIndexWriter implements Closeable {
 
     /**
      * @param analyzer
-     *            {@code AppAnalyzer.get()} in production; only {@code text} and {@code seqText} are
+     *            {@code AppAnalyzer.get()} in production; only {@code text} is
      *            analyzed
      */
     public SemanticIndexWriter(Path dir, Analyzer analyzer, int maxConn, int beamWidth) throws IOException {
@@ -172,7 +173,9 @@ public final class SemanticIndexWriter implements Closeable {
             anchor(d, line.getItemId());
             seqText.append(line.getText()).append('\n');
         }
-        d.add(new TextField(SEQ_TEXT, seqText.toString(), Field.Store.NO));
+        // same field as the passages: BM25 statistics (IDF, average length) are per field, and the
+        // hybrid word list must rank passages and sequences on the same scale
+        d.add(new TextField(TEXT, seqText.toString(), Field.Store.NO));
         vector(d, v);
         return d;
     }

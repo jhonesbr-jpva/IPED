@@ -337,13 +337,13 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
 
 ### Tests for User Story 7 ⚠️
 
-- [ ] T060 [P] [US7] `iped-semantic/src/test/java/iped/semantic/unit/RankFusionTest.java` cobre:
+- [X] T060 [P] [US7] `iped-semantic/src/test/java/iped/semantic/unit/RankFusionTest.java` cobre:
   - soma `Σ 1/(rrfK + posição)` com `rrfK = 60`;
   - união das duas listas;
   - desempate determinístico;
   - lista por palavra vazia → ordenação igual à semântica, com `lexicalMatches = 0`;
   - `ranks` com a posição em cada lista.
-- [ ] T061 [P] [US7] `iped-semantic/src/test/java/iped/semantic/unit/LexicalPassageSearcherTest.java` cobre:
+- [X] T061 [P] [US7] `iped-semantic/src/test/java/iped/semantic/unit/LexicalPassageSearcherTest.java` cobre:
   - BM25 sobre `text`/`seqText` respeita o mesmo recorte e a mesma unidade;
   - a pergunta vira termos com escape, sem interpretar sintaxe do IPED;
   - "ação" casa "acao".
@@ -356,9 +356,9 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
 
 ### Implementation for User Story 7
 
-- [ ] T065 [P] [US7] `iped-semantic/src/main/java/iped/semantic/search/LexicalPassageSearcher.java`: BM25 no índice semântico de texto, com o `ItemIdFilterQuery` do recorte e lista truncada em `lexicalCandidates` (`0` = teto × sobreamostragem).
-- [ ] T066 [P] [US7] `iped-semantic/src/main/java/iped/semantic/search/RankFusion.java`: RRF por posição com o desempate de D5.
-- [ ] T067 [US7] Modo híbrido em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java` (depende de T065 e T066): `mode` de `SemanticRequest`, com padrão `defaultTextMode`; consolidação depois da fusão; `lexicalMatches` e `ranks` no resultado; `proximityKind = combined_relative`.
+- [X] T065 [P] [US7] `iped-semantic/src/main/java/iped/semantic/search/LexicalPassageSearcher.java`: BM25 no índice semântico de texto, com o `ItemIdFilterQuery` do recorte e lista truncada em `lexicalCandidates` (`0` = teto × sobreamostragem).
+- [X] T066 [P] [US7] `iped-semantic/src/main/java/iped/semantic/search/RankFusion.java`: RRF por posição com o desempate de D5.
+- [X] T067 [US7] Modo híbrido em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java` (depende de T065 e T066): `mode` de `SemanticRequest`, com padrão `defaultTextMode`; consolidação depois da fusão; `lexicalMatches` e `ranks` no resultado; `proximityKind = combined_relative`.
 - [ ] T068 [US7] Na interface, em `SemanticSearchPanel.java` e `OrderingListRenderer.java`: seletor Semântico/Híbrido; rótulo "relevância combinada relativa" com a dica "por significado: nº X · por palavra: nº Y"; e na declaração, quantas unidades a parte por palavra trouxe.
 - [ ] T069 [US7] No MCP, em `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java`: parâmetro `mode` e campos `mode`, `lexical_matches`, `ranks`, `ordinal` e `char_start`/`char_end` por trecho, conforme [contracts/mcp-tools.md](contracts/mcp-tools.md).
 - [ ] T070 [US7] `iped-semantic/src/main/java/iped/semantic/search/ContextReader.java` (E12) e ferramenta `iped_semantic_context` em `SemanticTools.java`: `returnsContent("text")`, `before`/`after` com padrão 1, `max_chars` limitado por `contextMaxChars`, e recusas `BLOCKED_BY_POLICY`, `SEMANTIC_UNAVAILABLE` e `ENTRY_NOT_FOUND`. Acrescentar a disciplina de RAG com contexto a `iped-mcp/src/main/resources/skill/references/semantic-search.md`.
