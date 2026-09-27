@@ -73,4 +73,11 @@ from an item of one unit (a chat, or a file) another unit's item must come in th
 | 2 | see `validation-log.md` | Adds `subject` to the text questions, because SC-003 speaks of subjects and version 1 had none (its SC-003 attempts used each question alone). Questions and pertinent items unchanged |
 
 To change a question after the first measurement is to change what was measured: add a new version,
-never edit silently.
+never edit silently. The same holds for the corpus:
+
+| Corpus | Change |
+|---|---|
+| 1 | First corpus, built for the first measurement |
+| 2 | `docs/en/laundering_memo.txt` begins with "INTERNAL MEMO" instead of "MEMO". "MEMO" at offset 0 is the magic IPED's `CustomSignatures.xml` gives Windows SuperFetch files (`application/x-superfetch`): IPED read the memo as one, and its text reached no index, keyword or semantic. The question pointing at it measured IPED's signature detection, not semantic search. No other text changed |
+
+A text written in `content.py` must not begin with a magic IPED knows.

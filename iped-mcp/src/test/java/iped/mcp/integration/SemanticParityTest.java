@@ -39,15 +39,39 @@ import iped.semantic.search.SemanticRequest.Target;
  * {@link IPEDSearcher} computes. The MCP side is paged to the end through {@code tools/call}.
  *
  * <p>
- * The questions are fixed here until the evaluation gabarito (T005) exists; parity does not depend
- * on relevance, only on both sides asking the same thing.
+ * The questions are ten of the evaluation gabarito (T005, {@code iped-semantic}'s
+ * {@code eval/questions.json}): the first four conceptual, three cross-lingual and three mixed, in
+ * the gabarito's order. Parity does not depend on relevance, only on both sides asking the same
+ * thing, so the case need not be the eval case.
  */
 public class SemanticParityTest {
 
-    private static final String[] QUESTIONS = { "combinar um pagamento em dinheiro", "deixar um pacote na portaria",
-            "receita de bolo", "relatório de atividades", "envio de mercadoria para outro país",
-            "não falar nada ao telefone", "encontro marcado para amanhã", "problemas com a polícia",
-            "transferência bancária", "shipping tracking number" };
+    private static final String GABARITO = "../iped-semantic/src/test/resources/eval/questions.json";
+
+    private static final String[] QUESTIONS = gabarito();
+
+    private static String[] gabarito() {
+        java.nio.file.Path p = java.nio.file.Paths.get(System.getProperty("basedir", "."), GABARITO);
+        try {
+            JsonNode doc = new com.fasterxml.jackson.databind.ObjectMapper().readTree(p.toFile());
+            java.util.Map<String, Integer> wanted = new java.util.LinkedHashMap<>();
+            wanted.put("conceptual", 4);
+            wanted.put("crosslingual", 3);
+            wanted.put("mixed", 3);
+            List<String> out = new ArrayList<>();
+            for (JsonNode q : doc.path("questions")) {
+                String type = q.path("type").asText();
+                int left = wanted.getOrDefault(type, 0);
+                if (left > 0) {
+                    wanted.put(type, left - 1);
+                    out.add(q.path("question").asText());
+                }
+            }
+            return out.toArray(new String[0]);
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException("the gabarito is read from " + p, e);
+        }
+    }
 
     private static final String[] SCOPES = { "*:*", "pagamento OR pacote OR entrega OR portaria" };
 

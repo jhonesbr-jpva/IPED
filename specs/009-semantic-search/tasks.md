@@ -75,11 +75,13 @@ As suítes com parâmetro (`-Diped.semantic.test.referenceCase`, `-Diped.semanti
 - [X] T001 Criar o módulo `iped-semantic`: `iped-semantic/pom.xml` com parent `iped:iped-parent:4.3.1` (como `iped-mcp/pom.xml`), dependências `iped-engine`, `iped-api`, `iped-utils`, `lucene-core` 9.2.0, `jackson-databind` e `junit` (test). Registrar `<module>iped-semantic</module>` em `pom.xml`, logo depois de `iped-engine`. Criar `iped-semantic/src/main/java/iped/semantic/package-info.java` dizendo, em inglês, que o módulo não modifica classes do engine.
 - [X] T002 **Portão D2 (bloqueante)**: acrescentar `com.microsoft.onnxruntime:onnxruntime` e `com.microsoft.onnxruntime:onnxruntime-extensions` (versões candidatas) a `iped-semantic/pom.xml`. Escrever `iped-semantic/src/test/java/iped/semantic/spike/OrtBaselineSpikeTest.java`, que verifica: (a) versão de class file ≤ 55 em todas as classes dos dois jars; (b) nativos de Windows x64 e Linux x64 presentes nos jars; (c) criação de sessão e registro da biblioteca de extensões sem acesso à rede; (d) `run()` concorrente estável em 4 threads. Registrar o resultado numa seção "Resultado do spike" em `specs/009-semantic-search/research.md` (D2) e fixar as versões. Se reprovar, parar aqui e acionar o plano B de D2 antes de qualquer tarefa que dependa de `LocalOnnxEmbedder`.
 - [X] T003 [P] Ferramenta de exportação reprodutível em `iped-semantic/tools/export-models/export_models.py` (mais `requirements.txt` e `README.md`). Ela exporta `intfloat/multilingual-e5-small` na revisão fixada, quantizado em int8, com o tokenizador embutido no grafo (`onnxruntime-extensions`, `gen_processing_models`), e produz `model.onnx`, `model.json` e `LICENSE`. O `model.json` traz `id` no formato `<repositório>@<revisão>+<variante>`, `sha256`, `dimensions`, `similarity: DOT_PRODUCT`, `queryPrefix: "query: "`, `passagePrefix: "passage: "` e `probesVersion`. Empacotar como zip no leiaute `models/semantic/text/multilingual-e5-small-int8/`.
-- [ ] T004 [P] Gerador do conjunto de avaliação (research D18) em `iped-semantic/tools/eval-corpus/build_corpus.py`, **sem evidência real**. Ele produz:
+- [X] T004 [P] Gerador do conjunto de avaliação (research D18) em `iped-semantic/tools/eval-corpus/build_corpus.py`, **sem evidência real**. Ele produz:
   - conversas escritas pela equipe, em PT com gíria, abreviação e código, num banco de chat que o `WhatsAppParser` lê (partindo dos bancos de teste de `iped-parsers/iped-parsers-impl/src/test/resources`), incluindo o diálogo "quanto?" / "5 mil" / "fechado, amanhã na portaria" e mensagens que citam o apelido "Baiano";
   - documentos PT, EN e ES, entre eles um de ~40 páginas com um único parágrafo pertinente;
   - imagens e vídeos de licença aberta, listados em `iped-semantic/tools/eval-corpus/MANIFEST.md` com origem e licença.
-- [ ] T005 Gabarito versionado em `iped-semantic/src/test/resources/eval/questions.json` (depende de T004). Cada entrada tem pergunta, idioma, tipo (`conceptual`, `crosslingual`, `mixed`, `visual-image`, `visual-video`) e itens pertinentes por chave estável (caminho do item + chave da mensagem). Mínimos: ≥ 30 conceituais em PT, ≥ 10 com pertinente em outro idioma, ≥ 15 `mixed`, ≥ 30 descrições de imagem (das quais ≥ 5 em inglês, para FR-036) e ≥ 15 de vídeo. Fechar **antes** da primeira medição, registrando o hash do commit do gabarito em `specs/009-semantic-search/validation-log.md`.
+  - Feito com 100 artigos da Wikipedia (PT, EN, ES) em revisões fixadas como distratores, 151 imagens do Wikimedia Commons (CC0, domínio público, CC BY, CC BY-SA) escolhidas em folhas de contato e fixadas por sha256, e 8 vídeos montados de outras 45 imagens. Corpus versão 2: o memorando que começava com "MEMO" (a assinatura de SuperFetch do IPED) passou a "INTERNAL MEMO" (`validation-log.md`).
+- [X] T005 Gabarito versionado em `iped-semantic/src/test/resources/eval/questions.json` (depende de T004). Cada entrada tem pergunta, idioma, tipo (`conceptual`, `crosslingual`, `mixed`, `visual-image`, `visual-video`) e itens pertinentes por chave estável (caminho do item + chave da mensagem). Mínimos: ≥ 30 conceituais em PT, ≥ 10 com pertinente em outro idioma, ≥ 15 `mixed`, ≥ 30 descrições de imagem (das quais ≥ 5 em inglês, para FR-036) e ≥ 15 de vídeo. Fechar **antes** da primeira medição, registrando o hash do commit do gabarito em `specs/009-semantic-search/validation-log.md`.
+  - Versão 1 (commit `acdea125`): 43 conceituais, 12 entre idiomas, 16 mistas, 42 descrições de imagem (6 em inglês) e 24 de vídeo. Versão 2 (commit `141ce4e3`): acrescenta o assunto de cada pergunta de texto, que o SC-003 pede; perguntas e pertinentes inalterados.
 
 ---
 
@@ -159,10 +161,11 @@ SC-001 e SC-002).
   - o índice principal fica sem campo novo (compara `FieldInfos` antes e depois);
   - um item preparado para falhar (injeção por propriedade de teste) sai com `PREP_FAILURE`, os demais são cobertos e o processamento conclui (FR-022).
   - Implementado com `ProcessedCases`, que processa pelo release a evidência de referência duas vezes (capacidade desligada e ligada, perfil `semantic-it`): parâmetros `-Diped.semantic.test.ipedRoot=<release>` e `-Diped.semantic.test.referenceEvidence=<pasta>` em vez de `referenceCase`, porque o teste processa. A falha é injetada pela variável de ambiente `IPED_SEMANTIC_TEST_FAIL_ITEM` (o motor roda em JVM neta). SC-006 é conferido contra o arquivo da evidência: o texto do trecho é literal e o deslocamento é consistente entre os trechos do item (o texto extraído tem um prefixo antes do conteúdo). A linha de sequência guarda o valor do parser como veio; o índice principal o guarda aparado.
-- [ ] T022 [P] [US1] Harness de avaliação em `iped-semantic/src/test/java/iped/semantic/eval/TextQualityEval.java` (`-Diped.semantic.test.evalCase`):
+- [X] T022 [P] [US1] Harness de avaliação em `iped-semantic/src/test/java/iped/semantic/eval/TextQualityEval.java` (`-Diped.semantic.test.evalCase`):
   - descarta as perguntas `conceptual` cuja busca por palavra (com `IPEDSearcher` e os termos da pergunta) encontra algum pertinente, registrando quais;
   - calcula SC-001 (≥ 80% com pertinente no top-10) e SC-002 (≥ 70%);
   - grava os números em `specs/009-semantic-search/validation-log.md`.
+  - `EvalCase` abre o caso, resolve o gabarito em ids (arquivo pelo caminho, mensagem pelo corpo) e grava no log; `-Diped.semantic.test.config.<chave>=<valor>` sobrepõe uma chave de configuração para calibração, e o log registra a sobreposição. Medido: SC-001 92,7% (38/41), SC-002 91,7% (11/12).
 
 ### Implementation for User Story 1
 
@@ -278,7 +281,8 @@ próximo.
   - o item de referência nunca está na ordenação;
   - referência não coberta → recusa `REFERENCE_NOT_COVERED` com o motivo do item (E7);
   - referência por intervalo usa o trecho dado, e não o item inteiro.
-- [ ] T050 [P] [US4] `iped-semantic/src/test/java/iped/semantic/eval/SimilarQualityEval.java`: SC-003 (≥ 70% com outro pertinente no top-10), gravado em `specs/009-semantic-search/validation-log.md`.
+- [X] T050 [P] [US4] `iped-semantic/src/test/java/iped/semantic/eval/SimilarQualityEval.java`: SC-003 (≥ 70% com outro pertinente no top-10), gravado em `specs/009-semantic-search/validation-log.md`.
+  - Por assunto (gabarito versão 2): de cada unidade (chat ou arquivo) com pertinente do assunto, a primeira vez como referência; acerta quando outra unidade aparece nos dez primeiros. Primeira medição 54,2% (13/24). A análise dos erros levou à referência de mensagem pelo que foi dito, sem remetentes (research D22), e ao corpus versão 2; medido então 79,2% (19/24), **escolha feita olhando o caso de avaliação**, a confirmar na bancada (T096).
 
 ### Implementation for User Story 4
 
@@ -310,6 +314,7 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
 - [X] T055 [P] [US5] `iped-mcp/src/test/java/iped/mcp/integration/SemanticEgressTest.java`: com a política sem a classe `text`, cada entrada traz `excerpt_withheld` com a regra, e nenhum trecho aparece em campo algum; o `AuditRecord` segue sem campo novo.
 - [X] T056 [P] [US5] `iped-mcp/src/test/java/iped/mcp/integration/SemanticParityTest.java`: para 10 perguntas do gabarito, com o mesmo recorte, a ordenação do MCP é idêntica à do `SemanticSearcher` chamado como a interface o chama (SC-011).
   - Implementado com 10 perguntas fixas no teste, em dois recortes (`*:*` e uma expressão) e nos dois modos, até o gabarito de T005 existir; então trocar pelas perguntas dele. Roda com `-Diped.mcp.test.semanticCase=<caso preparado>` e `-Diped.mcp.ipedRoot=<release com o modelo>`; sem eles, pula.
+  - Trocadas: as quatro primeiras conceituais, três entre idiomas e três mistas do gabarito, lidas de `iped-semantic/src/test/resources/eval/questions.json`. Passa no caso de avaliação (40 ordenações idênticas).
 
 ### Implementation for User Story 5
 
@@ -353,7 +358,8 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
   - texto remendado igual ao intervalo `[charStart, charEnd)` do item, sem repetir a sobreposição (E12);
   - `truncated` em `contextMaxChars`;
   - mensagens vizinhas em sequência.
-- [ ] T063 [P] [US7] `iped-semantic/src/test/java/iped/semantic/eval/HybridQualityEval.java`: SC-018 (≥ 80% nas `mixed`; no máximo 5 pontos de perda nas de SC-001). Registrar no `validation-log.md` o `defaultTextMode` de fábrica que vence.
+- [X] T063 [P] [US7] `iped-semantic/src/test/java/iped/semantic/eval/HybridQualityEval.java`: SC-018 (≥ 80% nas `mixed`; no máximo 5 pontos de perda nas de SC-001). Registrar no `validation-log.md` o `defaultTextMode` de fábrica que vence.
+  - Com as listas de peso igual, o híbrido perdia 36,6 pontos no SC-001. A fusão ganhou `rrfLexicalWeight` (padrão 0,3, calibrado no caso de avaliação, research D20); os bancos de chat decodificados deixaram de virar trechos (`messageContainerMediaTypes`). Medido: 100% (16/16) nas mistas, nenhum ponto perdido; o modo que os números favorecem é `hybrid`.
 - [X] T064 [P] [US7] `iped-semantic/src/test/java/iped/semantic/integration/KeywordSearchUnchangedIT.java`: o roteiro fixo de buscas por palavra dá resultado idêntico com e sem a parte semântica preparada no caso (FR-047).
   - Roteiro em `iped-semantic/src/test/resources/eval/keyword-script.txt`, sobre o par de `ProcessedCases`. Compara por caminho e pontuação (os ids seguem a ordem dos workers) e compara também as estatísticas de termos de `content` e `name`.
 
@@ -388,7 +394,8 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
   - vídeos ligados sem miniatura de vídeo → `VIDEO_NO_FRAMES` e conflito `VIDEOS_ON_WITHOUT_VIDEO_THUMBS` no registro;
   - `timing` separado em `images`/`videos`.
   - Implementado sobre `VisualPreparation` com itens sintéticos e o `FakeEmbedder` (hermético, sem parâmetro), cobrindo também a busca de T080: um vídeo por entrada pelo melhor quadro, com instante aproximado, e `BOTH` em duas ordenações. Um item que não é imagem nem vídeo recebe `CATEGORY_NOT_SELECTED`, e o de uma chave desligada recebe `MODALITY_OFF` gravado, para a cobertura de qualquer recorte fechar. O teste achou um defeito: o cache de impressão digital do `Compatibility` não separava as sondas de imagem, e o mesmo modelo nas duas modalidades acusava incompatibilidade.
-- [ ] T074 [P] [US6] `iped-semantic/src/test/java/iped/semantic/eval/VisualQualityEval.java`: SC-012 (≥ 70%) e SC-014 (≥ 70%), e, em separado, o acerto das descrições em inglês (FR-036), tudo gravado no `validation-log.md`.
+- [X] T074 [P] [US6] `iped-semantic/src/test/java/iped/semantic/eval/VisualQualityEval.java`: SC-012 (≥ 70%) e SC-014 (≥ 70%), e, em separado, o acerto das descrições em inglês (FR-036), tudo gravado no `validation-log.md`.
+  - Medido: SC-012 100% (36/36), FR-036 100% (6/6), SC-014 87,5% (21/24).
 
 ### Implementation for User Story 6
 

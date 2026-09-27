@@ -254,8 +254,11 @@ DOCS = {
         "On Monday at 02:14 the file servers of the accounting department were encrypted. A ransom note demanded "
         "payment in bitcoin within 72 hours. The attackers entered through a VPN account without two-factor "
         "authentication. Backups from Sunday were intact and restoration completed on Wednesday."),
+    # Corpus version 2: this memo began with "MEMO", the magic IPED's CustomSignatures.xml gives
+    # Windows SuperFetch files (application/x-superfetch); IPED read it as one and its text never
+    # reached any index. No text written here may begin with a magic IPED knows.
     "docs/en/laundering_memo.txt": (
-        "MEMO - HANDLE WITH CARE\n\n"
+        "INTERNAL MEMO - HANDLE WITH CARE\n\n"
         "From now on, split the deposits into amounts under ten thousand and spread them across the accounts of "
         "relatives: the aunt, the two cousins and your brother-in-law. Never more than two deposits a day at the "
         "same branch. We consolidate at the end of the month through the consulting company's invoices."),
