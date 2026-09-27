@@ -1482,7 +1482,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         aiFiltersTabDock.setLocationsAside(metadataTabDock);
         aiFiltersTabDock.setVisible(true);
 
-        semanticTabDock.setLocationsAside(aiFiltersTabDock);
+        // with the item relations, next to the viewer: its passages need the width, and opening an
+        // entry shows the item in the viewer beside it
+        semanticTabDock.setLocationsAside(referencedByDock);
         semanticTabDock.setVisible(true);
 
         if (verticalLayout)

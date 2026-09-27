@@ -102,6 +102,9 @@ public class SemanticSearchPanel extends JPanel {
     private final JLabel status = new JLabel(" ");
     private final JLabel reference = new JLabel();
     private final JTabbedPane tabs = new JTabbedPane();
+    private static final String CARD_EMPTY = "empty";
+    private static final String CARD_TABS = "tabs";
+    private final JPanel center = new JPanel(new java.awt.CardLayout());
     private final JTextArea unavailable = new JTextArea();
     private final JButton buildDetails = new JButton();
     private final RemoteDestinationNotice remoteNotice = new RemoteDestinationNotice(text);
@@ -150,14 +153,15 @@ public class SemanticSearchPanel extends JPanel {
         JPanel line1 = new JPanel(new BorderLayout(4, 0));
         line1.add(question, BorderLayout.CENTER);
         line1.add(ask, BorderLayout.EAST);
-        JPanel line2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        // the dock is narrow by default: rows wrap and grow instead of clipping
+        JPanel line2 = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 2));
         line2.add(textModality);
         line2.add(visualModality);
         line2.add(bothModalities);
         line2.add(Box.createHorizontalStrut(8));
         line2.add(mode);
         line2.add(buildDetails);
-        JPanel line3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        JPanel line3 = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 0));
         line3.add(scopeLabel);
         line3.add(reference);
         top.add(line1);
@@ -165,14 +169,18 @@ public class SemanticSearchPanel extends JPanel {
         top.add(line3);
         top.add(remoteNotice);
         top.add(status);
+        for (java.awt.Component c : top.getComponents()) {
+            ((javax.swing.JComponent) c).setAlignmentX(LEFT_ALIGNMENT);
+        }
         add(top, BorderLayout.NORTH);
 
         unavailable.setEditable(false);
         unavailable.setLineWrap(true);
         unavailable.setWrapStyleWord(true);
         unavailable.setBackground(getBackground());
-        add(tabs, BorderLayout.CENTER);
 
+        // before the first ordering, the area says what an ordering is; each ordering then opens its
+        // declaration with the same caution, so no permanent block takes the room of the list
         JTextArea notice = new JTextArea(text.get("SemanticSearch.OrderingNotice.UI"));
         notice.setEditable(false);
         notice.setLineWrap(true);
@@ -180,7 +188,9 @@ public class SemanticSearchPanel extends JPanel {
         notice.setFont(notice.getFont().deriveFont(Font.ITALIC));
         notice.setBackground(getBackground());
         notice.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-        add(notice, BorderLayout.SOUTH);
+        center.add(new JScrollPane(notice), CARD_EMPTY);
+        center.add(tabs, CARD_TABS);
+        add(center, BorderLayout.CENTER);
 
         ask.addActionListener(e -> askQuestion());
         question.addActionListener(e -> askQuestion());
@@ -198,12 +208,29 @@ public class SemanticSearchPanel extends JPanel {
         });
         remoteNotice.update(target());
         buildDetails.addActionListener(e -> BuildDetailsDialog.show(this, session, text));
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentShown(java.awt.event.ComponentEvent e) {
+        // a dock shows the panel by adding it to the visible hierarchy, not by setVisible: listen to
+        // showing changes, or the state would only appear after the first question
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
                 refreshState();
             }
         });
+    }
+
+    private boolean followsTable;
+
+    /**
+     * Called on the EDT when a case finished loading: the panel may already be showing (it can be
+     * the selected tab of its dock), so its state is refreshed here, and the scope label follows the
+     * table from now on - the scope of the next question is the table's current result (FR-012).
+     */
+    public void caseLoaded() {
+        if (!followsTable && App.get().getResultsTable() != null) {
+            followsTable = true;
+            App.get().getResultsTable().getModel().addTableModelListener(e -> scopeLabel.setText(
+                    text.get("SemanticSearch.Scope", String.valueOf(App.get().getResultsTable().getRowCount()))));
+        }
+        refreshState();
     }
 
     /** Scope size and which modalities the open case(s) prepared; cheap, reads no model. */
@@ -212,11 +239,11 @@ public class SemanticSearchPanel extends JPanel {
             return;
         }
         new SwingWorker<boolean[], Void>() {
-            int scopeSize;
+            /** When no modality was prepared: why, as the searcher would say it (reads no model). */
+            Availability none;
 
             @Override
             protected boolean[] doInBackground() {
-                scopeSize = App.get().getResults().getLength();
                 boolean text = false;
                 boolean visual = false;
                 for (IPEDSource s : session.sources()) {
@@ -229,6 +256,10 @@ public class SemanticSearchPanel extends JPanel {
                         LOGGER.warn("Cannot read the semantic build record of {}", s.getCaseDir(), e);
                     }
                 }
+                if (!text && !visual && !session.sources().isEmpty()) {
+                    none = Availability.structural(SemanticStore.of(session.sources().get(0).getModuleDir()),
+                            Modality.TEXT, new iped.semantic.model.EmbedderFactory(SemanticSession.config()));
+                }
                 return new boolean[] { text, visual };
             }
 
@@ -236,16 +267,29 @@ public class SemanticSearchPanel extends JPanel {
             protected void done() {
                 try {
                     boolean[] prepared = get();
-                    scopeLabel.setText(text.get("SemanticSearch.Scope", String.valueOf(scopeSize)));
+                    // read now, on the EDT: the table may have been filled while this ran
+                    scopeLabel.setText(text.get("SemanticSearch.Scope",
+                            String.valueOf(App.get().getResults().getLength())));
                     textModality.setEnabled(prepared[0]);
                     visualModality.setEnabled(prepared[1]);
                     bothModalities.setEnabled(prepared[0] && prepared[1]);
-                    String off = text.get("SemanticSearch.Unavailable.MODALITY_NOT_PREPARED", "");
-                    textModality.setToolTipText(prepared[0] ? null : off);
-                    visualModality.setToolTipText(prepared[1] ? null : off);
+                    String noCapability = none == null ? null
+                            : text.get("SemanticSearch.Unavailable." + none.getReason().name());
+                    String textOff = noCapability != null ? noCapability
+                            : text.get("SemanticSearch.Unavailable.MODALITY_NOT_PREPARED", text.modality("text"));
+                    String visualOff = noCapability != null ? noCapability
+                            : text.get("SemanticSearch.Unavailable.MODALITY_NOT_PREPARED", text.modality("visual"));
+                    textModality.setToolTipText(prepared[0] ? null : textOff);
+                    visualModality.setToolTipText(prepared[1] ? null : visualOff);
+                    bothModalities.setToolTipText(prepared[0] && prepared[1] ? null : prepared[0] ? visualOff : textOff);
+                    mode.setEnabled(prepared[0] && !visualModality.isSelected());
                     if (!prepared[0] && prepared[1]) {
                         visualModality.setSelected(true);
                         mode.setEnabled(false);
+                    }
+                    if (none != null && tabs.getTabCount() == 0) {
+                        // a case without the capability shows only why, before any question (contract)
+                        showUnavailable(none);
                     }
                 } catch (InterruptedException | ExecutionException e) {
                     LOGGER.warn("Semantic panel state refresh failed", e);
@@ -356,6 +400,7 @@ public class SemanticSearchPanel extends JPanel {
                     for (Ordering o : orderings) {
                         tabs.addTab(text.modality(o.getModality().key()), new OrderingView(o, q, names));
                     }
+                    showCard(CARD_TABS);
                 } catch (InterruptedException | ExecutionException e) {
                     LOGGER.error("Semantic search failed", e);
                     status.setText(String.valueOf(e.getCause() != null ? e.getCause().getMessage() : e.getMessage()));
@@ -368,6 +413,11 @@ public class SemanticSearchPanel extends JPanel {
         unavailable.setText(String.join("\n", text.unavailable(a)));
         unavailable.setForeground(new Color(0xa0, 0x30, 0x30));
         tabs.addTab(text.modality(a.getModality().key()), new JScrollPane(unavailable));
+        showCard(CARD_TABS);
+    }
+
+    private void showCard(String card) {
+        ((java.awt.CardLayout) center.getLayout()).show(center, card);
     }
 
     /**
@@ -433,7 +483,7 @@ public class SemanticSearchPanel extends JPanel {
             apply.setToolTipText(text.get("SemanticSearch.ApplyToTable.Tip"));
             JButton bookmark = new JButton(text.get("SemanticSearch.Bookmark"));
             bookmark.setToolTipText(text.get("SemanticSearch.Bookmark.Tip"));
-            JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 2));
+            JPanel actions = new JPanel(new WrapLayout(FlowLayout.LEFT, 4, 2));
             actions.add(more);
             actions.add(apply);
             actions.add(bookmark);
@@ -458,6 +508,8 @@ public class SemanticSearchPanel extends JPanel {
                 lines.add(text.get("SemanticSearch.CasesParticipating", String.join(", ", in)));
             }
             declaration.setText(String.join("\n", lines));
+            // the declaration opens with what an ordering is; show it from the top
+            declaration.setCaretPosition(0);
             model.clear();
             for (OrderingEntry e : ordering.getShownEntries()) {
                 model.addElement(new EntryView(e, ordering, names.get(e)));
@@ -512,7 +564,6 @@ public class SemanticSearchPanel extends JPanel {
                 return;
             }
             IMultiBookmarks bookmarks = App.get().appCase.getMultiBookmarks();
-            Object[] existing = bookmarks.getBookmarkSet().toArray();
             Object choice = JOptionPane.showInputDialog(SemanticSearchPanel.this,
                     text.get("SemanticSearch.BookmarkName"), text.get("SemanticSearch.Bookmark"),
                     JOptionPane.PLAIN_MESSAGE, null, null, questionText);
@@ -520,13 +571,14 @@ public class SemanticSearchPanel extends JPanel {
                 return;
             }
             String name = choice.toString().strip();
-            List<IItemId> ids = new ArrayList<>();
+            Set<IItemId> ids = new LinkedHashSet<>();
             for (EntryView v : selected) {
                 for (Integer id : v.entry.targetItemIds()) {
                     ids.add(session.itemId(v.entry.getCaseIndex(), id));
                 }
             }
-            if (!bookmarks.getBookmarkSet().contains(name)) {
+            boolean created = !bookmarks.getBookmarkSet().contains(name);
+            if (created) {
                 bookmarks.newBookmark(name);
             }
             bookmarks.addBookmark(ids, name);
@@ -540,9 +592,8 @@ public class SemanticSearchPanel extends JPanel {
                     : previous + "\n" + comment);
             bookmarks.saveState();
             BookmarksController.get().updateUI();
-            if (existing.length == 0) {
-                LOGGER.info("Created bookmark {} from a semantic ordering", name);
-            }
+            LOGGER.info("{} bookmark {} with {} items from a semantic ordering", created ? "Created" : "Extended", name,
+                    ids.size());
         }
     }
 
@@ -552,15 +603,46 @@ public class SemanticSearchPanel extends JPanel {
         List<Integer> targets = e.targetItemIds();
         int target = targets.isEmpty() ? e.getItemId() : targets.get(0);
         IItemId id = session.itemId(e.getCaseIndex(), target);
-        if (!e.getExcerpts().isEmpty()) {
-            highlight(e.getExcerpts().get(0).getText());
+        if (e.getExcerpts().isEmpty()) {
+            show(id);
+            return;
         }
+        OrderingEntry.Excerpt x = e.getExcerpts().get(0);
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                // words of the excerpt the item does not repeat, so the viewer goes to this excerpt
+                return session.get().member(e.getCaseIndex()).distinctPhrase(e.getItemId(), e.getKind(),
+                        x.getCharStart(), x.getCharEnd(), HIGHLIGHT_WORDS);
+            }
+
+            @Override
+            protected void done() {
+                String phrase = null;
+                try {
+                    phrase = get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    // the viewer may then open at another occurrence of the excerpt's first words
+                    LOGGER.warn("Could not choose the highlight phrase of a semantic excerpt", ex);
+                }
+                highlight(phrase != null ? phrase : firstWords(x.getText()));
+                show(id);
+            }
+        }.execute();
+    }
+
+    private void show(IItemId id) {
         if (!selectInTable(id)) {
             int luceneId = App.get().appCase.getLuceneId(id);
             if (luceneId >= 0) {
                 new FileProcessor(luceneId, true).execute();
             }
         }
+    }
+
+    private static String firstWords(String passage) {
+        String[] words = passage.replace('"', ' ').replace('\\', ' ').trim().split("\\s+");
+        return String.join(" ", java.util.Arrays.copyOf(words, Math.min(HIGHLIGHT_WORDS, words.length)));
     }
 
     private boolean selectInTable(IItemId id) {
@@ -581,16 +663,16 @@ public class SemanticSearchPanel extends JPanel {
     }
 
     /**
-     * Highlights the passage in the viewers (research D13, T033): its first words as a phrase, added
-     * to the highlight query the text viewer scores with, and to the highlight terms the other
-     * viewers use. The next keyword search replaces both, as it always does.
+     * Highlights the excerpt in the viewers (research D13, T033): a phrase of it, added to the
+     * highlight query the text viewer scores with, and to the highlight terms the other viewers use.
+     * The text viewer goes to the phrase's first occurrence, which is why the phrase is one the item
+     * does not repeat. The next keyword search replaces both, as it always does.
      */
-    private void highlight(String passage) {
-        String[] words = passage.replace('"', ' ').replace('\\', ' ').trim().split("\\s+");
-        if (words.length < 2) {
+    private void highlight(String phrase) {
+        phrase = phrase.replace('"', ' ').replace('\\', ' ').trim();
+        if (phrase.split("\\s+").length < 2) {
             return;
         }
-        String phrase = String.join(" ", java.util.Arrays.copyOf(words, Math.min(HIGHLIGHT_WORDS, words.length)));
         try {
             Query q = new QueryBuilder(App.get().appCase).getQuery("\"" + phrase + "\"");
             Query current = App.get().getQuery();
@@ -619,6 +701,7 @@ public class SemanticSearchPanel extends JPanel {
         session.close();
         SwingUtilities.invokeLater(() -> {
             tabs.removeAll();
+            showCard(CARD_EMPTY);
             reference.setText("");
         });
     }

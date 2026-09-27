@@ -217,6 +217,9 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 ColumnsManagerUI.getInstance().dispose();
                 App.get().appletListener.updateFileListing();
             }
+            if (App.get().semanticSearchPanel != null) {
+                App.get().semanticSearchPanel.caseLoaded();
+            }
         } finally {
             App.get().dialogBar.setVisible(false);
         }
