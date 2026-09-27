@@ -100,8 +100,8 @@ servidor MCP.
 
 **Performance Goals**:
 - SC-004: até 5 s por pergunta em 1 M itens cobertos; até 2 s em recorte de até 10 mil itens.
-- SC-010: processamento com texto ≤ 2× o tempo sem a capacidade.
-- SC-013: processamento com texto e imagens ≤ 3×.
+- SC-010: processamento com texto ≤ 3× o tempo sem a capacidade (revisto em 2026-09-27; era 2×).
+- SC-013: processamento com texto e imagens ≤ 4× (revisto em 2026-09-27; era 3×).
 
 As três são **metas de partida, não medidas** (D15).
 

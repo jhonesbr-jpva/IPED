@@ -474,14 +474,15 @@ pela impressão digital, e não a fonte (emenda A4). Credenciais nunca em arquiv
   - Feito nesta estação (14 núcleos): índice sintético de 1 M pelo caminho de produção (`ScaleAndRecallEval`); sem recorte, frio 1,5 s e morno ~0,55 s; recorte de 10 mil, frio 0,37 s e morno 0,13 s; revocação do aproximado 1,000 nos 100 primeiros. No caso de avaliação a revocação é trivial (o HNSW devolve todas as unidades). **Pendente**: calibrar `fingerprintTolerance` entre duas CPUs diferentes (precisa de outra máquina).
 - [ ] T096 Medições na bancada (quickstart, Cenários 2, 3 e 8), registradas no `validation-log.md`:
   - SC-008 (±5% desligada);
-  - SC-010 (≤ 2× só texto);
-  - SC-013 (≤ 3× texto + imagens);
+  - SC-010 (≤ 3× só texto; revisto em 2026-09-27, era 2×);
+  - SC-013 (≤ 4× texto + imagens; revisto em 2026-09-27, era 3×);
   - SC-015 (tempo de vídeos em separado; desligar volta ±5%);
   - SC-009 e SC-016 (observação de tráfego).
   
   **Se SC-010 ou SC-013 reprovar só com CPU, parar e levar a revisão para a spec (Assumptions), sem relaxar no plano.**
   - Esta estação não é a bancada de referência (14 núcleos, não 48). Feito aqui, como indicação: SC-008 no `fastmode` sobre a evidência de referência (instalação anterior 54,1 e 50,9 s; nova desligada 51,6 s); SC-009 observado no processamento e na busca (nenhuma conexão); SC-016 observado na verificação da interface. **Pendente na bancada**: SC-008, SC-010, SC-013 e SC-015 no perfil forense.
   - **Indicação que para a tarefa** (validation-log): no perfil forense, a evidência de referência tem 7,05 bilhões de caracteres de texto; a preparação levaria de 4 h a 20 h conforme a política, contra 17,7 min de base. O SC-010 como escrito não é alcançável em evidência rica em texto: parado aqui e levado à spec, como a tarefa manda.
+  - **Revisão da spec (2026-09-27)**: SC-010 ≤ 3×, SC-013 ≤ 4×, texto de binários fora do padrão (`prepareBinaryText`). Indicação nesta estação, caso de avaliação, perfil forense: texto 1,60×, texto + imagens 1,66×. Segue pendente a medição na bancada de referência (SC-008, SC-010, SC-013, SC-015).
 - [ ] T097 Decisão de fábrica (research D19 e D20), com os números de T063 e T096: `defaultTextMode` em `SemanticSearchConfig.java`/`SemanticSearchConfig.txt`, e quais perfis em `iped-app/resources/config/profiles/*/IPEDConfig.txt` ligam o quê. Registrar a justificativa no `validation-log.md`.
   - `defaultTextMode = hybrid` confirmado pelos números de T063 (SC-018 100% sem perda no SC-001). Perfis: nenhum liga a capacidade até os números de T096 na bancada (D19).
 - [X] T098 Regressão, com o resultado registrado em `specs/009-semantic-search/validation-log.md`:

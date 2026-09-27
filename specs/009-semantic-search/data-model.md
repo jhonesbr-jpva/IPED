@@ -179,6 +179,7 @@ anterior à preparação.
 | `COVERED_BY_MESSAGES` | coberto pelas mensagens | chat cujas mensagens viraram sequência | acrescentado pela emenda A1 |
 | `COVERED_BY_SOURCE_VIDEO` | coberto pelo vídeo de origem | quadro-subitem com vídeos ligados | acrescentado pela emenda A1 |
 | `CATEGORY_NOT_SELECTED` | categoria não selecionada | fora das categorias configuradas | acrescentado pela emenda A1 |
+| `BINARY_TEXT` | texto extraído de binário (strings), não preparado | texto do extrator de strings do IPED (executáveis e bibliotecas, binários desconhecidos, espaço não alocado, slack) com `prepareBinaryText = false` | acrescentado na revisão de 2026-09-27 (FR-001) |
 | `REMOTE_UNAVAILABLE` | modelo remoto indisponível | tentativas esgotadas | acrescentado pela emenda A1 |
 | `MODEL_MISMATCH` | modelo diferente do caso | acréscimo com impressão digital divergente | sim ("falha no preparo", refinado) |
 | `PREP_FAILURE` | falha no preparo | exceção na preparação do item | sim |

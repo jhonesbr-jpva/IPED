@@ -80,7 +80,7 @@ IPEDConfig.txt: enableSemanticText = true
 ```
 
 1. Processe `<eval-src>` no perfil forense. Anote o tempo total e compare com o do Cenário 2:
-   **≤ 2×** (SC-010, meta de partida — se reprovar, a revisão volta para a spec).
+   **≤ 3×** (SC-010, revisto em 2026-09-27 — se reprovar, a revisão volta para a spec).
 2. Abra `<eval-case>/iped/semantic/build-record.json`:
    - `state: COMPLETE`;
    - identidade do modelo presente;
@@ -175,8 +175,8 @@ No chat do conjunto de avaliação com "quanto?" / "5 mil" / "fechado, amanhã n
 
 ## Cenário 8 — imagens e vídeos (História 6, SC-012 a SC-015)
 
-1. Processe com `enableSemanticImages = true` e `enableSemanticVideos = false`. Tempo **≤ 3×** o
-   do Cenário 2 (SC-013).
+1. Processe com `enableSemanticImages = true` e `enableSemanticVideos = false`. Tempo **≤ 4×** o
+   do Cenário 2 (SC-013, revisto em 2026-09-27).
 2. SC-012: ≥ 30 descrições em PT, pertinente entre as 10 primeiras em **≥ 70%**. Registre à
    parte o acerto das ≥ 5 descrições em inglês (FR-036): a pergunta em inglês tem de funcionar
    sobre o mesmo modelo, sem tradução.

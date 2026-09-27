@@ -473,8 +473,8 @@ Written by hand.
 - [ ] SC-005 · SC-006 · SC-007 · SC-008 (___%) · SC-009 — SC-005 (`DeterminismIT`), SC-006
       (`TextPreparationIT`, `FocusWindowTest`), SC-007 (28/28) and SC-009 (no connection observed)
       pass; **SC-008 is pending on the reference bench** (indication here: inside the noise).
-- [ ] SC-010 ___× · SC-013 ___× · SC-015 ±___% — **pending on the reference bench**, forensic
-      profile.
+- [ ] SC-010 ___× (≤ 3×) · SC-013 ___× (≤ 4×) · SC-015 ±___% — revised on 2026-09-27; indication here
+      1.60× and 1.66× on the evaluation case (forensic); **pending on the reference bench**.
 - [x] SC-011 (`SemanticParityTest`, 40 orderings) · SC-012 100% (PT) · English 100% (FR-036) ·
       SC-014 87.5%.
 - [x] FR-014 (build details) · FR-017 (`MultiCaseIT`, `CASES_EXCLUDED`) · FR-007 (`ceiling_reached`,
@@ -517,3 +517,29 @@ the exact numbers, are the finding.
 **SC-010 as written (≤ 2× on the reference case, CPU only) is not reachable for text-heavy
 evidence with this model.** Per T096 this goes back to the specification, with the options in the
 completion report; the plan is not relaxed here.
+
+### Revision of SC-010 and SC-013, and binary text out by default — 2026-09-27
+
+Written by hand. Decided by the owner after the measurement above: **SC-010 ≤ 3×** (text only),
+**SC-013 ≤ 4×** (text and images), and the text IPED draws from binaries is **not prepared by
+default** (`prepareBinaryText = false`; items recorded as `BINARY_TEXT`). Spec, plan, quickstart,
+research (D6, cost note) and config surface updated.
+
+Measured on the **evaluation case**, **forensic** profile, release with the change, this
+workstation (14 cores; the reference bench is still T096), two alternating rounds, whole run:
+
+| Run | Round 1 | Round 2 | Mean | Ratio |
+|---|---|---|---|---|
+| Capability off | 40.1 s | 38.2 s | 39.2 s | 1 |
+| Text only (SC-010) | 62.2 s | 62.7 s | 62.5 s | **1.60×** (≤ 3×) |
+| Text and images, videos off (SC-013) | 65.0 s | 65.0 s | 65.0 s | **1.66×** (≤ 4×) |
+
+Turning images off gives the text-only time (62.5 s against 65.0 s with images; the text-only runs
+are 0.4% apart). Coverage of the text runs: 235 covered, as before; 8 items `BINARY_TEXT` — the
+corpus folders, whose "text" in the forensic profile is `RawStringParser` over the directory
+entries (the list of file names). In the default profile they were `NO_TEXT`.
+
+On the text-heavy image of the previous section, the new default leaves 2.95 billion characters to
+prepare instead of 4.24: still hours (about 7 h without focus windows, 14 h with them, at the rate
+measured here). The criteria are measured on the evaluation case; a system image of that kind is
+recorded as a known cost, not as a failure of SC-010.

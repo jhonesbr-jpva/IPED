@@ -55,6 +55,7 @@ fonte.
 | `messageMediaTypes` | tipos de mensagem de WhatsApp, Telegram, Skype, Discord e Threema | Tipos preparados como sequência de conversa (D7) |
 | `messageContainerMediaTypes` | bancos de chat de WhatsApp (Android e iOS), Threema, Telegram e SMS do iOS que o IPED decodifica | O texto próprio desses bancos é a listagem das conversas que eles guardam; não viram trechos, e ficam `COVERED_BY_MESSAGES` (as mensagens já estão nas sequências). Acrescentada na implementação (T050): no caso de avaliação, o `msgstore.db` como trecho era vizinho de toda pergunta sobre conversa e ocupava as primeiras posições |
 | `maxTextCharsPerItem` | `200000` | Excedente declarado (`COVERED_TRUNCATED`) |
+| `prepareBinaryText` | `false` | Se o texto extraído de binários (cadeia de parsers com o `RawStringParser`; espaço não alocado; slack) é preparado. Desligado, esses itens ficam `BINARY_TEXT`. Acrescentada na revisão de 2026-09-27 (FR-002, FR-019) |
 | `passageChars` / `passageOverlapChars` | `1000` / `200` | |
 | `focusChars` / `focusOverlapChars` | `400` / `100` | Janelas de foco dos itens com mais de um trecho: escolhem o trecho exibido, não ordenam (research D23, data-model E3b). `0` desliga. Acrescentadas na implementação, depois de medir o cenário 2 da História 1 |
 | `chatWindowMessages` / `chatWindowStride` | `8` / `4` | |

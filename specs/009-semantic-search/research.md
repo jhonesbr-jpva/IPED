@@ -235,6 +235,7 @@ disponíveis e o cache de texto ainda não foi descartado.
 | Fonte | Unidade | Tratamento |
 |---|---|---|
 | Documento, e-mail, qualquer item com texto extraído (inclui OCR, que o parsing já anexa) | trecho | Janelas de ~1000 caracteres com ~200 de sobreposição, respeitando fim de frase. Corta o cabeçalho de metadados. Limite de `maxTextCharsPerItem` (padrão 200 000), com excedente declarado |
+| Item cujo texto veio de binário: a cadeia de parsers inclui o `RawStringParser` (executáveis e bibliotecas, pelo `MultipleParser` do `ParserConfig.xml`; binários desconhecidos), ou é espaço não alocado ou slack | — | **Não** preparado por padrão (revisão de 2026-09-27): status `BINARY_TEXT`. `prepareBinaryText = true` o trata como documento. Numa imagem de sistema Linux, era 45% do texto |
 | Transcrição (`audio:transcription`) | trecho | Mesmo fatiamento, com tipo `transcript` |
 | Mensagem de chat (tipo em `messageMediaTypes`) | — | **Não** é preparada sozinha: vai para a área de montagem (D7) |
 | Item do próprio chat (a conversa renderizada) | trecho | Preparado como documento. **Descartado no `finish()`** se mensagens desse chat foram montadas em sequência (motivo "coberto pelas mensagens"). Continua valendo quando o perfil não extrai mensagens (`extractMessages=false`, triagem) |
@@ -561,6 +562,12 @@ existe no disco antes dela é a pasta de saída e o índice principal vazio, nã
 **Meta de custo não medida**: nenhum número de SC-010, SC-013 ou SC-015 pode ser afirmado agora. A
 primeira medição na bancada é tarefa com critério de parada: se o dobro ou o triplo não forem
 atingidos só com CPU, a revisão volta para a spec (Assumptions), não para o plano.
+
+**Revisão de 2026-09-27**: a primeira medição (validation-log) mostrou o custo crescendo com o
+volume de texto — numa imagem de sistema Linux, 7 bilhões de caracteres, 45% vindos de binários, e
+horas de preparação contra 17,7 min de base, a ~113 mil caracteres por segundo em 14 núcleos. A
+revisão voltou à spec: SC-010 passou a ≤ 3× e SC-013 a ≤ 4×, e o texto extraído de binários saiu
+do padrão (D6).
 
 ---
 
