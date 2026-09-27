@@ -57,7 +57,7 @@ O que o caso oferece de busca semântica, sem executar busca.
                 "source": "local", "prepared_with": "remote", "covered": 812344, "not_covered": { "NO_TEXT": 90211, "COVERED_BY_MESSAGES": 1120 },
                 "built_at": "2026-10-02T14:31:07Z", "ipedVersion": "4.3.1",
                 "params": { "passageChars": 1000, "passageOverlapChars": 200, "chatWindowMessages": 8, "…": "…" } },
-    "visual": { "available": false, "reason": "MODALITY_OFF",
+    "visual": { "available": false, "reason": "MODALITY_NOT_PREPARED",
                 "remedy": "The case was processed with semantic image and video search off. Reprocess with enableSemanticImages/enableSemanticVideos on to use it." }
   },
   "default_depth": 100,
@@ -146,7 +146,9 @@ já entrega bloco de imagem (008) e passa pela política de egresso da classe `t
   trecho, ou o `item_id` de cada mensagem. É com isso que `iped_semantic_context` amplia o contexto
   e que uma resposta gerada fora liga cada afirmação a um intervalo literal.
 - Não existe `total_matches`, nem `total`, nem resultado vazio com sentido de "nada encontrado"
-  (FR-007). Recorte vazio → `coverage.recorte_size: 0` e `notices: ["RECORTE_EMPTY"]`.
+  (FR-007). Recorte vazio → `coverage.recorte_size: 0` e um aviso `RECORTE_EMPTY` em `notices`.
+  Cada aviso é um objeto `{ "code": "RECORTE_EMPTY", "modality": "text", "message": "…" }`: o
+  código é estável, e a mensagem carrega os argumentos (limite do truncamento, caso excluído).
 - `ordering_notice` vem em **toda** resposta, não só quando a proximidade é baixa (FR-040).
 - `method` é `exact` ou `approximate` (emenda A3).
 - Com modelo remoto, `model.sent_to` informa para onde a pergunta foi enviada.
@@ -216,6 +218,40 @@ item, sem repetição.
 `ENTRY_NOT_FOUND` (item e ordinal sem entrada no índice semântico).
 
 ---
+
+## Notas da implementação (2026-09-27)
+
+Decisões tomadas ao implementar (`iped-mcp/.../tools/SemanticTools.java`) que o texto acima não
+fixava:
+
+- **`modality: both` com uma modalidade indisponível**: a outra ordenação vem normalmente, e a
+  indisponível aparece no lugar da sua como `{ "available": false, "code", "message", "remedy",
+  "modality", "reason", … }`. A chamada só é recusada quando nenhuma das modalidades pedidas
+  responde. Com uma modalidade só, a indisponibilidade é sempre recusa.
+- **Cursor**: cada ordenação traz o seu `next_cursor`, e um cursor continua só a ordenação de que
+  veio (com `both`, a resposta paginada traz só essa). O cursor é amarrado a um resumo do caso, da
+  ferramenta, da pergunta ou referência, do modo e dos ids do recorte: apresentado com outros
+  argumentos, ou depois que o recorte mudou (marcador que ganhou itens), é recusado com
+  `INVALID_CURSOR`, em vez de emendar duas ordenações diferentes numa lista.
+- **Lista do teto em memória**: as últimas 8 ordenações da sessão ficam guardadas; paginar lê
+  delas. Se a ordenação saiu da memória, a busca é refeita, e como é determinística (FR-015) dá a
+  mesma lista.
+- **Fim da lista**: a última página traz `ceiling_reached` e, conforme o caso, `ceiling_note` (o
+  teto é limite de profundidade, não de relevância) ou `end_note` (toda unidade coberta do recorte
+  foi ordenada; as não cobertas não foram comparadas).
+- **Citação**: cada trecho de `excerpts` traz o próprio `ordinal`, além de `char_start`/`char_end`
+  — uma entrada consolidada pode juntar trechos de ordinais diferentes, e é o ordinal que
+  `iped_semantic_context` pede.
+- **Egresso em sequência**: a linha bloqueada perde `text` e ganha `text_withheld` com a regra; a
+  entrada ganha `excerpt_withheld` com a primeira regra que bloqueou. Item que não pode ser lido
+  para conferir a política tem o texto retido (`policy_rule: "unverifiable"`).
+- **`iped_semantic_context` não carrega modelo**: exige só a pasta, o registro, a seção da
+  modalidade e o índice (`Availability.structural`). Ler texto literal de volta não depende do
+  modelo que ordenou.
+- **`iped_semantic_status`** traz também, quando há registro: `model_sha256`, `timing`, `keys`
+  (visual), `conflicts`, `disabled_reason` e `partial`; quando indisponível, `message`, `detail` e,
+  em `MODEL_INCOMPATIBLE`, `case_model` e `current_model`. A impressão digital não sai (é feita de
+  vetores).
 
 ## Auditoria
 

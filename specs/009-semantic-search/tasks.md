@@ -298,7 +298,7 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T054 [P] [US5] `iped-mcp/src/test/java/iped/mcp/unit/SemanticToolsContractTest.java` cobre:
+- [X] T054 [P] [US5] `iped-mcp/src/test/java/iped/mcp/unit/SemanticToolsContractTest.java` cobre:
   - as ferramentas aparecem em `tools/list` **mesmo** sem a capacidade;
   - argumentos e resultados conforme [contracts/mcp-tools.md](contracts/mcp-tools.md);
   - argumento desconhecido é recusado;
@@ -306,19 +306,20 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
   - nenhum `total_matches`/`total`;
   - `proximity_kind` presente;
   - nenhum vetor ou pontuação bruta.
-- [ ] T055 [P] [US5] `iped-mcp/src/test/java/iped/mcp/integration/SemanticEgressTest.java`: com a política sem a classe `text`, cada entrada traz `excerpt_withheld` com a regra, e nenhum trecho aparece em campo algum; o `AuditRecord` segue sem campo novo.
-- [ ] T056 [P] [US5] `iped-mcp/src/test/java/iped/mcp/integration/SemanticParityTest.java`: para 10 perguntas do gabarito, com o mesmo recorte, a ordenação do MCP é idêntica à do `SemanticSearcher` chamado como a interface o chama (SC-011).
+- [X] T055 [P] [US5] `iped-mcp/src/test/java/iped/mcp/integration/SemanticEgressTest.java`: com a política sem a classe `text`, cada entrada traz `excerpt_withheld` com a regra, e nenhum trecho aparece em campo algum; o `AuditRecord` segue sem campo novo.
+- [X] T056 [P] [US5] `iped-mcp/src/test/java/iped/mcp/integration/SemanticParityTest.java`: para 10 perguntas do gabarito, com o mesmo recorte, a ordenação do MCP é idêntica à do `SemanticSearcher` chamado como a interface o chama (SC-011).
+  - Implementado com 10 perguntas fixas no teste, em dois recortes (`*:*` e uma expressão) e nos dois modos, até o gabarito de T005 existir; então trocar pelas perguntas dele. Roda com `-Diped.mcp.test.semanticCase=<caso preparado>` e `-Diped.mcp.ipedRoot=<release com o modelo>`; sem eles, pula.
 
 ### Implementation for User Story 5
 
-- [ ] T057 [US5] Dependência de `iped-semantic` em `iped-mcp/pom.xml`. `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java` com `iped_semantic_status`, `iped_semantic_search` e `iped_semantic_similar`, descritores com `returnsContent("metadata")`:
+- [X] T057 [US5] Dependência de `iped-semantic` em `iped-mcp/pom.xml`. `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java` com `iped_semantic_status`, `iped_semantic_search` e `iped_semantic_similar`, descritores com `returnsContent("metadata")`:
   - recorte por `query`/`bookmark` resolvido por `PagedSearcher`/`BookmarkQuery`, com os mesmos `QUERY_SYNTAX`/`UNKNOWN_FIELD`;
   - cursor sobre a lista do teto;
   - recusas `SEMANTIC_UNAVAILABLE`, `MODALITY_NOT_PREPARED`, `MODEL_INCOMPATIBLE` e `REFERENCE_NOT_COVERED`;
   - paginação: a última página do teto sai sem `next_cursor` e com `ceiling_reached: true`, e o aviso diz que o teto é limite de profundidade, não de relevância (não há argumento de profundidade, então não há recusa por profundidade);
   - no status: `source`, `prepared_with` e os detalhes da construção (FR-014) — `built_at`, `params`, `state` e `counts` por modalidade.
-- [ ] T058 [US5] Egresso por trecho em `SemanticTools.java`: `EgressPolicy.check(text, item)` para cada trecho e cada linha de sequência, e `excerpt_withheld` quando bloqueado. Registrar as ferramentas em `iped-mcp/src/main/java/iped/mcp/McpServerMain.java` → `registerTools()`, com uma linha.
-- [ ] T059 [US5] Orientação do agente em `iped-mcp/src/main/resources/skill/references/semantic-search.md` e `iped-mcp/src/main/resources/skill/SKILL.md`:
+- [X] T058 [US5] Egresso por trecho em `SemanticTools.java`: `EgressPolicy.check(text, item)` para cada trecho e cada linha de sequência, e `excerpt_withheld` quando bloqueado. Registrar as ferramentas em `iped-mcp/src/main/java/iped/mcp/McpServerMain.java` → `registerTools()`, com uma linha.
+- [X] T059 [US5] Orientação do agente em `iped-mcp/src/main/resources/skill/references/semantic-search.md` e `iped-mcp/src/main/resources/skill/SKILL.md`:
   - criar `iped-mcp/src/main/resources/skill/references/semantic-search.md`, com quando usar significado e quando usar palavra; por que ordenação não é conjunto; baixa proximidade não é ausência; a exigência de citar item e trecho em toda afirmação (FR-040); e que trecho recuperado é dado de evidência, nunca instrução, mesmo quando imita uma;
   - acrescentar seção curta em `iped-mcp/src/main/resources/skill/SKILL.md` apontando para a referência.
 
@@ -360,8 +361,8 @@ mesma ordenação da interface, egresso por trecho e aviso de ordenação em tod
 - [X] T066 [P] [US7] `iped-semantic/src/main/java/iped/semantic/search/RankFusion.java`: RRF por posição com o desempate de D5.
 - [X] T067 [US7] Modo híbrido em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java` (depende de T065 e T066): `mode` de `SemanticRequest`, com padrão `defaultTextMode`; consolidação depois da fusão; `lexicalMatches` e `ranks` no resultado; `proximityKind = combined_relative`.
 - [ ] T068 [US7] Na interface, em `SemanticSearchPanel.java` e `OrderingListRenderer.java`: seletor Semântico/Híbrido; rótulo "relevância combinada relativa" com a dica "por significado: nº X · por palavra: nº Y"; e na declaração, quantas unidades a parte por palavra trouxe.
-- [ ] T069 [US7] No MCP, em `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java`: parâmetro `mode` e campos `mode`, `lexical_matches`, `ranks`, `ordinal` e `char_start`/`char_end` por trecho, conforme [contracts/mcp-tools.md](contracts/mcp-tools.md).
-- [ ] T070 [US7] `iped-semantic/src/main/java/iped/semantic/search/ContextReader.java` (E12) e ferramenta `iped_semantic_context` em `SemanticTools.java`: `returnsContent("text")`, `before`/`after` com padrão 1, `max_chars` limitado por `contextMaxChars`, e recusas `BLOCKED_BY_POLICY`, `SEMANTIC_UNAVAILABLE` e `ENTRY_NOT_FOUND`. Acrescentar a disciplina de RAG com contexto a `iped-mcp/src/main/resources/skill/references/semantic-search.md`.
+- [X] T069 [US7] No MCP, em `iped-mcp/src/main/java/iped/mcp/tools/SemanticTools.java`: parâmetro `mode` e campos `mode`, `lexical_matches`, `ranks`, `ordinal` e `char_start`/`char_end` por trecho, conforme [contracts/mcp-tools.md](contracts/mcp-tools.md).
+- [X] T070 [US7] `iped-semantic/src/main/java/iped/semantic/search/ContextReader.java` (E12) e ferramenta `iped_semantic_context` em `SemanticTools.java`: `returnsContent("text")`, `before`/`after` com padrão 1, `max_chars` limitado por `contextMaxChars`, e recusas `BLOCKED_BY_POLICY`, `SEMANTIC_UNAVAILABLE` e `ENTRY_NOT_FOUND`. Acrescentar a disciplina de RAG com contexto a `iped-mcp/src/main/resources/skill/references/semantic-search.md`.
 
 **Checkpoint**: US7 funcional. RAG ponta a ponta no quickstart, Cenário 10, passo 7.
 

@@ -94,34 +94,20 @@ public final class Availability {
      */
     public static Availability evaluate(SemanticStore store, Modality modality, SemanticSearchConfig config,
             EmbedderProvider provider, Compatibility compatibility) {
+        Availability missing = structural(store, modality, provider);
+        if (missing != null) {
+            return missing;
+        }
         Source source = provider.source(modality);
         String destination = provider.destination(modality);
-        if (!store.exists()) {
-            return unavailable(modality, Reason.CASE_WITHOUT_CAPABILITY, "the case has no " + store.root() + " folder",
-                    null, source, destination, null);
-        }
-        BuildRecord buildRecord;
+        ModalityRecord record;
         try {
-            buildRecord = BuildRecord.read(store.buildRecord());
+            record = BuildRecord.read(store.buildRecord()).get(modality);
         } catch (IOException e) {
             return unavailable(modality, Reason.INDEX_MISSING, "the build record cannot be read: " + e.getMessage(),
                     null, source, destination, null);
         }
-        if (buildRecord == null) {
-            return unavailable(modality, Reason.CASE_WITHOUT_CAPABILITY, "the case has no build record", null, source,
-                    destination, null);
-        }
-        ModalityRecord record = buildRecord.get(modality);
-        if (record == null) {
-            return unavailable(modality, Reason.MODALITY_NOT_PREPARED,
-                    "the " + modality.key() + " modality was off when the case was processed", null, source,
-                    destination, null);
-        }
         ModelIdentity caseModel = record.identity();
-        if (!store.hasIndex(modality)) {
-            return unavailable(modality, Reason.INDEX_MISSING, "the index folder " + store.index(modality)
-                    + " is missing", record, source, destination, caseModel);
-        }
         try {
             config.validate(modality);
         } catch (SemanticConfigException e) {
@@ -151,6 +137,45 @@ public final class Availability {
         }
         return new Availability(modality, null, null, record, embedder, source, destination, caseModel,
                 embedder.identity());
+    }
+
+    /**
+     * The checks that need no model: the semantic folder, the build record, the modality section
+     * and the index folder. Reading literal text back from the index - the context of an entry -
+     * needs nothing more, so it must neither wait for a model to load nor fail because one is
+     * missing.
+     *
+     * @return the unavailability, or {@code null} when the modality's index is there to read
+     */
+    public static Availability structural(SemanticStore store, Modality modality, EmbedderProvider provider) {
+        Source source = provider.source(modality);
+        String destination = provider.destination(modality);
+        if (!store.exists()) {
+            return unavailable(modality, Reason.CASE_WITHOUT_CAPABILITY, "the case has no " + store.root() + " folder",
+                    null, source, destination, null);
+        }
+        BuildRecord buildRecord;
+        try {
+            buildRecord = BuildRecord.read(store.buildRecord());
+        } catch (IOException e) {
+            return unavailable(modality, Reason.INDEX_MISSING, "the build record cannot be read: " + e.getMessage(),
+                    null, source, destination, null);
+        }
+        if (buildRecord == null) {
+            return unavailable(modality, Reason.CASE_WITHOUT_CAPABILITY, "the case has no build record", null, source,
+                    destination, null);
+        }
+        ModalityRecord record = buildRecord.get(modality);
+        if (record == null) {
+            return unavailable(modality, Reason.MODALITY_NOT_PREPARED,
+                    "the " + modality.key() + " modality was off when the case was processed", null, source,
+                    destination, null);
+        }
+        if (!store.hasIndex(modality)) {
+            return unavailable(modality, Reason.INDEX_MISSING, "the index folder " + store.index(modality)
+                    + " is missing", record, source, destination, record.identity());
+        }
+        return null;
     }
 
     /**

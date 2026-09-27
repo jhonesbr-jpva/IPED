@@ -2,6 +2,7 @@ package iped.mcp.query;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -18,6 +20,8 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
@@ -378,6 +382,52 @@ public class PagedSearcher {
         builder.add(itemQuery, Occur.MUST);
         builder.add(new BookmarkQuery(bookmarks, bookmarkId, bookmark), Occur.FILTER);
         return builder.build();
+    }
+
+    /**
+     * The ids of every item an expression and, optionally, a bookmark select, as a set: the scope
+     * of a semantic question (009).
+     *
+     * <p>
+     * The plan comes from {@link #plan}, so the scope is parsed exactly as {@code iped_search}
+     * parses, with the same repairs and the same {@code QUERY_SYNTAX}/{@code UNKNOWN_FIELD}
+     * diagnostics. A bit set rather than a list: one bit per id keeps even a case of hundreds of
+     * millions of items within a few tens of megabytes, and it is what the semantic searcher takes.
+     */
+    public BitSet collectIdSet(OpenCase openCase, QueryPlan plan, String bookmark) {
+        IPEDSource source = openCase.getSource();
+        Query query = forItems(openCase, plan.getQuery());
+        if (bookmark != null) {
+            query = withBookmarkFilter(openCase, query, bookmark);
+        }
+        BitSet ids = new BitSet(Math.max(0, source.getLastId() + 1));
+        try {
+            source.getSearcher().search(query, new SimpleCollector() {
+                private int docBase;
+
+                @Override
+                protected void doSetNextReader(LeafReaderContext context) {
+                    docBase = context.docBase;
+                }
+
+                @Override
+                public void collect(int doc) {
+                    int id = source.getId(docBase + doc);
+                    if (id >= 0) {
+                        ids.set(id);
+                    }
+                }
+
+                @Override
+                public ScoreMode scoreMode() {
+                    return ScoreMode.COMPLETE_NO_SCORES;
+                }
+            });
+        } catch (IOException e) {
+            throw new McpError(McpError.INTERNAL_ERROR, "The scope could not be collected: " + e.getMessage(),
+                    "Report this with the server log attached.", e);
+        }
+        return ids;
     }
 
     /** Exact match count without collecting anything. */

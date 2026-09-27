@@ -1,6 +1,6 @@
 # Módulo `iped-mcp`
 
-> **Servidor MCP.** Expõe casos IPED a agentes de LLM, por JSON-RPC 2.0 sobre stdio, e distribui a skill que ensina o agente a usá-lo com disciplina pericial. Desde a 007 também **cria** caso, processando evidência com o motor do IPED fora do processo.
+> **Servidor MCP.** Expõe casos IPED a agentes de LLM, por JSON-RPC 2.0 sobre stdio, e distribui a skill que ensina o agente a usá-lo com disciplina pericial. Desde a 007 também **cria** caso, processando evidência com o motor do IPED fora do processo. Desde a 009 também **busca por significado** (`iped_semantic_status`, `_search`, `_similar`, `_context`), delegando ao mesmo `SemanticSearcher` do `iped-semantic` que a interface usa — a paridade entre as duas ordenações (SC-011) vem de não haver segundo caminho.
 
 > Este módulo **não modifica nenhuma classe existente**. Consome apenas API pública do `iped-engine` e do `iped-api`. Os dois únicos arquivos existentes tocados são aditivos: o `pom.xml` da raiz (registro do módulo) e `iped-app/pom.xml` (empacotamento no release).
 
@@ -39,8 +39,14 @@ iped/mcp/
 ├── processing/              # criação de caso: JobRunner, ProgressReader, JobStore, confinamentos
 ├── egress/EgressPolicy      # opcional, inativa por padrão
 ├── export/                  # ArtifactWriter (xlsx/CSV/JSON), ItemFileWriter, EvidenceFileName, PathConfinement
-└── tools/                   # uma classe por grupo de ferramentas MCP
+└── tools/                   # uma classe por grupo de ferramentas MCP (SemanticTools: busca semântica, 009)
 ```
+
+`SemanticTools` guarda um `SemanticSearcher` por caso aberto (disponibilidade, impressão digital e
+leitores avaliados uma vez) e o solta pelo `CaseRegistry.addCloseListener` quando o caso fecha — no
+Windows, arquivo aberto impede mover ou apagar a pasta do caso. As ferramentas de ordenação declaram
+`metadata` e conferem o egresso **trecho a trecho** (`excerpt_withheld`); a de contexto declara
+`text`. Contrato em [specs/009-semantic-search/contracts/mcp-tools.md](../specs/009-semantic-search/contracts/mcp-tools.md).
 
 Recursos em `src/main/resources/`:
 
@@ -142,6 +148,7 @@ Acrescentado na 006: **raízes de escrita** (`exportRoots`, separadas por `;` �
 | Lib | Para que |
 |---|---|
 | `iped-engine`, `iped-api`, `iped-utils` | `IPEDSource`, `QueryBuilder`, `Bookmarks`, `LoadIndexFields`, `IndexItem`, `BasicProps` |
+| `iped-semantic` | `SemanticSearcher`, `ContextReader`, `DeclarationText` — as ferramentas `iped_semantic_*` (009). Traz o ONNX Runtime, que já vai no release pelo `iped-app` |
 | `lucene-core`, `lucene-highlighter`, `lucene-queryparser` 9.2.0 | busca paginada, DocValues, trechos |
 | `jackson-core` 2.13.2 / `jackson-databind` 2.13.4.2 | JSON-RPC e serialização |
 | `poi` / `poi-ooxml` 5.2.2 | xlsx em modo streaming; versão alinhada à que o Tika 2.4.0 traz |
@@ -158,6 +165,9 @@ mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java
     -Diped.mcp.test.referenceCase=<path>                         # + suítes de integração
 mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release> -Djvm=<release>/jre/bin/java.exe \
     -Diped.mcp.test.largeCase=<path>                             # + SC-002 e SC-015
+mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release com o modelo de texto> \
+    -Diped.mcp.test.semanticCase=<caso processado com enableSemanticText> \
+    -Diped.mcp.test.referenceCase=<caso sem a capacidade>        # + busca semântica (009)
 
 # Processamento real (007): evidência de origem e raiz de caso declaradas.
 mvn -pl iped-mcp test -Diped.mcp.ipedRoot=<release> \

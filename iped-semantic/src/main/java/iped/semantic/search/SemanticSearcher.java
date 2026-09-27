@@ -413,6 +413,26 @@ public class SemanticSearcher implements Closeable {
         return table(m).reasonOf(itemId);
     }
 
+    /**
+     * Literal text around an entry of the text modality (data-model E12), read back from the index
+     * without loading any model: widening the context of a citation must not depend on the model
+     * that ranked it.
+     *
+     * @param itemId
+     *            the item of a passage, or the chat of a sequence
+     * @return {@code null} when the index has no entry with this item and ordinal
+     * @throws SemanticUnavailableException
+     *             when the case has no text index to read
+     */
+    public ContextReader.Context context(int itemId, int ordinal, int before, int after, int maxChars)
+            throws SemanticUnavailableException, IOException {
+        Availability missing = Availability.structural(store, Modality.TEXT, provider);
+        if (missing != null) {
+            throw new SemanticUnavailableException(missing);
+        }
+        return ContextReader.around(reader(Modality.TEXT), itemId, ordinal, before, after, maxChars);
+    }
+
     synchronized SemanticIndexReader reader(Modality m) throws IOException {
         SemanticIndexReader r = readers.get(m);
         if (r == null) {

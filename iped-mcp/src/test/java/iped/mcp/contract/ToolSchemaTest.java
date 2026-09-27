@@ -50,7 +50,9 @@ public class ToolSchemaTest {
             // Output artifacts
             "iped_export_artifact", "iped_export_item",
             // Audit
-            "iped_export_audit");
+            "iped_export_audit",
+            // Semantic search (009, contracts/mcp-tools.md of that feature)
+            "iped_semantic_status", "iped_semantic_search", "iped_semantic_similar", "iped_semantic_context");
 
     /** Tools that must refuse in read-only mode. */
     private static final Set<String> WRITE_TOOLS = new HashSet<>(Arrays.asList("iped_create_bookmark",

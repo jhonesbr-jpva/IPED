@@ -44,8 +44,26 @@ public final class McpTestSupport {
     public static final String SOURCE_EVIDENCE_ENV = "IPED_MCP_SOURCE_EVIDENCE";
     public static final String CASE_ROOT_PROPERTY = "iped.mcp.test.caseRoot";
     public static final String CASE_ROOT_ENV = "IPED_MCP_CASE_ROOT";
+    /** A case processed with the semantic text modality on (009). */
+    public static final String SEMANTIC_CASE_PROPERTY = "iped.mcp.test.semanticCase";
+    public static final String SEMANTIC_CASE_ENV = "IPED_MCP_SEMANTIC_CASE";
 
     private McpTestSupport() {
+    }
+
+    /**
+     * Skips the calling test when no case with semantic search prepared is configured. The small
+     * reference case is processed without the capability, which is itself worth testing - the tools
+     * must declare it - but says nothing about an ordering.
+     */
+    public static File requireSemanticCase() {
+        File semanticCase = resolve(SEMANTIC_CASE_PROPERTY, SEMANTIC_CASE_ENV);
+        Assume.assumeTrue("Case with semantic search prepared not available. Process any case with "
+                + "enableSemanticText = true and set -D" + SEMANTIC_CASE_PROPERTY + "=<path> (or " + SEMANTIC_CASE_ENV
+                + "). The installation in -D" + Diagnostics.IPED_ROOT_PROPERTY + " must carry the same text model.",
+                semanticCase != null && new File(semanticCase, "iped/semantic/build-record.json").isFile());
+        requireIpedConfiguration();
+        return semanticCase;
     }
 
     public static File referenceCase() {

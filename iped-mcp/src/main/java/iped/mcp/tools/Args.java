@@ -29,6 +29,25 @@ final class Args {
         return node.asText();
     }
 
+    /**
+     * Refuses an argument the tool does not declare, rather than ignoring it. An ignored argument
+     * reads to the agent as honoured: a misspelt restriction would silently widen the question.
+     */
+    static void rejectUnknown(JsonNode arguments, String tool, String... declared) {
+        List<String> known = java.util.Arrays.asList(declared);
+        List<String> unknown = new ArrayList<>();
+        arguments.fieldNames().forEachRemaining(name -> {
+            if (!known.contains(name)) {
+                unknown.add(name);
+            }
+        });
+        if (!unknown.isEmpty()) {
+            throw new McpError(McpError.INVALID_ARGUMENT, tool + " does not accept " + String.join(", ", unknown) + ".",
+                    "Pass only the declared parameters: " + String.join(", ", known) + ".").with("unknown", unknown)
+                            .with("accepted", known);
+        }
+    }
+
     static String optionalString(JsonNode arguments, String name, String fallback) {
         JsonNode node = arguments.get(name);
         return node == null || node.isNull() ? fallback : node.asText();

@@ -46,6 +46,7 @@ import iped.mcp.tools.ItemTools;
 import iped.mcp.tools.ProcessingTools;
 import iped.mcp.tools.QueryTools;
 import iped.mcp.tools.SelectionTools;
+import iped.mcp.tools.SemanticTools;
 import iped.mcp.tools.SessionTools;
 import iped.mcp.tools.VocabularyTools;
 
@@ -118,6 +119,7 @@ public class McpServerMain implements AutoCloseable {
         tools.addAll(new ExportTools(session, pagedSearcher, artifactWriter, contentAccess, itemFileWriter)
                 .descriptors());
         tools.addAll(new AuditTools(session).descriptors());
+        tools.addAll(new SemanticTools(session, pagedSearcher, contentAccess).descriptors());
         // Process-wide, like the case pool: one job at a time is a property of the machine, so two
         // sessions have to see the same running job rather than one counter each.
         tools.addAll(new ProcessingTools(session, JobRunner.forProcess(config, Diagnostics.resolveIpedRoot()))

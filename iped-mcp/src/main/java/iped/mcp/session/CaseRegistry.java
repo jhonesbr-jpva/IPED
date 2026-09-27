@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,7 @@ public class CaseRegistry implements AutoCloseable {
     private final CasePool casePool;
     private final SessionManifest manifest;
     private final Map<String, OpenCase> openCases = new LinkedHashMap<>();
+    private final List<Consumer<OpenCase>> closeListeners = new CopyOnWriteArrayList<>();
 
     public CaseRegistry(McpServerConfig config, AuditSync auditSync, ConcurrencyGuard concurrencyGuard,
             CasePool casePool, SessionManifest manifest) {
@@ -123,6 +126,15 @@ public class CaseRegistry implements AutoCloseable {
         return openCases.values();
     }
 
+    /**
+     * Registers what must be released when this session closes a case, before its engine handle is
+     * let go: the semantic tools keep the case's semantic index open between calls, and on Windows
+     * an open file keeps the case folder from being moved or deleted.
+     */
+    public void addCloseListener(Consumer<OpenCase> listener) {
+        closeListeners.add(listener);
+    }
+
     public synchronized void close(String caseId) {
         OpenCase openCase = require(caseId);
         AuditSync.Target target = openCase.getSyncTarget();
@@ -133,6 +145,13 @@ public class CaseRegistry implements AutoCloseable {
         }
         auditSync.unbindCase(caseId);
         openCases.remove(caseId);
+        for (Consumer<OpenCase> listener : closeListeners) {
+            try {
+                listener.accept(openCase);
+            } catch (RuntimeException e) {
+                LOGGER.warn("A close listener failed for case {}", caseId, e);
+            }
+        }
         openCase.close();
     }
 

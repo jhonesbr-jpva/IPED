@@ -72,6 +72,15 @@ public class McpError extends RuntimeException {
     public static final String SECRET_UNRESOLVED = "SECRET_UNRESOLVED";
     public static final String PROCESSING_MISCONFIGURED = "PROCESSING_MISCONFIGURED";
 
+    // Semantic search (009). An unavailable modality is never an empty ordering: it is one of these,
+    // with the reason and the remedy.
+    public static final String SEMANTIC_UNAVAILABLE = "SEMANTIC_UNAVAILABLE";
+    public static final String MODALITY_NOT_PREPARED = "MODALITY_NOT_PREPARED";
+    /** Names both models, the case's and this installation's (FR-016). */
+    public static final String MODEL_INCOMPATIBLE = "MODEL_INCOMPATIBLE";
+    public static final String REFERENCE_NOT_COVERED = "REFERENCE_NOT_COVERED";
+    public static final String ENTRY_NOT_FOUND = "ENTRY_NOT_FOUND";
+
     public static final String UNKNOWN_TOOL = "UNKNOWN_TOOL";
     public static final String MALFORMED_MESSAGE = "MALFORMED_MESSAGE";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
