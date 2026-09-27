@@ -320,6 +320,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public SimilarFacesSearchFilterer similarFacesSearchFilterer;
 
+    // Semantic search (spec 009): the dockable panel and the "apply to table" filter.
+    public iped.app.ui.semantic.SemanticSearchPanel semanticSearchPanel;
+    public iped.app.ui.semantic.SemanticResultFilterer semanticResultFilterer;
+    private DefaultSingleCDockable semanticTabDock;
+
     private App() {
     }
 
@@ -448,6 +453,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 ColumnsManagerUI.getInstance().dispose();
             }
 
+            if (semanticSearchPanel != null) {
+                semanticSearchPanel.caseClosed();
+            }
             appCase.close();
 
             if (processingFinished) {
@@ -533,6 +541,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         similarImagesFilterer = new SimilarImagesQueryFilterer();
 
         similarFacesSearchFilterer = new SimilarFacesSearchFilterer();
+
+        semanticResultFilterer = new iped.app.ui.semantic.SemanticResultFilterer();
+        semanticSearchPanel = new iped.app.ui.semantic.SemanticSearchPanel();
+        semanticSearchPanel.setResultFilterer(semanticResultFilterer);
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -817,6 +829,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addResultSetFilterer(duplicatesFilterer);
         filterManager.addResultSetFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarFacesSearchFilterer);
+        filterManager.addResultSetFilterer(semanticResultFilterer);
         filterManager.addResultSetFilterer(timelineListener);
         filterManager.addResultSetFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(metadataPanel);
@@ -953,6 +966,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         bookmarksTabDock = createDockable("bookmarkstab", Messages.getString("BookmarksTreeModel.RootName"), //$NON-NLS-1$ //$NON-NLS-2$
                 bookmarksPanel);
+        semanticTabDock = createDockable("semantictab", Messages.getString("SemanticSearch.Title"), semanticSearchPanel);
 
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         tableTabDock.addAction(timelineButton);
@@ -1071,6 +1085,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             dockingControl.addDockable(evidenceTabDock);
         }
         dockingControl.addDockable(bookmarksTabDock);
+        dockingControl.addDockable(semanticTabDock);
         dockingControl.addDockable(tableTabDock);
         dockingControl.addDockable(galleryTabDock);
         if (graphDock != null) {
@@ -1248,7 +1263,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
                 bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, aiFiltersTabDock, graphDock,
-                referencesDock, referencedByDock, filtersTabDock));
+                referencesDock, referencedByDock, filtersTabDock, semanticTabDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1466,6 +1481,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         aiFiltersTabDock.setLocationsAside(metadataTabDock);
         aiFiltersTabDock.setVisible(true);
 
+        semanticTabDock.setLocationsAside(aiFiltersTabDock);
+        semanticTabDock.setVisible(true);
+
         if (verticalLayout)
             adjustViewerLayout();
 
@@ -1531,6 +1549,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public IMultiSearchResult getResults() {
         return ipedResult;
+    }
+
+    /** The gallery model, whose display protections (blur) other image views honour. */
+    public GalleryModel getGalleryModel() {
+        return galleryModel;
     }
 
     public JTable getResultsTable() {

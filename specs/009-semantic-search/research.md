@@ -415,6 +415,22 @@ Motivos que o desenho produz e que **não estão** na enumeração de FR-008: "c
 selecionada", "coberto pelas mensagens", "coberto pelo vídeo de origem", "sem miniatura",
 "modelo remoto indisponível". Emenda **A1**, aceita e aplicada à FR-008.
 
+**Como ficou na implementação (2026-09-27).** Todo item que passa pela task tem documento de
+estado; por isso a derivação só cobre dois casos, e nenhum deles precisa do tipo do item:
+- **`BEFORE_CAPABILITY`**: item sem documento de estado com id menor que `capabilityStartId`,
+  gravado no registro quando a capacidade é ligada num acréscimo a caso que já tinha itens (o
+  primeiro id do acréscimo, lido do índice principal já gravado).
+- **`PREP_FAILURE`**: item sem documento de estado e posterior à capacidade. É o item cuja
+  preparação não se concluiu, tipicamente por um processamento interrompido cujo `--continue` não o
+  revisita (o `SkipCommitedTask` pula o que o índice principal já gravou). A janela é pequena: o
+  índice semântico grava junto com o principal (a task ouve "Manager.CommitStarted" e espera o que
+  já foi enviado ao modelo antes do `prepareCommit` do engine), mas o que escapar é declarado, não
+  escondido.
+- **`MODALITY_OFF`** é **gravado**, e não derivado: a task visual registra esse motivo nos itens
+  do tipo cuja chave está desligada (vídeos com só imagens ligadas, e vice-versa). Uma modalidade
+  inteira desligada não tem registro, e aí a busca já se declara indisponível antes de contar
+  cobertura.
+
 ---
 
 ## D13 — Interface
@@ -443,6 +459,22 @@ selecionada", "coberto pelas mensagens", "coberto pelo vídeo de origem", "sem m
   recebe pergunta, recorte, profundidade e modelo.
 - Consultas rodam fora da EDT (`SwingWorker`). O modelo é carregado sob demanda, na primeira
   pergunta, e não na abertura do caso.
+
+**Verificação do destaque (T033, 2026-09-27, só leitura).** O mecanismo é outro do que a
+decisão supunha. `App.getHighlightTerms()` → `FileProcessor` → `ViewerController.loadFile` serve
+aos visualizadores que destacam termos (HTML, PDF e afins). O **visualizador de texto** não usa
+esses termos: `iped-app/.../ui/viewers/TextViewer` → `TextParser` → `TextHighlighter` destaca os
+acertos de um `QueryScorer` sobre `App.getQuery()`, a consulta de destaque que
+`UICaseSearchFilterListener.saveHighlightTerms()` define a cada busca. O `QueryScorer` destaca
+`PhraseQuery` respeitando posição, ou seja, destaca **frase**. `App.getQuery()` só é lido pelo
+`TextHighlighter` (conferido por busca na árvore), então estendê-la não altera resultado de busca.
+
+Decisão: ao abrir uma entrada de trecho, o painel soma à consulta de destaque, por `OR`, uma frase
+com as primeiras palavras literais do trecho (montada pelo `QueryBuilder` do caso, com a mesma
+análise do campo de conteúdo), e publica a mesma frase em `setHighlightTerms` para os demais
+visualizadores. O visualizador de texto passa a destacar o trecho e a lista de acertos permite ir
+até ele. A próxima busca por palavra substitui a consulta de destaque, como já faz. Não foi
+preciso o fallback de rolar até `charStart`, nem tocar em `iped-viewers`.
 
 ---
 

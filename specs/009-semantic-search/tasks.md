@@ -214,26 +214,26 @@ mesma pergunta dá a mesma lista; caso antigo e retomadas se comportam como E2 m
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T034 [P] [US2] `iped-semantic/src/test/java/iped/semantic/integration/DeterminismIT.java`: mesma pergunta duas vezes, e de novo depois de fechar e reabrir o caso, dá lista idêntica, com recorte grande (`approximate`) e pequeno (`exact`) (SC-005).
-- [ ] T035 [P] [US2] `iped-semantic/src/test/java/iped/semantic/unit/CoverageTest.java` cobre:
+- [X] T034 [P] [US2] `iped-semantic/src/test/java/iped/semantic/integration/DeterminismIT.java`: mesma pergunta duas vezes, e de novo depois de fechar e reabrir o caso, dá lista idêntica, com recorte grande (`approximate`) e pequeno (`exact`) (SC-005).
+- [X] T035 [P] [US2] `iped-semantic/src/test/java/iped/semantic/unit/CoverageTest.java` cobre:
   - invariante de E9: "`covered + Σ notCovered = recorteSize`";
   - motivos derivados `MODALITY_OFF` e `BEFORE_CAPABILITY` para item sem documento de estado (research D12);
   - `partial: true` quando o estado é `PARTIAL`.
-- [ ] T036 [P] [US2] `iped-semantic/src/test/java/iped/semantic/unit/DeclarationTextTest.java` (o `iped-app` não tem pasta de testes nem JUnit; por isso os textos são montados no `iped-semantic`, em `search/DeclarationText.java`, e o painel só os exibe): nenhum texto de declaração, em PT-BR e EN, contém "resultados encontrados", "nenhum resultado", "0 ocorrências" ou porcentagem de confiança (FR-007, FR-010); e método, profundidade, teto, modelo e modo aparecem sempre (SC-006).
-- [ ] T037 [P] [US2] `iped-semantic/src/test/java/iped/semantic/integration/ResumeAndAppendIT.java` cobre:
+- [X] T036 [P] [US2] `iped-semantic/src/test/java/iped/semantic/unit/DeclarationTextTest.java` (o `iped-app` não tem pasta de testes nem JUnit; por isso os textos são montados no `iped-semantic`, em `search/DeclarationText.java`, e o painel só os exibe): nenhum texto de declaração, em PT-BR e EN, contém "resultados encontrados", "nenhum resultado", "0 ocorrências" ou porcentagem de confiança (FR-007, FR-010); e método, profundidade, teto, modelo e modo aparecem sempre (SC-006).
+- [X] T037 [P] [US2] `iped-semantic/src/test/java/iped/semantic/integration/ResumeAndAppendIT.java` cobre:
   - interrupção durante a preparação → `PARTIAL`; `--continue` → `COMPLETE` sem trecho duplicado;
   - `--append` em caso sem a capacidade → itens antigos `BEFORE_CAPABILITY`;
   - `--append` com impressão digital divergente → `DISABLED_MISMATCH`, itens do acréscimo `MODEL_MISMATCH`, e o processamento conclui (research D16).
-- [ ] T038 [P] [US2] `iped-semantic/src/test/java/iped/semantic/integration/MultiCaseIT.java` (FR-017). Três casos abertos juntos: dois preparados com o mesmo modelo e um com modelo diferente (ou sem a capacidade). A ordenação cobre só os dois compatíveis, com entradas de ambos intercaladas pela proximidade e o mesmo desempate determinístico. O terceiro aparece no aviso `CASES_EXCLUDED`, com o motivo dele (E2). A cobertura soma os recortes dos casos incluídos.
+- [X] T038 [P] [US2] `iped-semantic/src/test/java/iped/semantic/integration/MultiCaseIT.java` (FR-017). Três casos abertos juntos: dois preparados com o mesmo modelo e um com modelo diferente (ou sem a capacidade). A ordenação cobre só os dois compatíveis, com entradas de ambos intercaladas pela proximidade e o mesmo desempate determinístico. O terceiro aparece no aviso `CASES_EXCLUDED`, com o motivo dele (E2). A cobertura soma os recortes dos casos incluídos.
 
 ### Implementation for User Story 2
 
-- [ ] T039 [US2] `iped-semantic/src/main/java/iped/semantic/search/Coverage.java`: vetor de bytes por id, carregado uma vez por sessão a partir dos documentos `status` e cruzado com o bitset do recorte. Motivos derivados pelo `BuildRecord`. Integrar ao `SemanticSearcher` (campo `coverage` de toda ordenação).
-- [ ] T040 [US2] Declarações em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`, com os textos localizados montados em `iped-semantic/src/main/java/iped/semantic/search/DeclarationText.java` (testado por T036): `method` (`EXACT`/`APPROXIMATE`, emenda A3), `depth`/`ceiling`, `model` (identidade e fonte) e `notices`, incluindo `ordering_notice` (FR-040), `QUERY_TRUNCATED` e `IDENTIFIER_LIKE` (pergunta que, inteira, é dígitos com a pontuação usual de CPF, CNPJ, telefone ou número de conta, ou um e-mail → sugere busca por palavra; nome próprio não é detectado, como a spec registra).
+- [X] T039 [US2] `iped-semantic/src/main/java/iped/semantic/search/Coverage.java`: vetor de bytes por id, carregado uma vez por sessão a partir dos documentos `status` e cruzado com o bitset do recorte. Motivos derivados pelo `BuildRecord`. Integrar ao `SemanticSearcher` (campo `coverage` de toda ordenação).
+- [X] T040 [US2] Declarações em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`, com os textos localizados montados em `iped-semantic/src/main/java/iped/semantic/search/DeclarationText.java` (testado por T036): `method` (`EXACT`/`APPROXIMATE`, emenda A3), `depth`/`ceiling`, `model` (identidade e fonte) e `notices`, incluindo `ordering_notice` (FR-040), `QUERY_TRUNCATED` e `IDENTIFIER_LIKE` (pergunta que, inteira, é dígitos com a pontuação usual de CPF, CNPJ, telefone ou número de conta, ou um e-mail → sugere busca por palavra; nome próprio não é detectado, como a spec registra).
 - [ ] T041 [US2] Área de declaração e "Mais resultados" em `iped-app/src/main/java/iped/app/ui/semantic/SemanticSearchPanel.java`. A extensão revela mais da mesma lista, mantendo a ordem exibida. No teto, o botão desabilita, com dica que nomeia `maxDepth` sem sugerir ausência além dele. Mostrar o estado de indisponível, com motivo e remédio, para caso sem `semantic/` (FR-027) e demais linhas de E2. Os textos vêm de `DeclarationText`. Acrescentar "Detalhes da construção" (FR-014): para cada modalidade, modelo e versão, fonte e destino da preparação, data, parâmetros (`params`), estado e contagens por motivo, lidos do `BuildRecord`.
-- [ ] T042 [US2] Retomada e acréscimo em `iped-semantic/src/main/java/iped/semantic/task/SemanticTextTask.java`, conforme a máquina de estados de E2 e research D16: `PARTIAL` ao iniciar sobre registro `PREPARING` sem `finish`; retomada do `StagingStore`; `DISABLED_MISMATCH` sem abortar o processamento.
+- [X] T042 [US2] Retomada e acréscimo em `iped-semantic/src/main/java/iped/semantic/task/SemanticTextTask.java`, conforme a máquina de estados de E2 e research D16: `PARTIAL` ao iniciar sobre registro `PREPARING` sem `finish`; retomada do `StagingStore`; `DISABLED_MISMATCH` sem abortar o processamento.
 - [ ] T043 [US2] Ação "Marcar" em `iped-app/src/main/java/iped/app/ui/semantic/SemanticSearchPanel.java` (FR-011). Leva as entradas selecionadas a um marcador (numa sequência, só as mensagens dentro do recorte) e grava no comentário (`Bookmarks.setBookmarkComment`) a pergunta, o recorte, a profundidade, o modelo, o modo e a data.
-- [ ] T044 [US2] `iped-semantic/src/main/java/iped/semantic/search/MultiCaseSearch.java` (FR-017), chamado pelo `SemanticSearcher` quando o caso aberto é um `IPEDMultiSource`. Avalia `Availability` e a impressão digital **por caso**, e toma como referência o modelo em uso na instalação. Busca em cada caso compatível, com ids globais do multi-caso. Funde as listas pela proximidade, com o desempate de D5, e declara os casos excluídos em `notices` (`CASES_EXCLUDED`, com caso e motivo). A mensagem localizada fica em `DeclarationText`. Na interface, o painel mostra quais casos participaram.
+- [X] T044 [US2] `iped-semantic/src/main/java/iped/semantic/search/MultiCaseSearch.java` (FR-017), chamado pelo `SemanticSearcher` quando o caso aberto é um `IPEDMultiSource`. Avalia `Availability` e a impressão digital **por caso**, e toma como referência o modelo em uso na instalação. Busca em cada caso compatível, com ids globais do multi-caso. Funde as listas pela proximidade, com o desempate de D5, e declara os casos excluídos em `notices` (`CASES_EXCLUDED`, com caso e motivo). A mensagem localizada fica em `DeclarationText`. Na interface, o painel mostra quais casos participaram.
 
 **Checkpoint**: MVP (US1 + US2) completo. Quickstart, Cenários 2 a 6 e 12.
 
@@ -248,7 +248,7 @@ tabela.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T045 [P] [US3] `iped-semantic/src/test/java/iped/semantic/unit/RecorteFilterTest.java` cobre:
+- [X] T045 [P] [US3] `iped-semantic/src/test/java/iped/semantic/unit/RecorteFilterTest.java` cobre:
   - só itens do recorte na ordenação;
   - recorte vazio → `coverage.recorteSize = 0` e aviso `RECORTE_EMPTY`, nunca "nada encontrado";
   - recorte com até `exactSearchMaxItems` itens → varredura exata e `method: EXACT`;
@@ -256,8 +256,8 @@ tabela.
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] `iped-semantic/src/main/java/iped/semantic/search/ItemIdFilterQuery.java`: filtro Lucene sobre o `NumericDocValues` de `itemId` a partir de um bitset de ids (padrão do `BookmarkQuery` do `iped-mcp`), usado como filtro da `KnnVectorQuery`.
-- [ ] T047 [US3] Recorte em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: o bitset do recorte passa a restringir os dois caminhos da T031 — a varredura exata percorre só os itens do recorte, e o HNSW usa o `ItemIdFilterQuery` como filtro. O limiar `exactSearchMaxItems` passa a ser avaliado sobre o tamanho do recorte. Marca `inRecorte` nas linhas de sequência.
+- [X] T046 [US3] `iped-semantic/src/main/java/iped/semantic/search/ItemIdFilterQuery.java`: filtro Lucene sobre o `NumericDocValues` de `itemId` a partir de um bitset de ids (padrão do `BookmarkQuery` do `iped-mcp`), usado como filtro da `KnnVectorQuery`.
+- [X] T047 [US3] Recorte em `iped-semantic/src/main/java/iped/semantic/search/SemanticSearcher.java`: o bitset do recorte passa a restringir os dois caminhos da T031 — a varredura exata percorre só os itens do recorte, e o HNSW usa o `ItemIdFilterQuery` como filtro. O limiar `exactSearchMaxItems` passa a ser avaliado sobre o tamanho do recorte. Marca `inRecorte` nas linhas de sequência.
 - [ ] T048 [US3] `iped-app/src/main/java/iped/app/ui/semantic/SemanticResultFilterer.java`, implementando `IResultSetFilterer`/`IResultSetFilter` no padrão de `SimilarFacesSearchFilterer` em `App.java`: o `src` recebido é o recorte, e "Aplicar à tabela" devolve a ordenação da aba ativa com a proximidade na coluna de pontuação, uma modalidade de cada vez. Registrar em `App.java` (mudança aditiva). O painel passa a mostrar "sobre o resultado corrente: N itens".
 
 **Checkpoint**: US3 funcional e testável sozinha sobre a fundação e US1.

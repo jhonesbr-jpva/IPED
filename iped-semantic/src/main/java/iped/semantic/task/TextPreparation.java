@@ -546,7 +546,7 @@ public final class TextPreparation implements Closeable {
                 + "{} ms)", mismatch ? "DISABLED (model mismatch)" : "complete", covered, notCovered, itemsSeen.get(),
                 now - startedAtMillis, taskMs, inferenceMs, finishMs);
         close();
-        staging.closeAndDelete();
+        java.nio.file.Files.deleteIfExists(store.staging());
     }
 
     private void buildSequences() throws IOException, InterruptedException {
@@ -682,7 +682,10 @@ public final class TextPreparation implements Closeable {
         return out;
     }
 
-    /** Stops the threads and closes the index; uncommitted changes are discarded. */
+    /**
+     * Stops the threads and closes the index and the staging area; uncommitted index changes are
+     * discarded, and the staging file stays for a {@code --continue}.
+     */
     @Override
     public void close() throws IOException {
         if (closed) {
@@ -692,5 +695,6 @@ public final class TextPreparation implements Closeable {
         committer.shutdownNow();
         service.close();
         writer.close();
+        staging.close();
     }
 }

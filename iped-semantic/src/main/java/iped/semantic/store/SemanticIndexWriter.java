@@ -16,6 +16,7 @@ import org.apache.lucene.document.SortedNumericDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -63,7 +64,14 @@ public final class SemanticIndexWriter implements Closeable {
         cfg.setSimilarity(new BM25Similarity(BM25_K1, BM25_B));
         cfg.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         cfg.setCommitOnClose(false);
-        this.writer = new IndexWriter(FSDirectory.open(dir), cfg);
+        FSDirectory directory = FSDirectory.open(dir);
+        boolean existed = DirectoryReader.indexExists(directory);
+        this.writer = new IndexWriter(directory, cfg);
+        if (!existed) {
+            // An empty first commit keeps a preparation interrupted before its first real commit
+            // readable: the case then answers with partial coverage instead of failing to open.
+            writer.commit();
+        }
     }
 
     /** Replaces every document keyed by {@code keyId} (passages, sequences, frames and status). */

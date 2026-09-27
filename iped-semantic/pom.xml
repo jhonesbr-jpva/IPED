@@ -86,6 +86,14 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
                 <configuration>
+                    <!-- Unit tests, integration suites (*IT) and evaluation harnesses (*Eval). The
+                         suites that need a case or the evaluation set are skipped through Assume
+                         without their -D property, and the summary counts them as skipped. -->
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*IT.java</include>
+                        <include>**/*Eval.java</include>
+                    </includes>
                     <systemPropertyVariables>
                         <!-- Native libraries are unpacked here in tests, never in the system temp folder. -->
                         <iped.semantic.test.nativeDir>${project.build.directory}/onnxruntime</iped.semantic.test.nativeDir>

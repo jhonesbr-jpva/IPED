@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -73,6 +72,7 @@ public class SemanticSearcher implements Closeable {
     private final EmbedderProvider provider;
     private final BitSet caseItems;
     private final int caseIndex;
+    private final String caseName;
     private final Compatibility compatibility = new Compatibility();
     private final Map<Modality, Availability> availability = new EnumMap<>(Modality.class);
     private final Map<Modality, SemanticIndexReader> readers = new EnumMap<>(Modality.class);
@@ -95,6 +95,13 @@ public class SemanticSearcher implements Closeable {
         this.provider = provider;
         this.caseItems = caseItems;
         this.caseIndex = caseIndex;
+        File caseDir = moduleDir.getAbsoluteFile().getParentFile();
+        this.caseName = caseDir != null ? caseDir.getName() : moduleDir.getName();
+    }
+
+    /** Name of the case folder, used to name a case left out of a multi-case question. */
+    public String getCaseName() {
+        return caseName;
     }
 
     public SemanticSearchConfig getConfig() {
@@ -142,15 +149,7 @@ public class SemanticSearcher implements Closeable {
     /** Answers a question in one modality. */
     public Ordering search(SemanticRequest request, Modality modality)
             throws SemanticUnavailableException, IOException {
-        Availability a = availability(modality);
-        if (!a.isAvailable()) {
-            throw new SemanticUnavailableException(a);
-        }
-        Plan plan = plan(request, modality, a);
-        List<Hit> hits = collect(plan);
-        List<OrderingEntry> entries = Consolidator.consolidate(hits, config.getMaxDepth(), plan.proximityKind(),
-                scopes(plan.scope));
-        return ordering(plan, entries);
+        return SearchRun.execute(List.of(this), List.of(caseName), modality, i -> request);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -283,12 +282,6 @@ public class SemanticSearcher implements Closeable {
         return r;
     }
 
-    private Map<Integer, BitSet> scopes(BitSet scope) {
-        Map<Integer, BitSet> m = new HashMap<>();
-        m.put(caseIndex, scope);
-        return m;
-    }
-
     int getCaseIndex() {
         return caseIndex;
     }
@@ -364,8 +357,11 @@ public class SemanticSearcher implements Closeable {
                 if (live != null && !live.get(doc)) {
                     continue;
                 }
-                if (candidates != vectors && (vectors.docID() > doc || vectors.advance(doc) != doc)) {
-                    continue; // a status document: no vector
+                if (candidates != vectors) {
+                    int at = vectors.docID() < doc ? vectors.advance(doc) : vectors.docID();
+                    if (at != doc) {
+                        continue; // a status document: no vector
+                    }
                 }
                 int itemId = value(itemIds, doc);
                 if (exclude != null && itemId == exclude) {
