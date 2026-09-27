@@ -35,6 +35,7 @@ IPED/
 │   └── iped-carvers-impl/
 ├── iped-geo/         → docs em [iped-geo/CLAUDE.md](iped-geo/CLAUDE.md)
 ├── iped-engine/      → docs em [iped-engine/CLAUDE.md](iped-engine/CLAUDE.md)
+├── iped-semantic/    → docs em [iped-semantic/CLAUDE.md](iped-semantic/CLAUDE.md)   # busca semântica (009)
 ├── iped-mcp/         → docs em [iped-mcp/CLAUDE.md](iped-mcp/CLAUDE.md)   # servidor MCP + skill
 └── iped-app/         → docs em [iped-app/CLAUDE.md](iped-app/CLAUDE.md)   # binário final
     ├── src/main/java/iped/app/{bootstrap,config,processing,ui,graph,timelinegraph,metadata}
@@ -50,6 +51,7 @@ IPED/
 | Linguagem | Java 11 LTS (Liberica/BellSoft Full JDK com JavaFX) |
 | Build | Maven 3+ (multi-módulo, parent pom em `pom.xml`) |
 | Indexação/busca | Apache Lucene 9.2.0 |
+| Busca semântica | ONNX Runtime 1.20.0 + onnxruntime-extensions 0.13.0 (inferência local, nativos extraídos em `tools/onnxruntime/`); modelos `multilingual-e5-small` (texto, no release) e CLIP multilíngue (visual, pacote à parte) |
 | Parsing | Apache Tika 2.4.0(-p1) + parsers customizados |
 | Imagens forenses | The Sleuthkit 4.12.0.p1 (JNI + processo isolado) |
 | UI | Swing + JavaFX (`JFXPanel`) + DockingFrames 1.1.2 |
@@ -116,9 +118,9 @@ iped-<version>/
 │   └── iped-hashdb.jar              # main: iped.engine.hashdb.HashDBTool
 ├── conf/                             # configurações editáveis
 ├── localization/                     # bundles
-├── tools/                            # ferramentas externas (Sleuthkit, Tesseract, ImageMagick, LibreOffice, ...)
+├── tools/                            # ferramentas externas (Sleuthkit, Tesseract, ImageMagick, LibreOffice, ...; onnxruntime/ com os nativos da busca semântica)
 ├── scripts/                          # tasks JS/Python
-├── models/                           # modelos AI (DIE, NSFW, Vosk)
+├── models/                           # modelos AI (DIE, NSFW, Vosk; semantic/text e, instalado à parte, semantic/visual)
 ├── jre/                              # JRE 11.0.13 embutido (artefato maven `java:jre:zip`, Windows)
 ├── plugins/                          # JARs externos (Stanford CoreNLP, telegram-decoder, java-dbx, ...)
 └── iped.exe / bin/IPED-SearchApp.exe # launchers Windows
@@ -173,6 +175,7 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 | `iped-carvers` | Data carving (recuperação por assinatura) usando Aho-Corasick. | [iped-carvers/CLAUDE.md](iped-carvers/CLAUDE.md) |
 | `iped-geo` | Georreferenciamento e visualização cartográfica (Leaflet/Google Maps em JavaFX WebView, parsing KML/GPX). | [iped-geo/CLAUDE.md](iped-geo/CLAUDE.md) |
 | `iped-engine` | **Core**: orquestração, workers, indexação, busca, Sleuthkit out-of-process, configs, Web API, graph (Neo4j), scripting. | [iped-engine/CLAUDE.md](iped-engine/CLAUDE.md) |
+| `iped-semantic` | Busca semântica (009): preparação no pipeline (`SemanticTextTask`, `SemanticVisualTask`), índices próprios em `<caso>/iped/semantic/`, e o `SemanticSearcher` que a interface e o MCP chamam. Não toca o índice principal. | [iped-semantic/CLAUDE.md](iped-semantic/CLAUDE.md) |
 | `iped-mcp` | Servidor MCP (JSON-RPC 2.0 sobre stdio) que expõe casos processados a agentes de LLM, com consulta paginada, auditoria encadeada por hash e a skill que ensina disciplina pericial. | [iped-mcp/CLAUDE.md](iped-mcp/CLAUDE.md) |
 | `iped-app` | Empacotamento final + UI Swing principal: `Bootstrap`/`BootstrapUI`, `App` (JFrame singleton), gallery, bookmarks, filtros, AppGraphAnalytics (Neo4j+Kharon), timeline (JFreeChart), recursos de release. | [iped-app/CLAUDE.md](iped-app/CLAUDE.md) |
 
@@ -191,6 +194,7 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 | Hash DB (NSRL/ProjectVic) | `iped-app/resources/config/conf/HashDBLookupConfig.txt` + base externa |
 | Categorias | `CategoriesConfig.json`, `CategoriesToExpand.txt`, `CategoriesToExport.txt` |
 | Graph (Neo4j) | `iped-app/resources/config/conf/GraphConfig.json` |
+| Busca semântica | `enableSemanticText`/`Images`/`Videos` no `IPEDConfig.txt`; o resto em `iped-app/resources/config/conf/SemanticSearchConfig.txt` |
 
 ## 10. Onde editar código
 
@@ -205,6 +209,7 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 | Nova task no pipeline | `iped-engine/.../task/` + `TaskInstaller.xml` |
 | Novo Configurable | `iped-engine/.../config/` |
 | Novo endpoint REST | `iped-engine/.../webapi/` |
+| Busca semântica (preparação, busca, modelos) | `iped-semantic`; painel em `iped-app/.../ui/semantic/`; ferramentas MCP em `iped-mcp/.../tools/SemanticTools.java` |
 | UI principal (gallery, filtros, bookmarks, timeline) | `iped-app` |
 
 ## 11. Padrões de design recorrentes

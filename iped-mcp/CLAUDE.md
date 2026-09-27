@@ -142,6 +142,9 @@ Acrescentado na 006: **raízes de escrita** (`exportRoots`, separadas por `;` �
 | Nada do motor alcança o canal do protocolo | O fluxo do filho é lido por tubo e gravado em `<auditoria>/jobs/<id>/processing.log`; nunca repassado. `ProcessingLogTest` afirma que toda linha escrita pelo servidor parseia como JSON-RPC |
 | Caso de trabalho não concluído nunca abre como completo | `CaseValidator` consulta o `JobStore`. A verificação estrutural **não basta**: uma interrupção mid-processing deixa `index`, `data` e `lib` no lugar com índice comitado, indistinguível de caso pronto |
 | `AuditRecord` continua sem campo novo | Estado de trabalho vive no `JobStore`; vínculo sessão↔trabalho e postura vigente vivem no próprio registro do trabalho |
+| **Ordenação semântica nunca se apresenta como conjunto** (009) | Toda resposta de `iped_semantic_search`/`_similar` traz `ordering_notice`, e nenhuma traz `total_matches`/`total`, vetor ou pontuação bruta. `SemanticToolsContractTest` fixa as três coisas |
+| **Egresso semântico é conferido trecho a trecho** (009) | As ferramentas de busca declaram `returnsContent("metadata")` e aplicam a política a cada trecho: bloqueado vira `excerpt_withheld` (ou `text_withheld` numa linha de sequência) com a regra, e nunca aparece em campo algum. Item cuja política não se pode conferir tem o texto retido (`unverifiable`). `SemanticEgressTest` |
+| **A ordenação do agente é a do perito** (009) | `SemanticTools` chama o mesmo `SemanticSearcher`/`SearchRun` que a interface; o trecho exibido (janela de foco, research D23) sai do mesmo passo. `SemanticParityTest` compara as duas com perguntas do gabarito |
 
 ## 6. Dependências
 

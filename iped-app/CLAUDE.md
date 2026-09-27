@@ -52,6 +52,8 @@ iped-app/
         ├── filterdecisiontree/          # operadores AND/OR/NOT
         ├── parallelsorter/              # ParallelTableRowSorter
         ├── popups/                      # FieldValuePopupMenu
+        ├── semantic/                    # busca semântica (009): SemanticSearchPanel, SemanticResultFilterer,
+        │                                # MoreLikeThisAction, RemoteDestinationNotice, renderers, WrapLayout
         ├── splash/                      # SplashScreenManager + StartUpControl(Client)
         ├── themes/                      # ThemeManager + Theme
         ├── utils/                       # UiScale (DPI), PanelsLayout (persist do layout)
@@ -175,6 +177,7 @@ Roda na JVM filha de `BootstrapUI`. Sobe a UI:
 - `SimilarImagesFilterPanel` / `SimilarImagesFilterActions` + `App.SimilarImagesQueryFilterer` (classe interna).
 - `SimilarFacesFilterPanel` / `SimilarFacesFilterActions` + `App.SimilarFacesSearchFilterer` (classe interna).
 - `App.SimilarDocumentFilterer`, `App.DuplicatesFilterer`, `App.SearchFilterer` — todas classes internas de `App`.
+- `semantic.SemanticSearchPanel` (aba "Busca semântica", na pilha das relações do item, ao lado do visualizador) e `semantic.SemanticResultFilterer` ("Aplicar à tabela", proximidade na coluna de pontuação). O painel não calcula nada: monta a pergunta com o resultado corrente da tabela como recorte e chama o `SemanticSearcher` do `iped-semantic`, o mesmo do MCP. Estado (modalidades preparadas, recorte) vem de `caseLoaded()`, chamado no fim do `UICaseDataLoader`. "Mais como este" entra pelo menu da tabela e pelo visualizador de texto (`MoreLikeThisAction`). Ver [iped-semantic/CLAUDE.md](../iped-semantic/CLAUDE.md).
 
 **Visualização**:
 - `ViewerController` — orquestra `MultiViewer` (de `iped-viewers`) + viewers específicos.

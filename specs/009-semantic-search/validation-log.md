@@ -220,3 +220,166 @@ hit than the 54.2% above; D22 gives the other five of the 79.2%.
 
 - **SC-003** (≥ 70%): 58.3% (14/24) of the attempts from a pertinent item, by subject (gabarito version 2).
   - Missed: ameaca-por-divida from item 368; arma-de-fogo from item 400; conceptual-38 from item 338; conceptual-38 from item 68; contrabando-na-fronteira from item 370; contrabando-na-fronteira from item 74; documentos-falsos from item 336; golpe-na-internet from item 324; golpe-na-internet from item 125; lavagem-com-parentes from item 353.
+
+### TextQualityEval — User Story 1, scenario 2 — 2026-09-27
+
+Case `eval-case`; gabarito 137 questions. Configuration as distributed.
+
+- **US1, acceptance scenario 2**: the excerpt shown is the pertinent paragraph in 0.0% (0/6) of the questions on the long report, in both modes (gabarito version 3).
+  - Missed: conceptual-14 SEMANTIC showed "dois simulados de evacuação com tempo médio de saída de seis…"; conceptual-14 HYBRID showed "dois simulados de evacuação com tempo médio de saída de seis…"; conceptual-15 SEMANTIC showed "para-raios recebeu medição de aterramento dentro dos valores…"; conceptual-15 HYBRID showed "para-raios recebeu medição de aterramento dentro dos valores…"; mixed-14 SEMANTIC showed "O sistema de irrigação automática foi reprogramado para o pe…"; mixed-14 HYBRID showed "O sistema de irrigação automática foi reprogramado para o pe…".
+
+### HybridQualityEval — SC-018 — 2026-09-27
+
+Case `eval-case-p600`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-018** (≥ 80%, hybrid mode): 100.0% (16/16) of the mixed questions; the semantic mode alone: 100.0% (16/16).
+  - Missed in hybrid mode: none.
+- **SC-018, cost** (≤ 5 points): on the questions of SC-001, hybrid 87.8% (36/41) against semantic 90.2% (37/41) — 2.4 points lost.
+- **Factory `defaultTextMode` the numbers favour** (research D20): `HYBRID` (hybrid wins when it gains on the mixed questions and loses at most 5 points on the others).
+
+### SimilarQualityEval — SC-003 — 2026-09-27
+
+Case `eval-case-p600`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-003** (≥ 70%): 75.0% (18/24) of the attempts from a pertinent item, by subject (gabarito version 2).
+  - Missed: arma-de-fogo from item 400; arma-de-fogo from item 160; conceptual-38 from item 294; contrabando-na-fronteira from item 290; golpe-na-internet from item 337; golpe-na-internet from item 208.
+
+### TextQualityEval — User Story 1, scenario 2 — 2026-09-27
+
+Case `eval-case-p600`; gabarito 137 questions. Configuration as distributed.
+
+- **US1, acceptance scenario 2**: the excerpt shown is the pertinent paragraph in 33.3% (2/6) of the questions on the long report, in both modes (gabarito version 3).
+  - Missed: conceptual-14 SEMANTIC showed "de seis minutos. Ordem de serviço 1154 custo registrado no c…"; conceptual-14 HYBRID showed "de seis minutos. Ordem de serviço 1154 custo registrado no c…"; conceptual-15 SEMANTIC showed "das áreas comuns. Ordem de serviço 1245 custo registrado no …"; conceptual-15 HYBRID showed "das áreas comuns. Ordem de serviço 1245 custo registrado no …".
+
+### TextQualityEval — SC-001, SC-002 — 2026-09-27
+
+Case `eval-case-p600`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-001** (≥ 80%, semantic mode): 90.2% (37/41) of the conceptual questions keyword search does not answer.
+  - Dropped because keyword search finds a pertinent item (2): conceptual-32, conceptual-40.
+  - Missed: conceptual-09 "falsificação de documentos de identidade"; conceptual-12 "planejamento de um assalto a transporte de valores"; conceptual-13 "divisão de tarefas entre os integrantes antes de uma ação criminosa"; conceptual-24 "retiradas em espécie feitas por gente diversa em casas lotéricas".
+- **SC-002** (≥ 70%): 91.7% (11/12) of the questions whose pertinent items are in another language.
+  - Missed: crosslingual-10 "servidores de arquivos criptografados por sequestro de dados".
+
+### HybridQualityEval — SC-018 — 2026-09-27
+
+Case `eval-case-p400`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-018** (≥ 80%, hybrid mode): 100.0% (16/16) of the mixed questions; the semantic mode alone: 100.0% (16/16).
+  - Missed in hybrid mode: none.
+- **SC-018, cost** (≤ 5 points): on the questions of SC-001, hybrid 70.7% (29/41) against semantic 75.6% (31/41) — 4.9 points lost.
+- **Factory `defaultTextMode` the numbers favour** (research D20): `HYBRID` (hybrid wins when it gains on the mixed questions and loses at most 5 points on the others).
+
+### SimilarQualityEval — SC-003 — 2026-09-27
+
+Case `eval-case-p400`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-003** (≥ 70%): 66.7% (16/24) of the attempts from a pertinent item, by subject (gabarito version 2).
+  - Missed: arma-de-fogo from item 368; arma-de-fogo from item 21; conceptual-38 from item 246; contrabando-na-fronteira from item 355; contrabando-na-fronteira from item 155; golpe-na-internet from item 336; golpe-na-internet from item 133; lavagem-com-parentes from item 51.
+
+### TextQualityEval — User Story 1, scenario 2 — 2026-09-27
+
+Case `eval-case-p400`; gabarito 137 questions. Configuration as distributed.
+
+- **US1, acceptance scenario 2**: the excerpt shown is the pertinent paragraph in 83.3% (5/6) of the questions on the long report, in both modes (gabarito version 3).
+  - Missed: conceptual-15 SEMANTIC showed "na coluna de água fria do bloco 2 corrigido em duas etapas p…".
+
+### TextQualityEval — SC-001, SC-002 — 2026-09-27
+
+Case `eval-case-p400`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-001** (≥ 80%, semantic mode): 75.6% (31/41) of the conceptual questions keyword search does not answer.
+  - Dropped because keyword search finds a pertinent item (2): conceptual-32, conceptual-40.
+  - Missed: conceptual-05 "intimidação envolvendo os filhos de um devedor"; conceptual-07 "fracionar transferências em valores pequenos para escapar do controle"; conceptual-08 "mercadoria ilegal cruzando a divisa entre países oculta num compartimento secreto"; conceptual-09 "falsificação de documentos de identidade"; conceptual-12 "planejamento de um assalto a transporte de valores"; conceptual-13 "divisão de tarefas entre os integrantes antes de uma ação criminosa"; conceptual-18 "evitar mencionar quantias em mensagens"; conceptual-22 "ultimato para quitar um débito sob pena de represália"; conceptual-24 "retiradas em espécie feitas por gente diversa em casas lotéricas"; conceptual-25 "papelada de produto perecível como disfarce para a viagem".
+- **SC-002** (≥ 70%): 83.3% (10/12) of the questions whose pertinent items are in another language.
+  - Missed: crosslingual-09 "resultado de vendas do trimestre abaixo da meta"; crosslingual-10 "servidores de arquivos criptografados por sequestro de dados".
+
+### HybridQualityEval — SC-018 — 2026-09-27
+
+Case `eval-case`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-018** (≥ 80%, hybrid mode): 100.0% (16/16) of the mixed questions; the semantic mode alone: 100.0% (16/16).
+  - Missed in hybrid mode: none.
+- **SC-018, cost** (≤ 5 points): on the questions of SC-001, hybrid 92.7% (38/41) against semantic 92.7% (38/41) — 0.0 points lost.
+- **Factory `defaultTextMode` the numbers favour** (research D20): `HYBRID` (hybrid wins when it gains on the mixed questions and loses at most 5 points on the others).
+
+### SimilarQualityEval — SC-003 — 2026-09-27
+
+Case `eval-case`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-003** (≥ 70%): 79.2% (19/24) of the attempts from a pertinent item, by subject (gabarito version 2).
+  - Missed: arma-de-fogo from item 401; conceptual-38 from item 152; contrabando-na-fronteira from item 233; golpe-na-internet from item 325; golpe-na-internet from item 249.
+
+### TextQualityEval — User Story 1, scenario 2 — 2026-09-27
+
+Case `eval-case`; gabarito 137 questions. Configuration as distributed.
+
+- **US1, acceptance scenario 2**: the excerpt shown is the pertinent paragraph in 66.7% (4/6) of the questions on the long report, in both modes (gabarito version 3).
+  - Missed: conceptual-15 SEMANTIC showed "na coluna de água fria do bloco 2 corrigido em duas etapas p…"; conceptual-15 HYBRID showed "na coluna de água fria do bloco 2 corrigido em duas etapas p…".
+
+### TextQualityEval — SC-001, SC-002 — 2026-09-27
+
+Case `eval-case`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-001** (≥ 80%, semantic mode): 92.7% (38/41) of the conceptual questions keyword search does not answer.
+  - Dropped because keyword search finds a pertinent item (2): conceptual-32, conceptual-40.
+  - Missed: conceptual-09 "falsificação de documentos de identidade"; conceptual-12 "planejamento de um assalto a transporte de valores"; conceptual-13 "divisão de tarefas entre os integrantes antes de uma ação criminosa".
+- **SC-002** (≥ 70%): 91.7% (11/12) of the questions whose pertinent items are in another language.
+  - Missed: crosslingual-10 "servidores de arquivos criptografados por sequestro de dados".
+
+### VisualQualityEval — SC-012, SC-014, FR-036 — 2026-09-27
+
+Case `eval-case`; gabarito 137 questions. Configuration as distributed.
+
+- **SC-012** (≥ 70%): 100.0% (36/36) of the descriptions in Portuguese find a pertinent picture.
+- **FR-036**, descriptions in English: 100.0% (6/6).
+- **SC-014** (≥ 70%): 87.5% (21/24) of the descriptions find the video.
+  - Missed: visual-video-07 "trânsito engarrafado"; visual-video-09 "guindaste num canteiro de obras"; visual-video-14 "porto com contêineres e guindastes".
+
+### Analysis interface — checked in the interface — 2026-09-27
+
+Written by hand. The analysis interface was opened on processed cases through the case's own
+`iped-search-app.jar` and driven by a test agent loaded into its JVM (it paints the frame into PNG
+files and clicks components through the event queue; the workstation screen could not be captured).
+The agent is a scratch tool and is not part of the release.
+
+- **Case `eval-case`** (corpus version 2, text and visual prepared, focus windows on):
+  - T032: question, ordering in the Text tab with the literal excerpt; selecting an entry selects its
+    item in the table and opens the text viewer.
+  - T033 / US1 scenario 2: "propina para o fiscal liberar a obra" puts the long report first, the
+    excerpt shown is the bribe paragraph, and the viewer opens in June with the highlight just before
+    it (before the change it opened in January, research D13 and D23).
+  - T041: declaration (mode, words brought by the word part, depth and ceiling, method, coverage with
+    reasons, model); "More results" goes from 100 to 159 and then disables with the end tip; "Build
+    details" lists, per modality, state, model with sha256, source, dates, timing, parameters and
+    items per reason.
+  - T043: "Bookmark" on three entries of a question creates the bookmark with 10 items (the in-scope
+    messages of the sequences) and the comment with question, scope, depth, model, mode and date; the
+    bookmark file is written.
+  - T048: "Apply to table" shows the ordering in the table with the relevance in the score column.
+  - T068: mode selector (Semantic/Hybrid, off for Visual); entries labelled "combined relative
+    relevance" with "by meaning: #X · by word: #Y".
+  - T081: "Both" gives two tabs, never merged; the visual entry shows the picture or the frame with
+    "~ mm:ss (approximate)"; the gallery's blur applies to the panel's pictures.
+  - "More like this" from the table's context menu runs with the item as reference.
+- **Case processed without the capability** (`cost-off`): the panel shows the unavailability (reason,
+  remedy, detail) before any question, with the three modalities disabled and the reason as tip.
+- **T089, remote source**: the case's configuration pointed at the reference server
+  (`tools/semantic-server`, same model): permanent banner with the destination; first question asks
+  for confirmation; declining shows "Not sent" and the server received nothing; accepting sends it
+  (the declaration says "(remote)" and "Question sent to …"), and the second question of the session
+  does not ask again. The configuration was restored afterwards.
+- Found and fixed on the way (research D13, D17, D23): the panel's default dock (the list had 2 px),
+  controls clipped in a narrow dock, state shown only after the first question, the scope label, the
+  case's own app without the model, the excerpt of long items, and the highlight going to the first
+  occurrence of a repeated phrase.
+- Outside this feature, found on the way: a text file that begins with "MEMO" is read as a Windows
+  SuperFetch file (`CustomSignatures.xml`) and loses its text; and an `iped-geo` jar compiled by the
+  IDE without JavaFX had reached the local Maven repository (the map panel failed; rebuilt with Maven).
+
+### Processing time on this workstation (indication, not SC-010) — 2026-09-27
+
+Evaluation corpus (423 items, 36 MB), release as built, whole run including the JVMs' start:
+without the capability 39 s (twice); text only without focus windows 47 s (1.21×); text only with
+focus windows 63 s (1.62×). The semantic text preparation itself took 23 s without and 38 s with
+focus windows. SC-010 (≤ 2×) is measured on the reference bench (T096), on a larger case.
