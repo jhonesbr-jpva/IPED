@@ -18,12 +18,15 @@
         <jackson.core.version>2.13.2</jackson.core.version>
         <jackson.databind.version>2.13.4.2</jackson.databind.version>
         <!--
-            Pinned by the D2 gate (OrtBaselineSpikeTest, research.md "Resultado do spike"): every
-            class in both jars is class file 52, the Windows x64 and Linux x64 natives are inside,
-            sessions load with the network denied and run() is stable from four threads on the
-            release's Java 11. Changing either version means running the spike again.
+            Pinned by the D2 gate (OrtBaselineSpikeTest, research.md "Resultado do spike"), run on the
+            JRE the release embeds (-Djvm=<release>/jre/bin/java.exe), not only on the build JDK:
+            every class is class file 52, the Windows x64 and Linux x64 natives are inside, sessions
+            load with the network denied and run() is stable from four threads. 1.20.0 is the newest
+            ONNX Runtime that loads next to the MSVC runtime of the embedded JRE 11.0.13 (msvcp140
+            14.16): 1.21.x and 1.22.0 fail to link and 1.30.0 crashes the JVM in msvcp140.dll.
+            Changing either version, or the embedded JRE, means running the spike again.
         -->
-        <onnxruntime.version>1.30.0</onnxruntime.version>
+        <onnxruntime.version>1.20.0</onnxruntime.version>
         <onnxruntime.extensions.version>0.13.0</onnxruntime.extensions.version>
     </properties>
 

@@ -135,18 +135,18 @@ SC-001 e SC-002).
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T018 [P] [US1] `iped-semantic/src/test/java/iped/semantic/unit/PassageChunkerTest.java` cobre:
+- [X] T018 [P] [US1] `iped-semantic/src/test/java/iped/semantic/unit/PassageChunkerTest.java` cobre:
   - janelas de `passageChars = 1000` com `passageOverlapChars = 200` respeitando fim de frase;
   - corte do cabeçalho de metadados (`StandardParser.METADATA_HEADER`);
   - truncamento em `maxTextCharsPerItem` → `COVERED_TRUNCATED` com os caracteres excedentes em `detail`;
   - invariante de E3: "`text` é igual ao intervalo `[charStart, charEnd)` do texto do item".
-- [ ] T019 [P] [US1] `iped-semantic/src/test/java/iped/semantic/unit/ChatSequenceBuilderTest.java` cobre:
+- [X] T019 [P] [US1] `iped-semantic/src/test/java/iped/semantic/unit/ChatSequenceBuilderTest.java` cobre:
   - ordem por `Communication:Date`, depois `parentViewPosition`, depois id;
   - janela `chatWindowMessages = 8`, passo `chatWindowStride = 4`, limite `chatWindowMaxChars = 1500`, quebra em intervalo maior que `chatMaxGapMinutes = 720`;
   - `messageIds` na ordem da conversa;
   - texto calculado no formato `remetente: texto`, com `lines` literais;
   - mensagem curta sozinha nunca vira unidade.
-- [ ] T020 [P] [US1] `iped-semantic/src/test/java/iped/semantic/unit/ConsolidatorTest.java` cobre:
+- [X] T020 [P] [US1] `iped-semantic/src/test/java/iped/semantic/unit/ConsolidatorTest.java` cobre:
   - um item por ordenação, com o melhor trecho mais até 2 de contexto;
   - absorção gulosa de janelas: "nenhuma mensagem aparece em duas entradas";
   - desempate por proximidade decrescente, depois `itemId`, depois `ordinal` (FR-015).
@@ -165,11 +165,11 @@ SC-001 e SC-002).
 
 ### Implementation for User Story 1
 
-- [ ] T023 [P] [US1] `iped-semantic/src/main/java/iped/semantic/prep/PassageChunker.java`: fatiamento de T018, com deslocamentos sobre o texto já sem cabeçalho.
-- [ ] T024 [P] [US1] `iped-semantic/src/main/java/iped/semantic/store/StagingStore.java`, sobre H2 MVStore (a mesma dependência dos previews), em `semantic/staging.mv.db`. Registro E11: `chatId`, `itemId`, `date`, `position` (`parentViewPosition`), `sender` (`Communication:From`) e `text` (`Message:Body`). Iteração por chat; apagar depois do commit; sobrevive a `--continue`.
-- [ ] T025 [US1] `iped-semantic/src/main/java/iped/semantic/prep/ChatSequenceBuilder.java` (depende de T024): janelas de T019 a partir do `StagingStore`.
-- [ ] T026 [US1] Enumerar os tipos de mensagem de UFDR emitidos em `iped-engine`/`iped-parsers` (só leitura) e completar o padrão de `messageMediaTypes` em `SemanticSearchConfig.java` e `SemanticSearchConfig.txt`. Hoje o padrão é `message/x-whatsapp-message`, `message/x-telegram-message`, `message/x-skype-message`, `message/x-discord-message` e `message/x-threema-message`. Registrar a lista final em `specs/009-semantic-search/research.md` (D7).
-- [ ] T027 [US1] `iped-semantic/src/main/java/iped/semantic/task/SemanticTextTask.java` (depende de T011–T014, T016, T023, T025):
+- [X] T023 [P] [US1] `iped-semantic/src/main/java/iped/semantic/prep/PassageChunker.java`: fatiamento de T018, com deslocamentos sobre o texto já sem cabeçalho.
+- [X] T024 [P] [US1] `iped-semantic/src/main/java/iped/semantic/store/StagingStore.java`, sobre H2 MVStore (a mesma dependência dos previews), em `semantic/staging.mv.db`. Registro E11: `chatId`, `itemId`, `date`, `position` (`parentViewPosition`), `sender` (`Communication:From`) e `text` (`Message:Body`). Iteração por chat; apagar depois do commit; sobrevive a `--continue`.
+- [X] T025 [US1] `iped-semantic/src/main/java/iped/semantic/prep/ChatSequenceBuilder.java` (depende de T024): janelas de T019 a partir do `StagingStore`.
+- [X] T026 [US1] Enumerar os tipos de mensagem de UFDR emitidos em `iped-engine`/`iped-parsers` (só leitura) e completar o padrão de `messageMediaTypes` em `SemanticSearchConfig.java` e `SemanticSearchConfig.txt`. Hoje o padrão é `message/x-whatsapp-message`, `message/x-telegram-message`, `message/x-skype-message`, `message/x-discord-message` e `message/x-threema-message`. Registrar a lista final em `specs/009-semantic-search/research.md` (D7).
+- [X] T027 [US1] `iped-semantic/src/main/java/iped/semantic/task/SemanticTextTask.java` (depende de T011–T014, T016, T023, T025):
   - `getConfigurables()` devolve `SemanticSearchConfig`; `isEnabled()` com retorno imediato quando desligada, sem carregar modelo (FR-020).
   - `init()`: `SourceValidator`; cria ou retoma o registro em `PREPARING` com impressão digital e `params`.
   - `process()`:
@@ -179,14 +179,14 @@ SC-001 e SC-002).
     - sem texto: `ANALYSIS_NOT_RUN` quando o tipo do item seria coberto por uma análise que está desligada neste processamento — OCR (`enableOCR`) para imagem e PDF sem texto, transcrição (`enableAudioTranscription`) para áudio e vídeo —; `NO_TEXT` nos demais casos. O motivo nomeia algo verdadeiro do item, e não uma hipótese;
     - envio a `EmbeddingService`; falha → `PREP_FAILURE`, sem interromper o caso (FR-022).
   - `finish()`: drena a fila; monta as sequências; substitui os documentos do chat pelas sequências mais o status `COVERED_BY_MESSAGES`; faz o commit; grava `COMPLETE` com `counts`/`timing`; loga contagens por motivo e tempo (FR-021).
-- [ ] T028 [US1] Registrar `<task class="iped.semantic.task.SemanticTextTask"></task>` logo depois de `NamedEntityTask` em `iped-app/resources/config/conf/TaskInstaller.xml` e em `iped-app/resources/config/profiles/triage/conf/TaskInstaller.xml`. Acrescentar a dependência de `iped-semantic` em `iped-app/pom.xml`, para o jar ir para `lib/`.
-- [ ] T029 [US1] Empacotar o modelo de texto: execução `unpack-semantic-text-model` em `iped-app/pom.xml`, desempacotando o zip de T003 em `${release.dir}/models/semantic/text/`, na mesma mecânica de `unpack-vosk-model-pt`. A publicação do artefato no repositório Maven do IPED é ação do mantenedor; enquanto não houver, documentar em `iped-semantic/tools/export-models/README.md` a instalação local (`mvn install:install-file`).
-- [ ] T030 [P] [US1] `iped-semantic/src/main/java/iped/semantic/search/SemanticRequest.java`, `Ordering.java` e `OrderingEntry.java`, com os campos de [data-model.md](data-model.md) E1 e E8:
+- [X] T028 [US1] Registrar `<task class="iped.semantic.task.SemanticTextTask"></task>` logo depois de `NamedEntityTask` em `iped-app/resources/config/conf/TaskInstaller.xml` e em `iped-app/resources/config/profiles/triage/conf/TaskInstaller.xml`. Acrescentar a dependência de `iped-semantic` em `iped-app/pom.xml`, para o jar ir para `lib/`.
+- [X] T029 [US1] Empacotar o modelo de texto: execução `unpack-semantic-text-model` em `iped-app/pom.xml`, desempacotando o zip de T003 em `${release.dir}/models/semantic/text/`, na mesma mecânica de `unpack-vosk-model-pt`. A publicação do artefato no repositório Maven do IPED é ação do mantenedor; enquanto não houver, documentar em `iped-semantic/tools/export-models/README.md` a instalação local (`mvn install:install-file`).
+- [X] T030 [P] [US1] `iped-semantic/src/main/java/iped/semantic/search/SemanticRequest.java`, `Ordering.java` e `OrderingEntry.java`, com os campos de [data-model.md](data-model.md) E1 e E8:
   - `modality`; `mode`; `query` "até `maxQueryChars`", com o excedente truncado e declarado em `notices`;
   - `reference`; `recorte`; `depth` com "`1 ≤ depth ≤ maxDepth`"; `method`; `lexicalMatches`;
   - `entries` com `rank`, `proximity` + `proximityKind`, `ranks`, `kind`, `itemId`, `excerpts`, `sequence` e `frame`;
   - `coverage`; `model`; `notices`.
-- [ ] T031 [US1] `iped-semantic/src/main/java/iped/semantic/search/Consolidator.java` (regras de T020) e `search/SemanticSearcher.java`, o **único** buscador (depende de T014, T015 e T030). Modo semântico de texto:
+- [X] T031 [US1] `iped-semantic/src/main/java/iped/semantic/search/Consolidator.java` (regras de T020) e `search/SemanticSearcher.java`, o **único** buscador (depende de T014, T015 e T030). Modo semântico de texto:
   - `Availability`;
   - embedding da pergunta com `Role.QUERY`;
   - com até `exactSearchMaxItems` itens considerados, varredura **exata** sobre os vetores desses itens, `method: EXACT`; acima disso, `KnnVectorQuery` com `k = maxDepth × oversampling`, `method: APPROXIMATE` (research D5, emenda A3);

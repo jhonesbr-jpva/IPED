@@ -32,6 +32,13 @@
             <artifactId>iped-mcp</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Semantic search (spec 009): the processing tasks, the searcher and ONNX Runtime go to lib/;
+             TaskInstaller loads the tasks by class name. -->
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-semantic</artifactId>
+            <version>${project.version}</version>
+        </dependency>
       	<dependency>
           <groupId>com.beust</groupId>
           <artifactId>jcommander</artifactId>
@@ -905,5 +912,55 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>    
+    </build>
+
+    <profiles>
+        <!--
+            Semantic search text model (spec 009, T029): the zip that
+            iped-semantic/tools/export-models produces, unpacked into models/semantic/text/ with the
+            same mechanism as the Vosk models. Until the artifact is published in the IPED Maven
+            repository (a maintainer action), the profile turns itself on only when the zip is in the
+            local repository, so a build without it still works; the text modality then reports
+            "local model missing" at start-up instead of preparing anything (FR-042). Once published,
+            this execution moves into the main build like unpack-vosk-model-pt.
+        -->
+        <profile>
+            <id>semantic-text-model</id>
+            <activation>
+                <file>
+                    <exists>${user.home}/.m2/repository/iped/semantic/models/multilingual-e5-small-int8/1.0/multilingual-e5-small-int8-1.0.zip</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <executions>
+                            <execution>
+                                <id>unpack-semantic-text-model</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>iped.semantic.models</groupId>
+                                            <artifactId>multilingual-e5-small-int8</artifactId>
+                                            <version>1.0</version>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${release.dir}/models/semantic/text</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

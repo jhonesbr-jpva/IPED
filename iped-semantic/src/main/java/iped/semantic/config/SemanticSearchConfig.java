@@ -76,7 +76,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     static final String DEFAULT_VISUAL_CREDENTIAL_ENV = "IPED_SEMANTIC_VISUAL_CREDENTIAL";
     static final List<String> DEFAULT_MESSAGE_MEDIA_TYPES = List.of("message/x-whatsapp-message",
             "message/x-telegram-message", "message/x-skype-message", "message/x-discord-message",
-            "message/x-threema-message");
+            "message/x-threema-message", "message/x-jabber-message", "application/x-ufed-instantmessage");
 
     private UTF8Properties properties = new UTF8Properties();
 

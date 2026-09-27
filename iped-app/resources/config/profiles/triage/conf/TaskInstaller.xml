@@ -29,6 +29,7 @@
     <task class="iped.engine.task.regex.RegexTask"></task>
     <task class="iped.engine.task.LanguageDetectTask"></task>
     <task class="iped.engine.task.NamedEntityTask"></task>
+    <task class="iped.semantic.task.SemanticTextTask"></task>
     <task class="iped.engine.task.ExportFileTask"></task>
     <task class="iped.engine.task.EmbeddedDiskProcessTask"></task>
     <task class="iped.engine.task.MakePreviewTask"></task>

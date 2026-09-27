@@ -67,9 +67,10 @@ remoteMaxRetries = 5
 textCategories =
 visualCategories =
 
-# Media types of chat messages. Messages of these types are not prepared
+# Media types of chat messages (parsers of the tree and UFDR instant messages;
+# attachments are prepared as documents). Messages of these types are not prepared
 # alone: they are read as conversation sequences of the same chat.
-messageMediaTypes = message/x-whatsapp-message; message/x-telegram-message; message/x-skype-message; message/x-discord-message; message/x-threema-message
+messageMediaTypes = message/x-whatsapp-message; message/x-telegram-message; message/x-skype-message; message/x-discord-message; message/x-threema-message; message/x-jabber-message; application/x-ufed-instantmessage
 
 # Text beyond this many characters per item is not prepared; the excess is
 # declared in the item's coverage ("covered up to the limit").

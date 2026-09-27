@@ -72,13 +72,16 @@ models. Publishing the artifact in the IPED Maven repository is a maintainer act
 published, install it in the local repository:
 
 ```powershell
-mvn install:install-file -Dfile=<dir>\semantic-text-multilingual-e5-small-int8.zip `
-    -DgroupId=iped.semantic.models -DartifactId=multilingual-e5-small-int8 `
-    -Dversion=1.0 -Dpackaging=zip
+# PowerShell needs the quotes: unquoted -D arguments are split at the dots
+mvn "install:install-file" "-Dfile=<dir>\semantic-text-multilingual-e5-small-int8.zip" `
+    "-DgroupId=iped.semantic.models" "-DartifactId=multilingual-e5-small-int8" `
+    "-Dversion=1.0" "-Dpackaging=zip"
 ```
 
-Without the artifact the build still works: the execution is skipped, and the text modality then
-reports "local model missing" at start-up (FR-042) instead of preparing anything.
+The execution lives in the `semantic-text-model` profile, which turns itself on only when the zip
+is in the local repository (`~/.m2/repository/iped/semantic/models/...`). Without it the build
+still works, and the text modality then reports "local model missing" at start-up (FR-042) instead
+of preparing anything. Once the artifact is published, the execution moves into the main build.
 
 ## Visual model
 

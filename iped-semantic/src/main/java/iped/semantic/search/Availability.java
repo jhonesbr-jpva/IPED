@@ -153,6 +153,15 @@ public final class Availability {
                 embedder.identity());
     }
 
+    /**
+     * The source was available when the session started but failed on this question: the modality
+     * is unavailable now, and no other model or source is tried (FR-044).
+     */
+    static Availability failedNow(Availability was, String detail) {
+        return new Availability(was.modality, Reason.SOURCE_UNREACHABLE, detail, was.record, null, was.source,
+                was.destination, was.caseModel, was.currentModel);
+    }
+
     private static Availability unavailable(Modality m, Reason r, String detail, ModalityRecord record, Source source,
             String destination, ModelIdentity caseModel) {
         return new Availability(m, r, detail, record, null, source, destination, caseModel, null);

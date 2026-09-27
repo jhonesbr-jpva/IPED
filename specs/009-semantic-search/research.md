@@ -83,15 +83,34 @@ presentes no jar, (c) carregamento sem acesso à rede, (d) sessão `run()` conco
 Java 11. A documentação consultada não afirma o baseline Java das extensões, e a constituição
 proíbe adotar dependência que não rode no JRE 11 **mesmo que compile**.
 
-### Resultado do spike (T002, 2026-09-26) — **aprovado**
+### Resultado do spike (T002, 2026-09-26) — **aprovado, com a versão corrigida em 2026-09-27**
 
-Versões fixadas em `iped-semantic/pom.xml`: **`onnxruntime` 1.30.0** e **`onnxruntime-extensions`
-0.13.0**. Teste: `iped-semantic/src/test/java/iped/semantic/spike/OrtBaselineSpikeTest.java`,
-rodado com Liberica JDK 11.0.31 em Windows 11 x64.
+Versões fixadas em `iped-semantic/pom.xml`: **`onnxruntime` 1.20.0** e **`onnxruntime-extensions`
+0.13.0**. Teste: `iped-semantic/src/test/java/iped/semantic/spike/OrtBaselineSpikeTest.java`.
+
+**Correção de 2026-09-27.** A primeira rodada aprovou a 1.30.0 no JDK de build (Liberica 11.0.31),
+e isso não bastava: a restrição é de **runtime**, e o release embarca o JRE 11.0.13, cujo
+`jre\bin\msvcp140.dll` é a versão 14.16 (VS2017). No primeiro processamento real, a JVM caiu com
+`EXCEPTION_ACCESS_VIOLATION` em `msvcp140.dll` ao criar o `OrtEnvironment`: o ONNX Runtime recente
+é compilado com um MSVC mais novo, e o carregador do Windows resolve `msvcp140.dll` para o que a JVM
+já carregou. Matriz rodada no JRE do release (programa independente e depois a suíte inteira com
+`-Djvm=<release>/jre/bin/java.exe`):
+
+| ONNX Runtime | com extensões 0.12.4 / 0.13.0 |
+|---|---|
+| 1.17.3, 1.18.0, 1.19.2, **1.20.0** | carrega; operador padrão, operador das extensões e o modelo real funcionam, com o mesmo vetor nas quatro |
+| 1.21.0, 1.21.1, 1.22.0 | `UnsatisfiedLinkError` ao carregar o nativo |
+| 1.30.0 | queda da JVM em `msvcp140.dll` |
+
+As extensões 0.11.0 não exportam `RegisterCustomOps` e ficam fora. A 1.20.0 é a mais nova que
+funciona. **O portão passa a ser rodado sempre com `-Djvm` apontando para o JRE do release**; trocar
+o JRE embarcado ou a versão do ONNX Runtime exige rodá-lo de novo. A primeira rodada, no JDK de
+build, está descrita abaixo; os critérios (a) a (d) se repetiram no JRE 11.0.13 com a 1.20.0
+(suíte do módulo: 61 testes, nenhum pulado, `java.runtime.version = 11.0.13+8-LTS` no relatório).
 
 | Critério | Resultado |
 |---|---|
-| (a) class file ≤ 55 | Todas as classes dos dois jars são **major 52** (Java 8): 64 no `onnxruntime`, 2 no `onnxruntime-extensions`. Conferido também em 1.20.0, 1.22.0 e 0.12.4, com o mesmo resultado |
+| (a) class file ≤ 55 | Todas as classes dos dois jars são **major 52** (Java 8): 58 no `onnxruntime` 1.20.0 (64 na 1.30.0), 2 no `onnxruntime-extensions`. Conferido também em 1.22.0 e 0.12.4, com o mesmo resultado |
 | (b) nativos Windows x64 e Linux x64 | Presentes nos dois jars (`ai/onnxruntime/native/{win-x64,linux-x64}/…` e `ai/onnxruntime/extensions/native/{win-x64,linux-x64}/…`). O de Linux não foi **carregado** aqui; isso fica para o CI Ubuntu |
 | (c) carga sem rede | Sessão com operador padrão e sessão com operador das extensões (`StringUpper`, domínio `ai.onnx.contrib`, via `registerCustomOpLibrary`) criadas e executadas com um `SecurityManager` que recusa toda `SocketPermission`: **nenhum pedido**. O único pedido observado vinha da inicialização do Log4j (resolução do nome da própria máquina), que o IPED já faz; o teste inicializa o log antes de erguer o guarda. Código nativo não é observável por esse meio, e o Cenário 0 do quickstart repete a verificação com a máquina fora da rede |
 | (d) `run()` concorrente | Uma sessão compartilhada por 4 threads, 500 execuções cada, todas corretas |
@@ -101,8 +120,9 @@ Consequências para o desenho:
   o usa: `iped.semantic.model.OrtNatives` copia os nativos dos dois jars para
   `tools/onnxruntime/<os-arch>/`, define `onnxruntime.native.path` antes do primeiro uso do runtime
   e passa o caminho da biblioteca das extensões a `registerCustomOpLibrary` (D17).
-- A 1.30.0 é a menor das três avaliadas (55 MB, contra 139 MB da 1.22.0, que embute símbolos de
-  depuração do macOS) e traz `onnxruntime_providers_shared.dll` no Windows, extraído junto.
+- A 1.20.0 tem 93 MB (a 1.30.0, reprovada, teria 55 MB): o jar embute símbolos de depuração do
+  macOS, que não são extraídos. O `OrtNatives` remove de `tools/onnxruntime/` biblioteca opcional
+  que o jar em uso não traz, para nunca misturar nativos de duas versões.
 - Os modelos ainda não haviam sido exportados quando o portão rodou. A carga do modelo real, com o
   tokenizador no grafo, é verificada pelos testes do `LocalOnnxEmbedder` (T011).
 
@@ -253,6 +273,29 @@ vizinhas, que podem ainda não ter passado.
 **Tipos de mensagem**: `messageMediaTypes` é lista de configuração. O padrão traz os tipos
 emitidos pelos parsers de chat da árvore (WhatsApp, Telegram, Skype, Discord, Threema). Os tipos de
 mensagem de UFDR ainda precisam ser enumerados — tarefa de levantamento, não premissa.
+
+**Levantamento (T026, 2026-09-26, só leitura).** Lista final do padrão, em
+`SemanticSearchConfig.java` e `conf/SemanticSearchConfig.txt`:
+
+| Tipo | Origem |
+|---|---|
+| `message/x-whatsapp-message`, `message/x-telegram-message`, `message/x-skype-message`, `message/x-discord-message`, `message/x-threema-message` | parsers de chat da árvore; todos `sub-class-of message/x-chat-message` em `CustomSignatures.xml` |
+| `message/x-jabber-message` | também subclasse de `message/x-chat-message` em `CustomSignatures.xml` (nenhum parser Java da árvore o emite; entra para não ficar de fora quando um script o fizer) |
+| `application/x-ufed-instantmessage` | mensagens de chat de UFDR (`iped-parsers/.../ufed/handler/InstantMessageHandler.java` e `BaseModelHandler.java`) |
+
+As mensagens de UFDR têm os mesmos campos que as sequências usam: `BaseModelHandler` move
+`ufed:Body` para `Message-Body` (`ExtraProperties.MESSAGE_BODY`) e `ufed:TimeStamp` para
+`Communication:Date`; `InstantMessageHandler` grava `Communication:From` e `parentViewPosition`
+(o `anchorId` do modelo, que pode não ser numérico: nesse caso a ordem cai para data e id). O chat
+é o item pai (`application/x-ufed-chat`), como nos parsers da árvore.
+
+Ficam **fora de propósito** os anexos (`*-attachment`, `message/x-skype-filetransfer`): são itens
+com conteúdo próprio (o arquivo), preparados como documento. As chamadas (`call/x-*`) não têm
+corpo de mensagem. E-mails (`message/rfc822` e variantes) são documentos, não conversa.
+
+Observação de nome: o corpo da mensagem está na chave `Message-Body` (prefixo `Message-`), e não
+`Message:Body` como o texto da spec abrevia; o remetente normalizado está em `Communication:From`,
+com `Message:From` do Tika como alternativa quando a normalização não ocorreu.
 
 **Recorte parcial** (caso de borda da spec): a entrada entra se ao menos uma mensagem estiver no
 recorte. As de fora vêm marcadas como contexto, não contam e não são marcadas junto.

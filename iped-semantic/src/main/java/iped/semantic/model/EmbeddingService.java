@@ -41,6 +41,7 @@ public final class EmbeddingService<T> implements Closeable {
         final T payload;
         final String text;
         final BufferedImage image;
+        long ticket;
 
         Request(T payload, String text, BufferedImage image) {
             this.payload = payload;
@@ -58,6 +59,8 @@ public final class EmbeddingService<T> implements Closeable {
     private final Object idleLock = new Object();
     private final AtomicLong inferenceNanos = new AtomicLong();
     private final AtomicLong embedded = new AtomicLong();
+    private final AtomicLong tickets = new AtomicLong();
+    private final java.util.concurrent.ConcurrentSkipListSet<Long> pendingTickets = new java.util.concurrent.ConcurrentSkipListSet<>();
     private int inFlight;
     private volatile boolean closed;
 
@@ -96,10 +99,13 @@ public final class EmbeddingService<T> implements Closeable {
         }
         synchronized (idleLock) {
             inFlight++;
+            r.ticket = tickets.incrementAndGet();
+            pendingTickets.add(r.ticket);
         }
         try {
             queue.put(r);
         } catch (InterruptedException e) {
+            pendingTickets.remove(r.ticket);
             done(1);
             throw e;
         }
@@ -110,6 +116,20 @@ public final class EmbeddingService<T> implements Closeable {
         synchronized (idleLock) {
             while (inFlight > 0) {
                 idleLock.wait(1000);
+            }
+        }
+    }
+
+    /**
+     * Waits until everything submitted before this call has been embedded and handed to the
+     * callback. Unlike {@link #drain()}, it ends while workers keep submitting: it is what lets the
+     * semantic index commit together with the main index (the main commit's listener calls it).
+     */
+    public void awaitSubmittedSoFar() throws InterruptedException {
+        long target = tickets.get();
+        synchronized (idleLock) {
+            while (!pendingTickets.isEmpty() && pendingTickets.first() <= target) {
+                idleLock.wait(200);
             }
         }
     }
@@ -165,6 +185,9 @@ public final class EmbeddingService<T> implements Closeable {
                 run(imagePayloads, () -> embedder.embedImages(images));
             }
         } finally {
+            for (Request<T> r : batch) {
+                pendingTickets.remove(r.ticket);
+            }
             done(batch.size());
         }
     }

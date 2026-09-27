@@ -70,7 +70,18 @@ public final class OrtNatives {
         }
         String osArch = osArch();
         Path dir = baseDir.resolve(osArch).toAbsolutePath();
-        Files.createDirectories(dir);
+        try {
+            Files.createDirectories(dir);
+            Path probe = Files.createTempFile(dir, "write", ".probe");
+            Files.delete(probe);
+        } catch (IOException e) {
+            // A read-only installation must not make the capability fail: use a per-user folder.
+            Path fallback = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "iped-semantic-onnxruntime",
+                    osArch);
+            LOGGER.warn("Cannot write the ONNX Runtime natives to {} ({}); using {}", dir, e.toString(), fallback);
+            dir = fallback;
+            Files.createDirectories(dir);
+        }
 
         String configured = System.getProperty(ORT_NATIVE_PATH_PROPERTY);
         if (configured == null || configured.isBlank()) {
@@ -117,13 +128,19 @@ public final class OrtNatives {
     private static Path extract(String resourceDir, String fileName, Path dir, boolean required) throws IOException {
         String resource = resourceDir + fileName;
         byte[] expected = resourceDigest(resource);
+        Path target = dir.resolve(fileName);
         if (expected == null) {
             if (required) {
                 throw new IOException("Native library " + resource + " is not inside the ONNX Runtime jars");
             }
+            // left over from another ONNX Runtime version: never mix libraries of two versions
+            try {
+                Files.deleteIfExists(target);
+            } catch (IOException e) {
+                LOGGER.warn("Could not remove the stale native library {}", target, e);
+            }
             return null;
         }
-        Path target = dir.resolve(fileName);
         if (Files.isRegularFile(target) && Arrays.equals(expected, fileDigest(target))) {
             return target;
         }
