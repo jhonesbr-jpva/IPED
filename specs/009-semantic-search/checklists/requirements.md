@@ -31,19 +31,38 @@
 
 ## Notes
 
-- **Iteração 1** — três falhas corrigidas na própria spec:
-  - FR-003 misturava requisito (PT/EN) com desejo (espanhol) dentro de um MUST; o espanhol foi para Assumptions.
-  - FR-021 (registro de cobertura ao fim do processamento) não tinha cenário de aceitação; acrescentado à História 2.
-  - FR-022 (falha isolada por item) não aparecia nos casos de borda; acrescentado.
-- **Iteração 2** — três marcadores de escopo levados ao usuário e resolvidos em 2026-09-26 (seção Clarifications da spec):
-  - Q1 = A: interface **e** agente. História 5 entra; FR-038 a FR-040 e SC-011 passam a ser incondicionais.
-  - Q2 = B, com chave própria para imagens: a antiga História 7 vira História 6 (P3), com FR-032 a FR-037 e SC-012/SC-013. As ordenações de texto e imagem nunca se misturam (FR-034), porque proximidades de modalidades diferentes não são comparáveis.
-  - Q3 = B: a História 6 original (enriquecimento) sai; FR-030 declara o limite, e o acréscimo de evidência a caso antigo fica explicitamente proibido de servir de enriquecimento disfarçado (Edge Cases).
-- **Iteração 3** — revalidada depois da reescrita. Duas correções de consistência: a ordem de FR-031 e uma referência cruzada errada (FR-033 → FR-032) na seção Clarifications. Todos os itens passam.
-- Varredura por termos de implementação (linguagem, biblioteca, formato interno) sem ocorrências. Duas menções deliberadas, e não vazamento:
-  - "servidor MCP" em FR-028 nomeia uma **superfície de produto** existente, não uma tecnologia a adotar.
-  - A seção "Constitution Check" cita runtime do release, módulo e thread de interface porque existe para antecipar ao plano o que a constituição exige. Ela não prescreve solução.
-- Interpretação registrada da "opção de desligar a busca semântica em imagens": chave de **configuração/perfil**, independente da de texto, que elimina o custo de preparação (FR-032, SC-013). Além disso, o perito escolhe por pergunta a modalidade entre as preparadas (FR-033). Se a intenção era só a segunda, FR-032 é o ponto a rever.
-- Premissas assumidas sem pergunta, que `/speckit-clarify` pode querer confirmar: vídeos fora da busca de imagens nesta entrega; nenhuma referência por imagem para "mais como esta" (continua a similaridade visual existente); as duas modalidades desligadas de fábrica.
-- SC-010 (texto, no máximo o dobro) e SC-013 (texto + imagens, no máximo o triplo) são metas de partida declaradas nas Assumptions: se a pesquisa do plano as refutar, a revisão volta para a spec.
-- SC-001 a SC-003, SC-010, SC-012 e SC-013 dependem do **conjunto de avaliação** (entidade-chave), que precisa ser construído na entrega.
+Estado em 2026-09-26, depois de `/speckit-specify`, `/speckit-clarify`, da decisão sobre RAG e das
+emendas do plano. Todos os itens passam. O histórico de cada decisão está na seção Clarifications
+da spec (12 entradas).
+
+**Escopo como está hoje**
+- Superfícies: interface de análise **e** agente (MCP), com a mesma ordenação (FR-028, SC-011).
+- Modalidade texto: trechos, transcrições e **sequências de conversa** ancoradas nas mensagens
+  (FR-005). Modo **semântico** ou **híbrido**; o híbrido combina posição, não pontuação (FR-046,
+  FR-047, SC-018).
+- Modalidade visual: imagens **e vídeos**, estes pelos quadros já extraídos. Chaves independentes
+  para imagens e vídeos. Instante do quadro **aproximado** e declarado (FR-029, FR-032, FR-035).
+- Sem enriquecimento de caso já processado (FR-030).
+- Profundidade padrão extensível até um teto, sem piso de proximidade. Método exato ou aproximado
+  declarado (FR-007).
+- Modelos: o de texto no pacote, o visual em pacote separado, e remoto como opção. A exigência é o
+  **modelo**, não a fonte (FR-041 a FR-045, FR-044 pela emenda A4).
+- **RAG fica no harness**: o IPED recupera e cita, e não chama modelo de linguagem (FR-040,
+  FR-048).
+
+**Menções deliberadas que não são vazamento de implementação**
+- "servidor MCP" nomeia uma superfície de produto existente.
+- "RAG" aparece para delimitar o que a feature **não** faz, com a definição no próprio texto.
+- A seção "Constitution Check" da spec cita runtime, módulo e thread de interface, porque existe
+  para antecipar ao plano o que a constituição exige.
+
+**Metas de partida, sem medição**
+- SC-010 (texto, ≤ 2×) e SC-013 (texto e imagens, ≤ 3×). Se a bancada as refutar, a revisão volta
+  para a spec (Assumptions).
+
+**Dependem do conjunto de avaliação** (a construir na entrega)
+- SC-001 a SC-003, SC-010, SC-012 a SC-015 e SC-018.
+
+**Decididos pela medição, não agora**
+- Modo padrão de fábrica (`hybrid` ou `semantic`), por SC-018.
+- Perfis distribuídos que ligam a capacidade, por SC-010, SC-013 e SC-015.
