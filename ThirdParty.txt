@@ -183,3 +183,19 @@ JUnRAR
 Lottie-player
 - Site: https://github.com/LottieFiles/lottie-player/blob/master/LICENSE
 - License: licenses/LOTTIE-PLAYER.txt
+
+ONNX Runtime 1.20.0 (com.microsoft.onnxruntime:onnxruntime)
+- Site: https://onnxruntime.ai/
+- License: MIT, licenses/ONNXRuntime.txt (the jar also carries ThirdPartyNotices.txt for the components bundled in the native library)
+
+ONNX Runtime Extensions 0.13.0 (com.microsoft.onnxruntime:onnxruntime-extensions)
+- Site: https://github.com/microsoft/onnxruntime-extensions
+- License: MIT, licenses/ONNXRuntimeExtensions.txt
+
+intfloat/multilingual-e5-small, revision 614241f622f53c4eeff9890bdc4f31cfecc418b3 (text model of semantic search, converted to ONNX int8)
+- Site: https://huggingface.co/intfloat/multilingual-e5-small
+- License: MIT, licenses/multilingual-e5-small.txt
+
+sentence-transformers/clip-ViT-B-32-multilingual-v1, revision 58edf8cada9e398793dca955574a48cbb7f18be2, with the image encoder of openai/clip-vit-base-patch32, revision 3d74acf9a28c67741b2f4f2ea7635f0aaf6f0268 (visual model of semantic search, separate package)
+- Site: https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1
+- License: Apache License, Version 2.0 (text encoder) and MIT, Copyright (c) 2021 OpenAI (image encoder), licenses/clip-ViT-B-32-multilingual-v1.txt
