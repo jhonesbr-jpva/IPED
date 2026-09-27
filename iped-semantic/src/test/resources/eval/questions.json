@@ -1,5 +1,5 @@
 {
- "version": 2,
+ "version": 3,
  "corpus": "iped-semantic/tools/eval-corpus",
  "questions": [
   {
@@ -249,7 +249,8 @@
      "path": "docs/pt/relatorio_manutencao_2023.txt"
     }
    ],
-   "subject": "suborno"
+   "subject": "suborno",
+   "excerpt": "agrado de dez mil reais"
   },
   {
    "id": "conceptual-15",
@@ -261,7 +262,8 @@
      "path": "docs/pt/relatorio_manutencao_2023.txt"
     }
    ],
-   "subject": "suborno"
+   "subject": "suborno",
+   "excerpt": "agrado de dez mil reais"
   },
   {
    "id": "conceptual-16",
@@ -1098,7 +1100,8 @@
      "path": "docs/pt/relatorio_manutencao_2023.txt"
     }
    ],
-   "subject": "suborno"
+   "subject": "suborno",
+   "excerpt": "agrado de dez mil reais"
   },
   {
    "id": "mixed-15",

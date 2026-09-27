@@ -192,6 +192,12 @@ SUBJECTS = {
     "receitas": ["conceptual-32", "crosslingual-08", "crosslingual-12"],
 }
 
+# Version 3 adds, to the questions whose pertinent item is the long report, the literal words the
+# excerpt shown for it must contain: acceptance scenario 2 of User Story 1 ("the excerpt shown is
+# that paragraph, not the beginning of the document"), which versions 1 and 2 did not measure. The
+# words have no comma, because IPED reads the report as delimited text and turns commas into tabs.
+EXCERPTS = {qid: "agrado de dez mil reais" for qid in ("conceptual-14", "conceptual-15", "mixed-14")}
+
 
 def main():
     commons = json.load(open(os.path.join(HERE, "commons.json"), encoding="utf-8"))
@@ -222,12 +228,14 @@ def main():
     for q in questions:
         if q["type"] in ("conceptual", "crosslingual", "mixed"):
             q["subject"] = subject_of.get(q["id"], q["id"])
+        if q["id"] in EXCERPTS:
+            q["excerpt"] = EXCERPTS[q["id"]]
     known = {q["id"] for q in questions}
-    unknown = [qid for qid in subject_of if qid not in known]
+    unknown = [qid for qid in list(subject_of) + list(EXCERPTS) if qid not in known]
     if unknown:
-        raise SystemExit("SUBJECTS names questions that do not exist: %s" % unknown)
+        raise SystemExit("SUBJECTS or EXCERPTS name questions that do not exist: %s" % unknown)
 
-    doc = {"version": 2, "corpus": "iped-semantic/tools/eval-corpus", "questions": questions}
+    doc = {"version": 3, "corpus": "iped-semantic/tools/eval-corpus", "questions": questions}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(doc, fh, indent=1, ensure_ascii=False)
