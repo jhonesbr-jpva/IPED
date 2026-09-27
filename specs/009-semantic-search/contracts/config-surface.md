@@ -34,7 +34,8 @@ Nenhum perfil distribuído liga qualquer uma delas nesta entrega (research D19).
 | `textRemoteEndpoint` | *(vazio)* | URL base. **Sem padrão**: não existe destino de fábrica |
 | `textRemoteModel` | *(vazio)* | Nome do modelo pedido ao serviço |
 | `textRemoteCredentialEnv` | `IPED_SEMANTIC_TEXT_CREDENTIAL` | Nome da variável de ambiente |
-| `textRemoteCredentialFile` | *(vazio)* | Caminho de arquivo com a credencial. Nunca a credencial em si |
+| `textRemoteCredentialFile` | *(vazio)* | Caminho de arquivo com a credencial. Nunca a credencial em si. Quando preenchido, prevalece sobre a variável (que sempre tem nome padrão) |
+| `textRemoteQueryPrefix` / `textRemotePassagePrefix` | *(vazio)* | Só `openai-embeddings`: prefixos que o modelo exige, enviados dentro do texto (o e5 pede `"query: "` e `"passage: "`). Entre aspas para manter o espaço final. Acrescentadas na implementação (2026-09-27): o contrato do protocolo dizia que o prefixo "vem da configuração" sem nomear a chave |
 | `visualModelSource` / `visualLocalModel` / `visualRemote*` | análogos | O modelo local visual vem em pacote separado |
 | `remoteAllowPlainHttp` | `false` | HTTP sem TLS só com esta chave explícita, ou em loopback |
 | `remoteTimeoutSeconds` | `60` | Por requisição |

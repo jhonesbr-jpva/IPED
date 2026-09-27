@@ -88,6 +88,9 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private String textRemoteModel = "";
     private String textRemoteCredentialEnv = DEFAULT_TEXT_CREDENTIAL_ENV;
     private String textRemoteCredentialFile = "";
+    /** openai-embeddings only: the prefixes travel inside the text, the service knows nothing of them. */
+    private String textRemoteQueryPrefix = "";
+    private String textRemotePassagePrefix = "";
     private Source visualModelSource = Source.LOCAL;
     private String visualLocalModel = DEFAULT_VISUAL_LOCAL_MODEL;
     private String visualRemoteProtocol = "";
@@ -177,6 +180,8 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         textRemoteModel = string(p, "textRemoteModel", textRemoteModel);
         textRemoteCredentialEnv = string(p, "textRemoteCredentialEnv", textRemoteCredentialEnv);
         textRemoteCredentialFile = string(p, "textRemoteCredentialFile", textRemoteCredentialFile);
+        textRemoteQueryPrefix = unquoted(p, "textRemoteQueryPrefix", textRemoteQueryPrefix);
+        textRemotePassagePrefix = unquoted(p, "textRemotePassagePrefix", textRemotePassagePrefix);
         visualModelSource = source(p, "visualModelSource", visualModelSource);
         visualLocalModel = string(p, "visualLocalModel", visualLocalModel);
         visualRemoteProtocol = string(p, "visualRemoteProtocol", visualRemoteProtocol);
@@ -263,6 +268,22 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private String string(UTF8Properties p, String key, String fallback) {
         String v = p.getProperty(key);
         return v == null ? fallback : v.trim();
+    }
+
+    /**
+     * A value whose spaces matter, such as the prefix {@code "query: "}: written between double
+     * quotes it is taken verbatim, since a properties file trims what is not quoted.
+     */
+    private String unquoted(UTF8Properties p, String key, String fallback) {
+        String v = p.getProperty(key);
+        if (v == null) {
+            return fallback;
+        }
+        String t = v.trim();
+        if (t.length() >= 2 && t.startsWith("\"") && t.endsWith("\"")) {
+            return t.substring(1, t.length() - 1);
+        }
+        return t;
     }
 
     private boolean bool(UTF8Properties p, String key, boolean fallback) {
@@ -382,6 +403,16 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
 
     public String getRemoteCredentialFile(Modality m) {
         return m == Modality.TEXT ? textRemoteCredentialFile : visualRemoteCredentialFile;
+    }
+
+    /** Prefix put in front of a question for {@code openai-embeddings} (e5 needs "query: "). */
+    public String getRemoteQueryPrefix() {
+        return textRemoteQueryPrefix;
+    }
+
+    /** Prefix put in front of a passage for {@code openai-embeddings} (e5 needs "passage: "). */
+    public String getRemotePassagePrefix() {
+        return textRemotePassagePrefix;
     }
 
     public List<String> getCategories(Modality m) {

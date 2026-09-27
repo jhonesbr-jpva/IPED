@@ -1,0 +1,6 @@
+# Reference server of iped-embed/1. Python 3.11. The ONNX Runtime versions are those of the export,
+# so the server answers the fingerprint probes as the IPED package does.
+onnxruntime==1.22.1
+onnxruntime-extensions==0.13.0
+numpy==2.2.6
+pillow==11.1.0

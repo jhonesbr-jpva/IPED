@@ -40,6 +40,11 @@ textRemoteModel =
 # name an environment variable, or a file that contains only the credential.
 textRemoteCredentialEnv = IPED_SEMANTIC_TEXT_CREDENTIAL
 textRemoteCredentialFile =
+# openai-embeddings only: prefixes the model needs in front of questions and
+# passages, sent inside the text (iped-embed/1 servers apply their own).
+# Quote them to keep the trailing space, e.g. "query: " and "passage: " for e5.
+textRemoteQueryPrefix =
+textRemotePassagePrefix =
 
 visualModelSource = local
 # The visual model is distributed as a separate package; unzip it into the

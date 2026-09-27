@@ -132,6 +132,20 @@ public final class ProcessedCases {
 
     private static void process(File ipedRoot, File evidence, File out, String profile, String failItem, Path log)
             throws Exception {
+        int exit = run(ipedRoot, evidence, out, profile, failItem, log);
+        if (exit != 0) {
+            throw new AssertionError("processing failed with exit " + exit + "; last lines of " + log + ":\n"
+                    + tail(log, 30));
+        }
+    }
+
+    /**
+     * Runs the release on an evidence as an examiner would, with its output in {@code log}.
+     *
+     * @return the exit code
+     */
+    static int run(File ipedRoot, File evidence, File out, String profile, String failItem, Path log)
+            throws Exception {
         File java = new File(ipedRoot, "jre/bin/java" + (File.pathSeparatorChar == ';' ? ".exe" : ""));
         List<String> cmd = new ArrayList<>();
         cmd.add(java.isFile() ? java.getAbsolutePath() : "java");
@@ -161,13 +175,10 @@ public final class ProcessedCases {
             p.destroyForcibly();
             throw new AssertionError("processing did not finish in " + TIMEOUT_MINUTES + " min; see " + log);
         }
-        if (p.exitValue() != 0) {
-            throw new AssertionError("processing failed with exit " + p.exitValue() + "; last lines of " + log
-                    + ":\n" + tail(log, 30));
-        }
+        return p.exitValue();
     }
 
-    private static String tail(Path log, int lines) throws IOException {
+    static String tail(Path log, int lines) throws IOException {
         List<String> all = Files.readAllLines(log, StandardCharsets.ISO_8859_1);
         return String.join("\n", all.subList(Math.max(0, all.size() - lines), all.size()));
     }

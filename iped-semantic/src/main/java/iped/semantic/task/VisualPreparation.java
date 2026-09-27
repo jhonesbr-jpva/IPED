@@ -152,6 +152,7 @@ public final class VisualPreparation implements Closeable {
     private final AtomicLong itemsSeen = new AtomicLong();
     private final ScheduledExecutorService committer;
     private volatile boolean closed;
+    private final PreparationSupport.Stop stop = new PreparationSupport.Stop();
 
     /**
      * Opens (or resumes) the visual preparation of a case: writes the build record before the
@@ -249,6 +250,11 @@ public final class VisualPreparation implements Closeable {
 
                     @Override
                     public void onFailure(List<Pending> payloads, Exception error) {
+                        if (stop.record(error)) {
+                            LOGGER.error("Semantic visual: the model source refused the request ({}); the modality "
+                                    + "stops sending, and the remaining items are recorded as {}", error.getMessage(),
+                                    CoverageReason.REMOTE_UNAVAILABLE);
+                        }
                         for (Pending p : payloads) {
                             p.failed(error);
                         }
@@ -366,6 +372,10 @@ public final class VisualPreparation implements Closeable {
             status(item.id, CoverageReason.MODALITY_OFF, "enableSemanticImages = false");
             return;
         }
+        if (stop.reason() != null) {
+            status(item.id, CoverageReason.REMOTE_UNAVAILABLE, "modality stopped: " + stop.reason());
+            return;
+        }
         int min = config.getMinImageSize();
         if (item.width != null && item.height != null && (item.width < min || item.height < min)) {
             status(item.id, CoverageReason.IMAGE_TOO_SMALL, item.width + "x" + item.height);
@@ -398,6 +408,10 @@ public final class VisualPreparation implements Closeable {
         }
         if (!settings.videos) {
             status(item.id, CoverageReason.MODALITY_OFF, "enableSemanticVideos = false");
+            return;
+        }
+        if (stop.reason() != null) {
+            status(item.id, CoverageReason.REMOTE_UNAVAILABLE, "modality stopped: " + stop.reason());
             return;
         }
         List<BufferedImage> frames = item.frames == null ? null : item.frames.read();
@@ -560,7 +574,11 @@ public final class VisualPreparation implements Closeable {
         Map<String, Object> videoTiming = videos.toRecord(inferenceMs, allPictures);
         BuildRecord.update(store.buildRecord(), r -> {
             ModalityRecord mr = r.getOrCreate(Modality.VISUAL);
-            mr.state = mismatch ? State.DISABLED_MISMATCH : State.COMPLETE;
+            String stopped = stop.reason();
+            mr.state = mismatch ? State.DISABLED_MISMATCH : stopped != null ? State.PARTIAL : State.COMPLETE;
+            if (!mismatch && stopped != null) {
+                mr.disabledReason = "stopped during processing: " + stopped;
+            }
             mr.counts = counts;
             Map<String, Object> timing = mr.timing == null ? new LinkedHashMap<>() : new LinkedHashMap<>(mr.timing);
             timing.put("finishedAt", Instant.ofEpochMilli(now).toString());

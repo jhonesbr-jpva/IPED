@@ -416,25 +416,25 @@ da de texto, instante aproximado nos vídeos e desfoque respeitado.
 **Purpose**: qualquer modalidade pode usar modelo remoto. A exigência é o **modelo**, confirmado
 pela impressão digital, e não a fonte (emenda A4). Credenciais nunca em arquivo distribuído.
 
-- [ ] T083 [P] `iped-semantic/src/test/java/iped/semantic/unit/RemoteEmbedderTest.java`, contra servidor HTTP falso em processo (`com.sun.net.httpserver`), com os dois protocolos de [contracts/remote-model-protocol.md](contracts/remote-model-protocol.md):
+- [X] T083 [P] `iped-semantic/src/test/java/iped/semantic/unit/RemoteEmbedderTest.java`, contra servidor HTTP falso em processo (`com.sun.net.httpserver`), com os dois protocolos de [contracts/remote-model-protocol.md](contracts/remote-model-protocol.md):
   - resposta sem identidade → recusada;
   - `data[].index` incompleto → falha do lote;
   - 5xx/timeout → novas tentativas até `remoteMaxRetries`;
   - 429 respeita `Retry-After`;
   - 401/403 → falha de configuração;
   - HTTP puro recusado salvo em loopback ou com `remoteAllowPlainHttp=true`.
-- [ ] T084 [P] `iped-semantic/src/test/java/iped/semantic/unit/CredentialResolverTest.java`: credencial por variável de ambiente ou arquivo; nunca aparece em log (verificado com appender de teste), nem no `BuildRecord`, nem em `toString()`.
-- [ ] T085 [P] `iped-semantic/src/test/java/iped/semantic/integration/SourceSwapIT.java` (emenda A4): caso preparado por fonte remota (servidor de referência em loopback) e pesquisado com fonte local do mesmo artefato → disponível, `source: local`, `prepared_with: remote`; artefato diferente → `MODEL_INCOMPATIBLE`.
-- [ ] T086 [P] `iped-semantic/src/main/java/iped/semantic/model/CredentialResolver.java`: `…RemoteCredentialEnv` ou `…RemoteCredentialFile`; nunca o valor na configuração.
-- [ ] T087 `iped-semantic/src/main/java/iped/semantic/model/RemoteOpenAiEmbedder.java` (`POST {endpoint}/v1/embeddings`, só texto, identidade = `model`) e `model/RemoteIpedEmbedder.java` (`POST {endpoint}/iped-embed/1/embed` e `GET …/model`, texto e imagem). Ambos com `java.net.http`, UTF-8, `Authorization: Bearer` a partir do `CredentialResolver`, e as regras de falha do contrato. Falha de lote no processamento → itens `REMOTE_UNAVAILABLE`.
-- [ ] T088 Seleção de fonte por modalidade (`textModelSource`/`visualModelSource`) em `iped-semantic/src/main/java/iped/semantic/task/SemanticTextTask.java`, `task/SemanticVisualTask.java`, `task/SourceValidator.java` e `search/SemanticSearcher.java`:
+- [X] T084 [P] `iped-semantic/src/test/java/iped/semantic/unit/CredentialResolverTest.java`: credencial por variável de ambiente ou arquivo; nunca aparece em log (verificado com appender de teste), nem no `BuildRecord`, nem em `toString()`.
+- [X] T085 [P] `iped-semantic/src/test/java/iped/semantic/integration/SourceSwapIT.java` (emenda A4): caso preparado por fonte remota (servidor de referência em loopback) e pesquisado com fonte local do mesmo artefato → disponível, `source: local`, `prepared_with: remote`; artefato diferente → `MODEL_INCOMPATIBLE`.
+- [X] T086 [P] `iped-semantic/src/main/java/iped/semantic/model/CredentialResolver.java`: `…RemoteCredentialEnv` ou `…RemoteCredentialFile`; nunca o valor na configuração.
+- [X] T087 `iped-semantic/src/main/java/iped/semantic/model/RemoteOpenAiEmbedder.java` (`POST {endpoint}/v1/embeddings`, só texto, identidade = `model`) e `model/RemoteIpedEmbedder.java` (`POST {endpoint}/iped-embed/1/embed` e `GET …/model`, texto e imagem). Ambos com `java.net.http`, UTF-8, `Authorization: Bearer` a partir do `CredentialResolver`, e as regras de falha do contrato. Falha de lote no processamento → itens `REMOTE_UNAVAILABLE`.
+- [X] T088 Seleção de fonte por modalidade (`textModelSource`/`visualModelSource`) em `iped-semantic/src/main/java/iped/semantic/task/SemanticTextTask.java`, `task/SemanticVisualTask.java`, `task/SourceValidator.java` e `search/SemanticSearcher.java`:
   - o registro grava o destino **da preparação** (`remote.phase: "preparation"`);
   - o resultado traz `model.sentTo` quando a fonte das perguntas é remota;
   - sem troca automática de fonte (FR-044);
   - `SourceValidator` verifica o serviço remoto alcançável com identidade informada (FR-042).
 - [ ] T089 `iped-app/src/main/java/iped/app/ui/semantic/RemoteDestinationNotice.java`: faixa permanente "Perguntas desta modalidade são enviadas a `<destino>`" e confirmação na primeira pergunta da sessão; recusar não envia nada (FR-044). Ligar em `SemanticSearchPanel.java`. `sent_to` no MCP em `SemanticTools.java`.
-- [ ] T090 [P] Servidor de referência `iped-semantic/tools/semantic-server/semantic_server.py` (mais `requirements.txt` e `README.md`): implementa `iped-embed/1` servindo os **mesmos** artefatos ONNX de T003/T075, com a mesma identidade, e exige credencial. Não faz parte do release.
-- [ ] T091 Teste de falha rápida em `iped-semantic/src/test/java/iped/semantic/integration/FailFastIT.java` (SC-017). Com `enableSemanticImages = true`, sem modelo visual local e sem remoto, o processamento recusa começar, nomeando o que falta, e a evidência não é aberta. Verificação: no log do processamento, a recusa vem antes de qualquer marcador de início do leitor da fonte de dados ou de carga do Sleuthkit, e nenhum desses marcadores aparece. O mesmo com fonte remota inalcançável.
+- [X] T090 [P] Servidor de referência `iped-semantic/tools/semantic-server/semantic_server.py` (mais `requirements.txt` e `README.md`): implementa `iped-embed/1` servindo os **mesmos** artefatos ONNX de T003/T075, com a mesma identidade, e exige credencial. Não faz parte do release.
+- [X] T091 Teste de falha rápida em `iped-semantic/src/test/java/iped/semantic/integration/FailFastIT.java` (SC-017). Com `enableSemanticImages = true`, sem modelo visual local e sem remoto, o processamento recusa começar, nomeando o que falta, e a evidência não é aberta. Verificação: no log do processamento, a recusa vem antes de qualquer marcador de início do leitor da fonte de dados ou de carga do Sleuthkit, e nenhum desses marcadores aparece. O mesmo com fonte remota inalcançável.
 
 ---
 

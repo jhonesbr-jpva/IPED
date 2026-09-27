@@ -96,6 +96,27 @@ GET {endpoint}/iped-embed/1/model  →  { "id": "…", "sha256": "…", "dimensi
 
 ---
 
+## Notas da implementação (2026-09-27)
+
+- **Imagem vai em PNG** (`"media_type": "image/png"`), não JPEG: sem perda, o serviço vê os
+  pixels que o IPED tem. O `media_type` já era campo do pedido; o exemplo acima mostra JPEG.
+- **Redirecionamento não é seguido.** Uma resposta 3xx é recusada como erro de configuração: a
+  requisição vai só ao destino declarado (SC-016), e seguir um `Location` a levaria a outro.
+- **Outros 4xx** também são erro de configuração, sem nova tentativa. Nenhuma mensagem de erro
+  carrega o corpo da resposta, que pode ecoar conteúdo de evidência.
+- **URL com credencial embutida** (`https://user:senha@…`) é recusada: a credencial fica na
+  variável ou no arquivo, nunca na configuração.
+- **Abertura conversa com o serviço uma vez**: `GET …/model` no `iped-embed/1` (sem ele, um texto),
+  e um texto no `openai-embeddings`. Assim destino inalcançável ou credencial recusada aparecem
+  antes de qualquer item ser lido (FR-042), e a identidade é a que o serviço informa. Uma resposta
+  posterior com outra identidade é recusada como erro de configuração.
+- **401/403 no meio do processamento**: o lote falha, a modalidade para de enviar, os itens
+  seguintes ficam `REMOTE_UNAVAILABLE` com o motivo, e o registro fecha `PARTIAL` com
+  `disabledReason`. O processamento segue.
+- **Pilha com o visualizador HTML**: a política de segurança do IPED nega rede a qualquer pilha que
+  passe pelo jar dos visualizadores, e o "Mais como este" pode partir do visualizador de texto. O
+  envio roda em `AccessController.doPrivileged`, com o privilégio do `iped-semantic`.
+
 ## Servidor de referência
 
 `iped-semantic/tools/semantic-server/` implementa `iped-embed/1` servindo os **mesmos artefatos

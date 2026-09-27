@@ -49,10 +49,41 @@ final class PreparationSupport {
         return out;
     }
 
-    /** The reason an embedding failure leaves on an item. */
+    /**
+     * The reason an embedding failure leaves on an item: a remote source that stayed unreachable, or
+     * that refused the request as misconfigured (a credential refused, an answer without identity),
+     * is {@code REMOTE_UNAVAILABLE}; anything else is a failure of this item.
+     */
     static CoverageReason failureReason(Exception e) {
-        return e instanceof EmbeddingException && ((EmbeddingException) e).isRemoteUnavailable()
-                ? CoverageReason.REMOTE_UNAVAILABLE
-                : CoverageReason.PREP_FAILURE;
+        if (e instanceof EmbeddingException) {
+            EmbeddingException ee = (EmbeddingException) e;
+            if (ee.isRemoteUnavailable() || ee.isConfiguration()) {
+                return CoverageReason.REMOTE_UNAVAILABLE;
+            }
+        }
+        return CoverageReason.PREP_FAILURE;
+    }
+
+    /**
+     * The first configuration failure of the model source during processing, such as a credential
+     * the destination refuses (HTTP 401/403). Retrying cannot fix it, so the modality stops sending:
+     * the remaining items are recorded as {@code REMOTE_UNAVAILABLE}, the build record as
+     * {@code PARTIAL} with the reason, and the processing goes on (contracts/remote-model-protocol.md).
+     */
+    static final class Stop {
+        private volatile String reason;
+
+        /** @return {@code true} the first time a configuration failure is seen */
+        synchronized boolean record(Exception e) {
+            if (reason == null && e instanceof EmbeddingException && ((EmbeddingException) e).isConfiguration()) {
+                reason = e.getMessage();
+                return true;
+            }
+            return false;
+        }
+
+        String reason() {
+            return reason;
+        }
     }
 }

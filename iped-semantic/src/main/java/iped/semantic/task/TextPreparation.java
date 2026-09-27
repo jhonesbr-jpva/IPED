@@ -124,6 +124,7 @@ public final class TextPreparation implements Closeable {
     private final AtomicLong itemsSeen = new AtomicLong();
     private final ScheduledExecutorService committer;
     private volatile boolean closed;
+    private final PreparationSupport.Stop stop = new PreparationSupport.Stop();
 
     /**
      * Opens (or resumes) the preparation of a case: writes the build record before the first
@@ -223,6 +224,11 @@ public final class TextPreparation implements Closeable {
 
                     @Override
                     public void onFailure(List<Pending> payloads, Exception error) {
+                        if (stop.record(error)) {
+                            LOGGER.error("Semantic text: the model source refused the request ({}); the modality "
+                                    + "stops sending, and the remaining items are recorded as {}", error.getMessage(),
+                                    CoverageReason.REMOTE_UNAVAILABLE);
+                        }
                         for (Pending p : payloads) {
                             p.failed(error);
                         }
@@ -288,6 +294,11 @@ public final class TextPreparation implements Closeable {
             if (item.isMessage() && messageTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {
                 staging.put(new StagingStore.Message(item.chatId, item.id, item.date, item.position, item.sender,
                         item.body));
+                return;
+            }
+            String stopped = stop.reason();
+            if (stopped != null) {
+                status(item.id, CoverageReason.REMOTE_UNAVAILABLE, "modality stopped: " + stopped);
                 return;
             }
             ItemJob job = passages(item);
@@ -516,7 +527,11 @@ public final class TextPreparation implements Closeable {
         long finishMs = now - f0;
         BuildRecord.update(store.buildRecord(), r -> {
             ModalityRecord mr = r.getOrCreate(Modality.TEXT);
-            mr.state = mismatch ? State.DISABLED_MISMATCH : State.COMPLETE;
+            String stopped = stop.reason();
+            mr.state = mismatch ? State.DISABLED_MISMATCH : stopped != null ? State.PARTIAL : State.COMPLETE;
+            if (!mismatch && stopped != null) {
+                mr.disabledReason = "stopped during processing: " + stopped;
+            }
             mr.counts = counts;
             Map<String, Object> timing = mr.timing == null ? new LinkedHashMap<>() : new LinkedHashMap<>(mr.timing);
             timing.put("finishedAt", Instant.ofEpochMilli(now).toString());
@@ -548,6 +563,13 @@ public final class TextPreparation implements Closeable {
             if (mismatch) {
                 for (StagingStore.Message m : messages) {
                     safeStatus(m.itemId, CoverageReason.MODEL_MISMATCH, null);
+                }
+                continue;
+            }
+            String stopped = stop.reason();
+            if (stopped != null) {
+                for (StagingStore.Message m : messages) {
+                    safeStatus(m.itemId, CoverageReason.REMOTE_UNAVAILABLE, "modality stopped: " + stopped);
                 }
                 continue;
             }

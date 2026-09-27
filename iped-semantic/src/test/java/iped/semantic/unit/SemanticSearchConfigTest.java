@@ -86,11 +86,22 @@ public class SemanticSearchConfigTest {
             // code reads them rather than ignoring an unknown key.
             boolean stringKey = key.endsWith("LocalModel") || key.endsWith("RemoteProtocol")
                     || key.endsWith("RemoteEndpoint") || key.endsWith("RemoteModel") || key.contains("Credential")
-                    || key.endsWith("Categories") || key.equals("messageMediaTypes");
+                    || key.endsWith("Categories") || key.equals("messageMediaTypes") || key.endsWith("Prefix");
             if (!stringKey && !reported) {
                 fail("key " + key + " accepted garbage: is it read by SemanticSearchConfig?");
             }
         }
+    }
+
+    @Test
+    public void aQuotedPrefixKeepsItsTrailingSpace() {
+        UTF8Properties p = new UTF8Properties();
+        p.setProperty("textRemoteQueryPrefix", " \"query: \" ");
+        p.setProperty("textRemotePassagePrefix", "passage:");
+        SemanticSearchConfig c = new SemanticSearchConfig();
+        c.processProperties(p);
+        assertEquals("query: ", c.getRemoteQueryPrefix());
+        assertEquals("unquoted, trimmed as any value", "passage:", c.getRemotePassagePrefix());
     }
 
     @Test

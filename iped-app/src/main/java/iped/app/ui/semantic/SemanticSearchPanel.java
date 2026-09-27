@@ -104,6 +104,7 @@ public class SemanticSearchPanel extends JPanel {
     private final JTabbedPane tabs = new JTabbedPane();
     private final JTextArea unavailable = new JTextArea();
     private final JButton buildDetails = new JButton();
+    private final RemoteDestinationNotice remoteNotice = new RemoteDestinationNotice(text);
 
     private transient SemanticRequest.Reference pendingReference;
     private transient Query highlightBase;
@@ -162,6 +163,7 @@ public class SemanticSearchPanel extends JPanel {
         top.add(line1);
         top.add(line2);
         top.add(line3);
+        top.add(remoteNotice);
         top.add(status);
         add(top, BorderLayout.NORTH);
 
@@ -182,9 +184,19 @@ public class SemanticSearchPanel extends JPanel {
 
         ask.addActionListener(e -> askQuestion());
         question.addActionListener(e -> askQuestion());
-        textModality.addActionListener(e -> mode.setEnabled(true));
-        visualModality.addActionListener(e -> mode.setEnabled(false));
-        bothModalities.addActionListener(e -> mode.setEnabled(true));
+        textModality.addActionListener(e -> {
+            mode.setEnabled(true);
+            remoteNotice.update(target());
+        });
+        visualModality.addActionListener(e -> {
+            mode.setEnabled(false);
+            remoteNotice.update(target());
+        });
+        bothModalities.addActionListener(e -> {
+            mode.setEnabled(true);
+            remoteNotice.update(target());
+        });
+        remoteNotice.update(target());
         buildDetails.addActionListener(e -> BuildDetailsDialog.show(this, session, text));
         addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
@@ -272,6 +284,12 @@ public class SemanticSearchPanel extends JPanel {
         Target target = ref != null ? Target.TEXT : target();
         TextMode m = (TextMode) mode.getSelectedItem();
         SemanticSearchConfig cfg = SemanticSession.config();
+        remoteNotice.update(target);
+        if (!remoteNotice.confirm(this, target)) {
+            // refused: the question does not leave the workstation, and nothing else is asked instead
+            status.setText(text.get("SemanticSearch.Remote.Declined"));
+            return;
+        }
         ask.setEnabled(false);
         tabs.removeAll();
         new SwingWorker<List<Ordering>, String>() {
