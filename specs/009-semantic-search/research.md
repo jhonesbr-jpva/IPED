@@ -299,6 +299,17 @@ Observação de nome: o corpo da mensagem está na chave `Message-Body` (prefixo
 `Message:Body` como o texto da spec abrevia; o remetente normalizado está em `Communication:From`,
 com `Message:From` do Tika como alternativa quando a normalização não ocorreu.
 
+**O que não é texto de ninguém** (revisão de 2026-09-28, bancada de chats do Telegram). O texto de
+uma mensagem é o seu `Message-Body`, menos os marcadores que o parser escreve no lugar do texto:
+`"! " + tipo` (WhatsApp, Threema: `! IMAGE_MESSAGE`) e `"! Attachment: " + tipo de mídia`
+(Telegram, mensagem com arquivo). O segundo escapava da expressão até esta revisão, e na bancada
+~207 mil mensagens só com anexo entravam nas sequências como `remetente: ! Attachment: image/jpeg`;
+a legenda, quando há, continua sendo o texto. Uma mensagem de tipo listado **sem** `Message-Body`
+(Telegram sem texto, anexo nem tipo; UFDR sem `Body` nem `Snippet`) fica `NO_TEXT`: o texto que o
+IPED extraiu dela é a listagem dos metadados (`StandardParser`, `printMetadata`), e o conteúdo vazio
+passa pelo `RawStringParser`, de modo que a regra de binários a registrava como `BINARY_TEXT` (70
+mil mensagens na bancada).
+
 **Recorte parcial** (caso de borda da spec): a entrada entra se ao menos uma mensagem estiver no
 recorte. As de fora vêm marcadas como contexto, não contam e não são marcadas junto.
 

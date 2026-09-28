@@ -170,7 +170,7 @@ anterior à preparação.
 |---|---|---|---|
 | `COVERED` | coberto | — | — |
 | `COVERED_TRUNCATED` | coberto até o limite (excedente declarado) | limite de texto | sim ("texto acima do limite") |
-| `NO_TEXT` | sem texto | item sem texto extraído nem transcrição | sim |
+| `NO_TEXT` | sem texto | item sem texto extraído nem transcrição; mensagem sem texto próprio (corpo vazio, só marcador do parser, ou sem `Message-Body`: research D7) | sim |
 | `ANALYSIS_NOT_RUN` | análise não executada (OCR/transcrição) | item que teria texto se a análise rodasse | sim |
 | `IMAGE_TOO_SMALL` | imagem abaixo do tamanho mínimo | `minImageSize` | sim |
 | `IMAGE_UNDECODABLE` | imagem não decodificável | falha de leitura da miniatura | sim |

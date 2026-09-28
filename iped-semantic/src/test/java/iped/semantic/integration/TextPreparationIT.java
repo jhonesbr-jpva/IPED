@@ -243,7 +243,7 @@ public class TextPreparationIT {
     private static String body(Document message) {
         StringBuilder sb = new StringBuilder();
         for (String v : message.getValues(ExtraProperties.MESSAGE_BODY)) {
-            if (v == null || v.strip().matches("^! [A-Z0-9_]+$")) {
+            if (v == null || v.strip().matches("^! (?:[A-Z0-9_]+|Attachment: \\S+)$")) {
                 continue;
             }
             if (sb.length() > 0) {

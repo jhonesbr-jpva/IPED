@@ -317,6 +317,13 @@ public final class TextPreparation implements Closeable {
                 status(item.id, CoverageReason.COVERED_BY_MESSAGES, "message container");
                 return;
             }
+            if (!item.isMessage() && messageTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {
+                // a message with no Message-Body: nobody wrote text in it, and its extracted text is
+                // the metadata the parser prints (research D7); checked before the binary rule, which
+                // its empty content would otherwise meet through the strings fallback
+                status(item.id, CoverageReason.NO_TEXT, "message without text");
+                return;
+            }
             if (item.binaryText && !config.isPrepareBinaryText()) {
                 // strings of a binary: large, and rarely worth a question by meaning (research D6)
                 status(item.id, CoverageReason.BINARY_TEXT, null);

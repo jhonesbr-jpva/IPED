@@ -36,6 +36,15 @@ public class MessageBodyTest {
     }
 
     @Test
+    public void telegramAttachmentMarkersAreNotText() {
+        assertEquals("", body("! Attachment: image/jpeg"));
+        assertEquals("", body("! Attachment: application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+        // Telegram sets the caption first and adds the marker after it
+        assertEquals("olha o pacote na portaria", body("olha o pacote na portaria", "! Attachment: video/mp4"));
+        assertEquals("! Attachment: segue o contrato", body("! Attachment: segue o contrato"));
+    }
+
+    @Test
     public void ordinaryTextIsKeptLiterally() {
         assertEquals("fechado, amanhã na portaria", body("fechado, amanhã na portaria"));
         assertEquals("! atenção, é urgente", body("! atenção, é urgente"));

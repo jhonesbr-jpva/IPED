@@ -543,3 +543,33 @@ On the text-heavy image of the previous section, the new default leaves 2.95 bil
 prepare instead of 4.24: still hours (about 7 h without focus windows, 14 h with them, at the rate
 measured here). The criteria are measured on the evaluation case; a system image of that kind is
 recorded as a known cost, not as a failure of SC-010.
+
+### Telegram chat bench (real evidence) — 2026-09-28
+
+Written by hand. A folder of real Telegram extractions (Android and iOS databases), processed
+locally only; nothing from it is recorded here beyond counts. This workstation (14 cores), not the
+reference bench. **forensic** profile with `enableSemanticText`; 1,222,369 items, 2,855 chats with
+conversation sequences, 811,733 messages staged.
+
+The first run showed two kinds of wasted inference, fixed in `39b7ce9c6` (research D6):
+
+- **Rendered conversations embedded and thrown away.** The chat item IPED writes beside the
+  messages was prepared as a document and then replaced by the chat's sequences at the end. It is
+  now staged (`chatMediaTypes`) and prepared at the end only if its chat got no sequence.
+- **Unreadable text.** BLOB values a text parser decoded (`t15_value_N.data` of an iOS key-value
+  store: resource identifiers behind binary length prefixes) were prepared as text. Text with 10%
+  or more unreadable characters is now `BINARY_TEXT` unless `prepareBinaryText` is on.
+
+| Run | Total | Pipeline phase | Sequences at the end | Model time, summed over threads |
+|---|---|---|---|---|
+| Before (`2be23d66f`) | 77.6 min | 48.6 min | 28.3 min | 17.8 h |
+| With the two fixes (`39b7ce9c6`) | **50.2 min** | 21.2 min | 28.3 min | 11.4 h |
+
+Semantic index: sequences 241,424 in both runs, and the same 2,855 chats covered by their messages
+and 11,149 rendered conversations prepared as documents (their chat got no sequence). Passages
+377,202 → 326,912 and focus windows 105,853 → 92,329, the difference being the unreadable items.
+Coverage: covered 1,148,539 → 1,103,222; `BINARY_TEXT` 70,401 → 115,718 (+45,317 unreadable:
+45,052 values of that key-value table, 239 of another, 16 full-text index blocks, 10 carved HTML
+pages); `COVERED_BY_MESSAGES` 2,912 and `NO_TEXT` 517 unchanged. By text volume, the rendered
+conversations were most of the saving: 97.3 million characters (about 122,000 passages and
+323,000 focus windows) against 18.8 million for the unreadable items.

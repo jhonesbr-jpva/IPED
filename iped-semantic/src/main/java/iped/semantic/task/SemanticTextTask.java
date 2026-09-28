@@ -206,11 +206,13 @@ public class SemanticTextTask extends AbstractTask {
     }
 
     /**
-     * Parser-generated marker the chat parsers write as the body of a message that has no text,
-     * {@code "! " + message type} (WhatsApp, Threema; Telegram uses it for attachments). It names
-     * the type of the event, it is not something anyone wrote.
+     * Parser-generated marker the chat parsers write as the body of a message that has no text:
+     * {@code "! " + message type} (WhatsApp, Threema) and {@code "! Attachment: " + media type}
+     * (Telegram, for a message carrying a file). It names the kind of event or file, it is not
+     * something anyone wrote.
      */
-    private static final java.util.regex.Pattern TYPE_MARKER = java.util.regex.Pattern.compile("^! [A-Z0-9_]+$");
+    private static final java.util.regex.Pattern TYPE_MARKER = java.util.regex.Pattern
+            .compile("^! (?:[A-Z0-9_]+|Attachment: \\S+)$");
 
     /**
      * The literal text of a message: every value of {@code Message-Body} (a media caption is added

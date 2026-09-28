@@ -61,6 +61,7 @@ próprios, codec HNSW) e `staging/` (mensagens à espera de virar sequência). C
 | Referência de mensagem sem remetentes | D22 | "Mais como este" pede significado, não interlocutor |
 | Modelo copiado para o caso | D17 | O app do próprio caso precisa dele na hora da busca (`CaseModels`) |
 | Texto de binários fora do padrão | D6 (revisão de 2026-09-27) | Cadeia de parsers com o `RawStringParser`, espaço não alocado e slack ficam `BINARY_TEXT`; `prepareBinaryText = true` inclui. Era 45% do texto de uma imagem Linux medida. Também o texto ilegível (≥ 10% de caracteres de substituição, controle, uso privado ou não atribuídos): binário que um parser de texto decodificou, como BLOB de banco |
+| Mensagem sem texto próprio | D7 (revisão de 2026-09-28) | Marcadores do parser não são texto (`! IMAGE_MESSAGE`, `! Attachment: image/jpeg`); mensagem de tipo listado sem `Message-Body` fica `NO_TEXT`, antes da regra de binários (o conteúdo vazio passa pelo `RawStringParser`) |
 | Conversa renderizada só no fim | D6 (revisão de 2026-09-28) | O item de chat (`chatMediaTypes`) vai para a área de montagem; no `finish()` é preparado como documento só se o chat não ganhou sequência. Antes era embutido e descartado: metade da inferência numa bancada de chats |
 
 ## 4. Configuração
