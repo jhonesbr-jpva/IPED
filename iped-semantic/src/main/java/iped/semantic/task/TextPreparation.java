@@ -122,6 +122,9 @@ public final class TextPreparation implements Closeable {
     private final Set<String> categories = new HashSet<>();
     private final Set<String> messageTypes = new HashSet<>();
     private final Set<String> containerTypes = new HashSet<>();
+    private final Set<String> chatTypes = new HashSet<>();
+    /** Chats whose sequences were written: their rendered conversation is not prepared (D7). */
+    private final Set<Integer> sequencedChats = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final long startedAtMillis = System.currentTimeMillis();
     private final AtomicLong taskNanos = new AtomicLong();
     private final AtomicLong itemsSeen = new AtomicLong();
@@ -157,6 +160,9 @@ public final class TextPreparation implements Closeable {
         }
         for (String t : config.getMessageContainerMediaTypes()) {
             containerTypes.add(t.toLowerCase(Locale.ROOT));
+        }
+        for (String t : config.getChatMediaTypes()) {
+            chatTypes.add(t.toLowerCase(Locale.ROOT));
         }
 
         BuildRecord existing = BuildRecord.read(store.buildRecord());
@@ -277,6 +283,7 @@ public final class TextPreparation implements Closeable {
         p.put("messageMediaTypes", new ArrayList<>(c.getMessageMediaTypes()));
         p.put("messageContainerMediaTypes", new ArrayList<>(c.getMessageContainerMediaTypes()));
         p.put("prepareBinaryText", c.isPrepareBinaryText());
+        p.put("chatMediaTypes", new ArrayList<>(c.getChatMediaTypes()));
         Map<String, Object> hnsw = new LinkedHashMap<>();
         hnsw.put("maxConn", c.getHnswMaxConn());
         hnsw.put("beamWidth", c.getHnswBeamWidth());
@@ -320,6 +327,11 @@ public final class TextPreparation implements Closeable {
                         item.body));
                 return;
             }
+            if (!item.isMessage() && chatTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {
+                // a rendered conversation: its messages usually replace it at the end (research D7)
+                stageChatDocument(item);
+                return;
+            }
             String stopped = stop.reason();
             if (stopped != null) {
                 status(item.id, CoverageReason.REMOTE_UNAVAILABLE, "modality stopped: " + stopped);
@@ -328,6 +340,12 @@ public final class TextPreparation implements Closeable {
             ItemJob job = passages(item);
             if (job == null) {
                 status(item.id, analysisNotRun(item) ? CoverageReason.ANALYSIS_NOT_RUN : CoverageReason.NO_TEXT, null);
+                return;
+            }
+            if (job.units == null) {
+                // binary content read as text: the parser was a text one, the bytes were not (D6)
+                status(item.id, CoverageReason.BINARY_TEXT,
+                        String.format(Locale.ROOT, "unreadable characters %.0f%%", job.unreadableShare * 100));
                 return;
             }
             for (Unit u : job.units) {
@@ -367,25 +385,34 @@ public final class TextPreparation implements Closeable {
         return (mt.startsWith("audio/") || mt.startsWith("video/")) && !settings.transcriptionEnabled;
     }
 
+    /**
+     * The passages (and focus windows) of an item. {@code null} when it has no text; a job without
+     * units ({@code units == null}) when its only text is binary content read as text, which is left
+     * out unless {@code prepareBinaryText} is on.
+     */
     private ItemJob passages(TextItem item) throws IOException {
         List<Unit> units = new ArrayList<>();
         long excess = 0;
         ItemJob job = new ItemJob(item.id);
+        int textPassages = 0;
+        double unreadable = -1;
         if (item.text != null) {
             try (Reader r = item.text.open()) {
                 if (r != null) {
                     PassageChunker.Result res = chunker.chunk(r, settings.metadataHeader);
-                    excess = res.excessChars();
-                    for (PassageChunker.Passage p : res.passages()) {
-                        units.add(new Unit(job, units.size(), SemanticFields.KIND_PASSAGE, p.ordinal(), p.start(),
-                                p.end(), p.text()));
+                    double share = unreadableShare(res.content());
+                    if (share >= UNREADABLE_SHARE && !config.isPrepareBinaryText()) {
+                        unreadable = share;
+                    } else {
+                        excess = res.excessChars();
+                        textPassages = res.passages().size();
+                        addDocument(job, units, res.content(), res.passages());
                     }
-                    focusWindows(job, units, SemanticFields.KIND_FOCUS, res.content(), res.passages(), 0);
                 }
             }
         }
         if (item.transcript != null && !item.transcript.isBlank()) {
-            int offset = units.size();
+            int offset = textPassages;
             String t = item.transcript.length() > config.getMaxTextCharsPerItem()
                     ? item.transcript.substring(0, config.getMaxTextCharsPerItem())
                     : item.transcript;
@@ -398,10 +425,107 @@ public final class TextPreparation implements Closeable {
             focusWindows(job, units, SemanticFields.KIND_TRANSCRIPT_FOCUS, t, ps, offset);
         }
         if (units.isEmpty()) {
+            if (unreadable >= 0) {
+                job.unreadableShare = unreadable;
+                return job;
+            }
             return null;
         }
         job.init(units, excess);
         return job;
+    }
+
+    /** Passages of a document text and their focus windows, appended to {@code units}. */
+    private void addDocument(ItemJob job, List<Unit> units, String content, List<PassageChunker.Passage> passages) {
+        for (PassageChunker.Passage p : passages) {
+            units.add(new Unit(job, units.size(), SemanticFields.KIND_PASSAGE, p.ordinal(), p.start(), p.end(),
+                    p.text()));
+        }
+        focusWindows(job, units, SemanticFields.KIND_FOCUS, content, passages, 0);
+    }
+
+    /**
+     * Share of text, over its first {@link #UNREADABLE_SAMPLE} code points, that no reader could
+     * read: replacement characters, control characters other than tab and line breaks, private-use
+     * and unassigned code points. Text written by someone stays near zero; binary content decoded as
+     * text by a text parser (a BLOB of a database, a container read as plain text) does not (D6).
+     */
+    static double unreadableShare(String content) {
+        if (content == null || content.isEmpty()) {
+            return 0;
+        }
+        int bad = 0;
+        int n = 0;
+        for (int i = 0; i < content.length() && n < UNREADABLE_SAMPLE;) {
+            int c = content.codePointAt(i);
+            i += Character.charCount(c);
+            n++;
+            int type = Character.getType(c);
+            if (c == 0xFFFD || (type == Character.CONTROL && c != '\t' && c != '\n' && c != '\r')
+                    || type == Character.PRIVATE_USE || type == Character.UNASSIGNED || type == Character.SURROGATE) {
+                bad++;
+            }
+        }
+        return (double) bad / n;
+    }
+
+    /** One unreadable character in ten marks the text as binary content (measured, research D6). */
+    static final double UNREADABLE_SHARE = 0.10;
+    static final int UNREADABLE_SAMPLE = 4000;
+
+    /**
+     * Stages a rendered conversation instead of preparing it now (research D7): when its chat gets
+     * conversation sequences, they are its representation and the document would be thrown away;
+     * {@link #prepareChatDocuments} prepares it at the end only when the chat got none.
+     */
+    private void stageChatDocument(TextItem item) throws IOException {
+        if (item.text != null) {
+            try (Reader r = item.text.open()) {
+                if (r != null) {
+                    PassageChunker.Result res = chunker.chunk(r, settings.metadataHeader);
+                    if (!res.passages().isEmpty()) {
+                        staging.putChatDocument(new StagingStore.ChatDocument(item.id, res.content(), res.excessChars()));
+                        return;
+                    }
+                }
+            }
+        }
+        status(item.id, analysisNotRun(item) ? CoverageReason.ANALYSIS_NOT_RUN : CoverageReason.NO_TEXT, null);
+    }
+
+    /**
+     * The staged rendered conversations whose chat got no sequence (no message with text, a failed
+     * sequence) are prepared now, as the documents they are; the others are covered by their
+     * messages.
+     */
+    private void prepareChatDocuments() throws IOException, InterruptedException {
+        List<Integer> ids = staging.chatDocuments();
+        int prepared = 0;
+        for (int id : ids) {
+            if (sequencedChats.contains(id)) {
+                continue;
+            }
+            String stopped = stop.reason();
+            if (stopped != null) {
+                safeStatus(id, CoverageReason.REMOTE_UNAVAILABLE, "modality stopped: " + stopped);
+                continue;
+            }
+            StagingStore.ChatDocument d = staging.chatDocument(id);
+            List<Unit> units = new ArrayList<>();
+            ItemJob job = new ItemJob(id);
+            addDocument(job, units, d.content, chunker.split(d.content));
+            if (units.isEmpty()) {
+                safeStatus(id, CoverageReason.NO_TEXT, null);
+                continue;
+            }
+            job.init(units, d.excessChars);
+            for (Unit u : job.units) {
+                service.submit(u, u.text);
+            }
+            prepared++;
+        }
+        LOGGER.info("Semantic text: {} rendered conversations covered by their messages, {} prepared as documents "
+                + "(their chat got no sequence)", ids.size() - prepared, prepared);
     }
 
     /**
@@ -447,6 +571,8 @@ public final class TextPreparation implements Closeable {
         AtomicInteger remaining;
         volatile Exception failure;
         long excess;
+        /** Set, with no units, when the item's only text is binary content read as text. */
+        double unreadableShare = -1;
 
         ItemJob(int itemId) {
             this.itemId = itemId;
@@ -573,6 +699,8 @@ public final class TextPreparation implements Closeable {
         service.drain();
         buildSequences();
         service.drain();
+        prepareChatDocuments();
+        service.drain();
         writer.commit();
         staging.commit();
 
@@ -631,7 +759,7 @@ public final class TextPreparation implements Closeable {
             }
             List<ChatSequenceBuilder.Window> windows = sequences.build(messages);
             if (windows.isEmpty()) {
-                // no message with text: the chat keeps its document passages
+                // no message with text: the chat's rendered conversation is prepared instead, at the end
                 for (StagingStore.Message m : messages) {
                     safeStatus(m.itemId, CoverageReason.NO_TEXT, null);
                 }
@@ -669,7 +797,7 @@ public final class TextPreparation implements Closeable {
             }
             try {
                 if (failure != null) {
-                    // the chat keeps its document passages; its messages are not covered
+                    // its messages are not covered; the rendered conversation is prepared at the end
                     for (StagingStore.Message m : messages) {
                         status(m.itemId, failureReason(failure), failure.toString());
                     }
@@ -685,8 +813,9 @@ public final class TextPreparation implements Closeable {
                     }
                 }
                 docs.add(SemanticIndexWriter.status(chatId, CoverageReason.COVERED_BY_MESSAGES, null));
-                // one operation: the chat's document passages become its sequences (case-storage.md)
+                // one operation: whatever the chat had becomes its sequences (case-storage.md)
                 writer.replaceItem(chatId, docs);
+                sequencedChats.add(chatId);
                 for (StagingStore.Message m : messages) {
                     status(m.itemId, inSequences.contains(m.itemId) ? CoverageReason.COVERED : CoverageReason.NO_TEXT,
                             null);

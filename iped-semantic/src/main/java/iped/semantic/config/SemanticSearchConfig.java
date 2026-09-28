@@ -88,6 +88,20 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
             "application/x-threema-chatstorage", "application/x-threema-chatstorage-f", "application/x-telegram-db",
             "application/x-telegram-db-ios", "application/x-ios-sms-db");
 
+    /**
+     * Rendered conversations: the chat items the parsers write beside their messages. Their text is
+     * the same conversation the messages form, so it is prepared only when the chat ends up with no
+     * sequence (research D7).
+     */
+    static final List<String> DEFAULT_CHAT_MEDIA_TYPES = List.of("application/x-whatsapp-chat",
+            "application/x-telegram-chat", "application/x-threema-chat", "application/x-ufed-chat",
+            "application/x-ufed-chat-preview", "application/x-ufed-chat-preview-discord",
+            "application/x-ufed-chat-preview-facebook", "application/x-ufed-chat-preview-instagram",
+            "application/x-ufed-chat-preview-signal", "application/x-ufed-chat-preview-skype",
+            "application/x-ufed-chat-preview-snapchat", "application/x-ufed-chat-preview-telegram",
+            "application/x-ufed-chat-preview-threema", "application/x-ufed-chat-preview-tiktok",
+            "application/x-ufed-chat-preview-viber", "application/x-ufed-chat-preview-whatsapp");
+
     private UTF8Properties properties = new UTF8Properties();
 
     // model sources
@@ -117,6 +131,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     private ArrayList<String> visualCategories = new ArrayList<>();
     private ArrayList<String> messageMediaTypes = new ArrayList<>(DEFAULT_MESSAGE_MEDIA_TYPES);
     private ArrayList<String> messageContainerMediaTypes = new ArrayList<>(DEFAULT_MESSAGE_CONTAINER_MEDIA_TYPES);
+    private ArrayList<String> chatMediaTypes = new ArrayList<>(DEFAULT_CHAT_MEDIA_TYPES);
     private boolean prepareBinaryText = false;
     private int maxTextCharsPerItem = 200_000;
     private int passageChars = 1000;
@@ -212,6 +227,7 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
         visualCategories = list(p, "visualCategories", visualCategories);
         messageMediaTypes = list(p, "messageMediaTypes", messageMediaTypes);
         messageContainerMediaTypes = list(p, "messageContainerMediaTypes", messageContainerMediaTypes);
+        chatMediaTypes = list(p, "chatMediaTypes", chatMediaTypes);
         prepareBinaryText = bool(p, "prepareBinaryText", prepareBinaryText);
         maxTextCharsPerItem = integer(p, "maxTextCharsPerItem", maxTextCharsPerItem, 1);
         passageChars = integer(p, "passageChars", passageChars, 1);
@@ -472,6 +488,11 @@ public class SemanticSearchConfig extends AbstractTaskConfig<UTF8Properties> {
     /** Chat databases recorded as {@code COVERED_BY_MESSAGES} instead of prepared as passages. */
     public List<String> getMessageContainerMediaTypes() {
         return Collections.unmodifiableList(messageContainerMediaTypes);
+    }
+
+    /** Media types of rendered conversations, prepared only when the chat gets no sequence (D7). */
+    public List<String> getChatMediaTypes() {
+        return Collections.unmodifiableList(chatMediaTypes);
     }
 
     /**

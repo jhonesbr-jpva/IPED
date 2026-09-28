@@ -63,15 +63,65 @@ public final class StagingStore implements Closeable {
         }
     }
 
+    /**
+     * A rendered conversation waiting for the end of processing (research D7): its text, cut and
+     * capped as a document is, and the characters beyond the cap. It is prepared only when its chat
+     * ends up with no sequence.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static final class ChatDocument {
+        public final int itemId;
+        public final String content;
+        public final long excessChars;
+
+        @JsonCreator
+        public ChatDocument(@JsonProperty("itemId") int itemId, @JsonProperty("content") String content,
+                @JsonProperty("excessChars") long excessChars) {
+            this.itemId = itemId;
+            this.content = content == null ? "" : content;
+            this.excessChars = excessChars;
+        }
+    }
+
+    private static final String DOCUMENTS = "chatDocuments";
+
     private final Path file;
     private final MVStore store;
     private final MVMap<Long, String> messages;
+    private final MVMap<Integer, String> documents;
 
     public StagingStore(Path file) throws IOException {
         Files.createDirectories(file.getParent());
         this.file = file;
         this.store = new MVStore.Builder().fileName(file.toString()).open();
         this.messages = store.openMap(MAP);
+        this.documents = store.openMap(DOCUMENTS);
+    }
+
+    /** Stages a rendered conversation; staging it again (an item reprocessed) overwrites it. */
+    public void putChatDocument(ChatDocument d) {
+        try {
+            documents.put(d.itemId, MAPPER.writeValueAsString(d));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /** Item ids of the staged rendered conversations, ascending. */
+    public List<Integer> chatDocuments() {
+        return new ArrayList<>(documents.keySet());
+    }
+
+    public ChatDocument chatDocument(int itemId) {
+        String json = documents.get(itemId);
+        if (json == null) {
+            return null;
+        }
+        try {
+            return MAPPER.readValue(json, ChatDocument.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static long key(int chatId, int itemId) {

@@ -38,6 +38,25 @@ public class BinaryTextTest {
     }
 
     @Test
+    public void binaryContentReadAsTextIsMostlyUnreadable() {
+        StringBuilder blob = new StringBuilder("SQLite format 3");
+        java.util.Random r = new java.util.Random(7);
+        for (int i = 0; i < 2000; i++) {
+            int b = r.nextInt(256);
+            blob.append(b < 32 || (b >= 0x7f && b < 0xa0) ? (char) b : b > 0xf0 ? '�' : (char) b);
+        }
+        assertTrue(TextPreparation.unreadableShare(blob.toString()) >= TextPreparation.UNREADABLE_SHARE);
+    }
+
+    @Test
+    public void writtenTextEmojiAndAccentsAreReadable() {
+        assertTrue(TextPreparation.unreadableShare("Deixa o pacote com o moleque da portaria, o acerto é amanhã.") == 0);
+        assertTrue(TextPreparation.unreadableShare("MOVIMENTO PRA FRENTE 🚀🇧🇷 ok\tfim\r\n") == 0);
+        assertTrue(TextPreparation.unreadableShare("Cristo Redentor é uma estátua; 中文文本") == 0);
+        assertTrue(TextPreparation.unreadableShare("") == 0);
+    }
+
+    @Test
     public void textParsersOcrAndDocumentsAreNot() {
         assertFalse(SemanticTextTask.isBinaryText("text/plain", parsedBy("org.apache.tika.parser.csv.TextAndCSVParser")));
         assertFalse(SemanticTextTask.isBinaryText("image/png",

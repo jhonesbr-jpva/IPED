@@ -82,11 +82,18 @@ messageMediaTypes = message/x-whatsapp-message; message/x-telegram-message; mess
 # they are recorded as "covered by the messages" instead of prepared as passages.
 messageContainerMediaTypes = application/x-whatsapp-db; application/x-whatsapp-db-f; application/x-whatsapp-chatstorage; application/x-whatsapp-chatstorage-f; application/x-threema-chatstorage; application/x-threema-chatstorage-f; application/x-telegram-db; application/x-telegram-db-ios; application/x-ios-sms-db
 
+# Rendered conversations: the chat items the parsers write beside their messages.
+# Their text is the conversation the messages already form, so it is prepared only
+# at the end of processing, and only for a chat that got no conversation sequence.
+chatMediaTypes = application/x-whatsapp-chat; application/x-telegram-chat; application/x-threema-chat; application/x-ufed-chat; application/x-ufed-chat-preview; application/x-ufed-chat-preview-discord; application/x-ufed-chat-preview-facebook; application/x-ufed-chat-preview-instagram; application/x-ufed-chat-preview-signal; application/x-ufed-chat-preview-skype; application/x-ufed-chat-preview-snapchat; application/x-ufed-chat-preview-telegram; application/x-ufed-chat-preview-threema; application/x-ufed-chat-preview-tiktok; application/x-ufed-chat-preview-viber; application/x-ufed-chat-preview-whatsapp
+
 # Text IPED draws from binaries by strings extraction: executables and libraries,
 # unknown binaries, unallocated space and file slack. It is often most of the text
 # of a system image (a Linux image measured 7 billion characters, 45% from binaries)
 # and rarely worth a question by meaning, so it is not prepared unless this is true.
 # Such items are recorded as "text drawn from a binary". Keyword search is unaffected.
+# The same holds for binary content a text parser decoded (a database BLOB read as
+# plain text): text with one unreadable character in ten or more is left out too.
 prepareBinaryText = false
 
 # Text beyond this many characters per item is not prepared; the excess is

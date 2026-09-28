@@ -248,7 +248,7 @@ anterior à preparação.
 ## E11 — Mensagem em montagem (`StagingMessage`)
 
 Registro temporário em `semantic/staging.mv.db`: `chatId`, `itemId`, `date`, `position`
-(`parentViewPosition`), `sender` (`Communication:From`), `text` (`Message:Body`). É apagado depois do
+(`parentViewPosition`), `sender` (`Communication:From`), `text` (`Message:Body`). No mesmo arquivo, a conversa renderizada de cada chat (`itemId`, texto já cortado e limitado, excedente), preparada no fim só se o chat não ganhar sequência (research D6, revisão de 2026-09-28). É apagado depois do
 commit das sequências e sobrevive a `--continue`.
 
 ---

@@ -67,7 +67,9 @@ public class CoverageTest {
                 TextItem.document(9, "application/x-whatsapp-db", java.util.Set.of("WhatsApp"),
                         () -> new java.io.StringReader("WhatsApp Chat - Ana - quanto fica a entrega"), null),
                 // strings of a library: not prepared by default
-                binary(c, 14));
+                binary(c, 14),
+                // a database BLOB a text parser decoded: text/plain, but binary content
+                unreadable(c, 15));
         c.items.set(9);
         c.prepareAll(p, items);
         p.finish();
@@ -76,9 +78,10 @@ public class CoverageTest {
         try (SemanticSearcher s = c.searcher(E)) {
             Coverage all = s.coverage(Modality.TEXT, null);
             assertInvariant(all);
-            assertEquals(12, all.getRecorteSize());
+            assertEquals(13, all.getRecorteSize());
             Map<CoverageReason, Long> nc = all.getNotCovered();
-            assertEquals(Long.valueOf(1), nc.get(CoverageReason.BINARY_TEXT));
+            assertEquals(Long.valueOf(2), nc.get(CoverageReason.BINARY_TEXT));
+            assertEquals(CoverageReason.BINARY_TEXT, s.table(Modality.TEXT).reasonOf(15));
             assertEquals(CoverageReason.BINARY_TEXT, s.table(Modality.TEXT).reasonOf(14));
             assertEquals(Long.valueOf(2), nc.get(CoverageReason.NO_TEXT)); // item 3 and message 13
             assertEquals(Long.valueOf(2), nc.get(CoverageReason.ANALYSIS_NOT_RUN));
@@ -105,6 +108,17 @@ public class CoverageTest {
         return TextItem.document(id, "application/x-sharedlib", java.util.Set.of("Other files"),
                 () -> new java.io.StringReader("GLIBC_2.17 __cxa_finalize libpthread.so.0 malloc free"), null)
                 .binaryText();
+    }
+
+    private static TextItem unreadable(SyntheticCase c, int id) {
+        c.items.set(id);
+        StringBuilder sb = new StringBuilder("?_?");
+        for (int i = 0; i < 300; i++) {
+            sb.append((char) (i % 31 + 1)).append("t75").append('�');
+        }
+        String blob = sb.toString();
+        return TextItem.document(id, "text/plain", java.util.Set.of("Other files"), () -> new java.io.StringReader(blob),
+                null);
     }
 
     @Test
