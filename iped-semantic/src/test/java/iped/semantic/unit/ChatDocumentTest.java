@@ -25,8 +25,8 @@ import iped.semantic.task.TextPreparation;
 
 /**
  * Rendered conversations (research D7): a chat whose messages become sequences is represented by
- * them, and its rendered text is never embedded; a chat that gets no sequence is prepared as the
- * document it is, at the end.
+ * them, and its rendered text is never embedded; a chat whose messages have no text is not prepared
+ * either; a chat with no message items is prepared as the document it is, at the end.
  */
 public class ChatDocumentTest {
 
@@ -67,22 +67,47 @@ public class ChatDocumentTest {
         items.add(c.message(12, 10, 1, "Beto", "cinco mil, fechado para amanhã cedo"));
         // a chat without messages: its rendered text is all there is
         items.add(renderedChat(c, 20, "CONVERSA SEM MENSAGENS sobre o aluguel do galpão no porto"));
-        // a chat whose messages have no text
+        // a chat whose messages have no text (a parser marker only)
         items.add(renderedChat(c, 30, "CONVERSA SÓ COM MÍDIA figurinha enviada"));
         items.add(c.message(31, 30, 0, "Ana", ""));
+        // a chat whose only message has no body at all
+        items.add(renderedChat(c, 40, "CONVERSA SEM CORPO evento do sistema"));
+        items.add(bodyless(c, 41, 40));
+        // a body-less message beside one with text: the chat still gets its sequence
+        items.add(renderedChat(c, 50, "CONVERSA MISTA combinado"));
+        items.add(c.message(51, 50, 0, "Beto", "combinado, levo o contrato assinado amanhã"));
+        items.add(bodyless(c, 52, 50));
         c.prepareAll(p, items);
         p.finish();
 
         assertFalse("the rendered text of a sequenced chat is not embedded",
                 e.passages.stream().anyMatch(t -> t.contains("CONVERSA RENDERIZADA")));
         assertTrue(e.passages.stream().anyMatch(t -> t.contains("CONVERSA SEM MENSAGENS")));
-        assertTrue(e.passages.stream().anyMatch(t -> t.contains("CONVERSA SÓ COM MÍDIA")));
+        for (String nobody : List.of("CONVERSA SÓ COM MÍDIA", "CONVERSA SEM CORPO", "CONVERSA MISTA")) {
+            assertFalse(nobody + " is not embedded", e.passages.stream().anyMatch(t -> t.contains(nobody)));
+        }
         try (SemanticSearcher s = c.searcher(e.inner)) {
             assertEquals(CoverageReason.COVERED_BY_MESSAGES, s.table(Modality.TEXT).reasonOf(10));
             assertEquals(CoverageReason.COVERED, s.table(Modality.TEXT).reasonOf(11));
             assertEquals(CoverageReason.COVERED, s.table(Modality.TEXT).reasonOf(20));
-            assertEquals(CoverageReason.COVERED, s.table(Modality.TEXT).reasonOf(30));
+            assertEquals(CoverageReason.NO_TEXT, s.table(Modality.TEXT).reasonOf(30));
             assertEquals(CoverageReason.NO_TEXT, s.table(Modality.TEXT).reasonOf(31));
+            assertEquals(CoverageReason.NO_TEXT, s.table(Modality.TEXT).reasonOf(40));
+            assertEquals(CoverageReason.NO_TEXT, s.table(Modality.TEXT).reasonOf(41));
+            assertEquals(CoverageReason.COVERED_BY_MESSAGES, s.table(Modality.TEXT).reasonOf(50));
+            assertEquals(CoverageReason.COVERED, s.table(Modality.TEXT).reasonOf(51));
+            assertEquals(CoverageReason.NO_TEXT, s.table(Modality.TEXT).reasonOf(52));
         }
+    }
+
+    /**
+     * A message with no Message-Body, as the task builds it: a document of a message type, its text
+     * the printed metadata, its empty content read by the strings fallback.
+     */
+    private static TextItem bodyless(SyntheticCase c, int id, int chatId) {
+        c.items.set(id);
+        return TextItem.document(id, "message/x-telegram-message", Set.of("Instant Messages"),
+                () -> new StringReader("Communication:From: Ana\nisDecodedData: true"), null).parent(chatId)
+                .binaryText();
     }
 }

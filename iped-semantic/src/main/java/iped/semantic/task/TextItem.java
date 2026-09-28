@@ -28,6 +28,11 @@ public final class TextItem {
     final String body;
     /** The text was drawn from a binary by strings extraction ({@link #binaryText()}). */
     boolean binaryText;
+    /**
+     * Parent item of a document ({@link #parent(Integer)}): the chat of a message-type item that has
+     * no body.
+     */
+    Integer parentId;
 
     private TextItem(int id, String mediaType, Set<String> categories, TextSource text, String transcript,
             Integer chatId, Long date, Integer position, String sender, String body) {
@@ -75,6 +80,15 @@ public final class TextItem {
      */
     public TextItem binaryText() {
         this.binaryText = true;
+        return this;
+    }
+
+    /**
+     * Records the item's parent. A message-type item with no body is staged under it with no text,
+     * so its chat is known to hold messages none of which has text. Returns this item.
+     */
+    public TextItem parent(Integer parentId) {
+        this.parentId = parentId;
         return this;
     }
 

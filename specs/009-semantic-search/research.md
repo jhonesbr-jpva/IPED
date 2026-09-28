@@ -238,7 +238,7 @@ disponíveis e o cache de texto ainda não foi descartado.
 | Item cujo texto veio de binário: a cadeia de parsers inclui o `RawStringParser` (executáveis e bibliotecas, pelo `MultipleParser` do `ParserConfig.xml`; binários desconhecidos), ou é espaço não alocado ou slack | — | **Não** preparado por padrão (revisão de 2026-09-27): status `BINARY_TEXT`. `prepareBinaryText = true` o trata como documento. Numa imagem de sistema Linux, era 45% do texto |
 | Transcrição (`audio:transcription`) | trecho | Mesmo fatiamento, com tipo `transcript` |
 | Mensagem de chat (tipo em `messageMediaTypes`) | — | **Não** é preparada sozinha: vai para a área de montagem (D7) |
-| Item do próprio chat (a conversa renderizada, tipos em `chatMediaTypes`) | trecho | **Não é preparado na hora** (revisão de 2026-09-28): o texto vai para a área de montagem e, no `finish()`, só é preparado como documento se o chat não ganhou sequência (sem mensagens com texto, sem mensagens extraídas — `extractMessages=false`, triagem —, ou sequência que falhou). Com sequência, o chat fica "coberto pelas mensagens" sem nunca ter sido embutido. Antes a conversa era embutida e descartada no fim: numa bancada de chats do Telegram, metade da inferência |
+| Item do próprio chat (a conversa renderizada, tipos em `chatMediaTypes`) | trecho | **Não é preparado na hora** (revisão de 2026-09-28): o texto vai para a área de montagem e, no `finish()`, só é preparado como documento se o chat não tem itens de mensagem (`extractMessages=false`, triagem) ou se a sequência falhou. Com sequência, o chat fica "coberto pelas mensagens" sem nunca ter sido embutido. Com mensagens e nenhuma com texto (só marcadores do parser, ou sem `Message-Body`, que também entram na área de montagem, com texto vazio), a conversa fica `NO_TEXT`, "conversation without text": a renderização é nomes, datas e marcadores (na bancada, 11.282 conversas assim viravam documento). Antes a conversa era embutida e descartada no fim: numa bancada de chats do Telegram, metade da inferência |
 | Texto ilegível (binário decodificado por parser de texto, como um BLOB de banco lido como texto) | — | Com `prepareBinaryText = false`, texto com um caractere ilegível em cada dez ou mais (substituição, controle, uso privado, não atribuído; nos primeiros 4000) fica `BINARY_TEXT`, com a proporção no detalhe. Medido: texto escrito fica abaixo de 3%, BLOBs de 10% a 55% |
 
 O custo fica fora do caminho do worker: a task entrega os trechos a um `EmbeddingService`
@@ -308,7 +308,8 @@ a legenda, quando há, continua sendo o texto. Uma mensagem de tipo listado **se
 (Telegram sem texto, anexo nem tipo; UFDR sem `Body` nem `Snippet`) fica `NO_TEXT`: o texto que o
 IPED extraiu dela é a listagem dos metadados (`StandardParser`, `printMetadata`), e o conteúdo vazio
 passa pelo `RawStringParser`, de modo que a regra de binários a registrava como `BINARY_TEXT` (70
-mil mensagens na bancada).
+mil mensagens na bancada). Ela entra na área de montagem com texto vazio, sob o seu chat: um chat
+cujas mensagens não têm texto deixa a conversa renderizada `NO_TEXT` (D6).
 
 **Recorte parcial** (caso de borda da spec): a entrada entra se ao menos uma mensagem estiver no
 recorte. As de fora vêm marcadas como contexto, não contam e não são marcadas junto.

@@ -596,3 +596,23 @@ strings fallback, met the binary rule. Third run, same evidence and workstation:
 
 Against the first run: 77.6 → 46.1 min, with the conversations represented by what people wrote.
 The capability-off time of this evidence was not measured, so this is not an SC-010 figure.
+
+Fourth run, after one more finding: of the 11,307 rendered conversations still prepared as
+documents, 11,282 belonged to chats whose messages all lacked text (body-less or attachment-only),
+so what got embedded was names, dates and parser markers. Body-less messages are now staged with
+no text under their chat, and a chat whose messages have no text leaves its rendered conversation
+`NO_TEXT` ("conversation without text"); only a chat with no message items (25 here) still has
+it prepared as a document. The installation's `LocalConfig.txt` was set to `locale = pt-BR` for
+this run instead of passing `-Diped-locale`.
+
+| Run | Total | Pipeline phase | Sequences at the end | Model time, summed over threads |
+|---|---|---|---|---|
+| Conversation without text | **46.2 min** | 22.7 min | 22.9 min | 10.3 h |
+
+- Rendered conversations: 2,697 covered by their messages, 11,282 without text in any message, 25
+  prepared as documents. Passages 315,740, focus windows 92,185.
+- Coverage: covered 885,476; `NO_TEXT` 288,549; `BINARY_TEXT` 45,590; `COVERED_BY_MESSAGES` 2,754.
+- The same 605,110 Telegram messages are in sequences as in the third run, group by group.
+  Sequences: 191,037 (4 fewer). The extracted text of the items is about 0.1% longer in this run,
+  consistent with parts of IPED now writing in Portuguese, which moves a few 1,500-character
+  window cuts.

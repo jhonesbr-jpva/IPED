@@ -177,7 +177,7 @@ public class SemanticTextTask extends AbstractTask {
                     transcript(evidence), parent, date == null ? null : date.getTime(), position, sender, body);
         }
         TextItem item = TextItem.document(evidence.getId(), mediaType, categories, textSource(evidence),
-                transcript(evidence));
+                transcript(evidence)).parent(parent);
         return isBinaryText(mediaType, md) ? item.binaryText() : item;
     }
 

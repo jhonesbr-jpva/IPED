@@ -125,6 +125,8 @@ public final class TextPreparation implements Closeable {
     private final Set<String> chatTypes = new HashSet<>();
     /** Chats whose sequences were written: their rendered conversation is not prepared (D7). */
     private final Set<Integer> sequencedChats = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** Chats with messages none of which has text: their rendered conversation is not prepared (D7). */
+    private final Set<Integer> textlessChats = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final long startedAtMillis = System.currentTimeMillis();
     private final AtomicLong taskNanos = new AtomicLong();
     private final AtomicLong itemsSeen = new AtomicLong();
@@ -320,8 +322,13 @@ public final class TextPreparation implements Closeable {
             if (!item.isMessage() && messageTypes.contains(item.mediaType.toLowerCase(Locale.ROOT))) {
                 // a message with no Message-Body: nobody wrote text in it, and its extracted text is
                 // the metadata the parser prints (research D7); checked before the binary rule, which
-                // its empty content would otherwise meet through the strings fallback
-                status(item.id, CoverageReason.NO_TEXT, "message without text");
+                // its empty content would otherwise meet through the strings fallback. Staged with no
+                // text, so its chat counts as a conversation without text at the end.
+                if (item.parentId != null) {
+                    staging.put(new StagingStore.Message(item.parentId, item.id, null, null, null, ""));
+                } else {
+                    status(item.id, CoverageReason.NO_TEXT, "message without text");
+                }
                 return;
             }
             if (item.binaryText && !config.isPrepareBinaryText()) {
@@ -483,7 +490,7 @@ public final class TextPreparation implements Closeable {
     /**
      * Stages a rendered conversation instead of preparing it now (research D7): when its chat gets
      * conversation sequences, they are its representation and the document would be thrown away;
-     * {@link #prepareChatDocuments} prepares it at the end only when the chat got none.
+     * {@link #prepareChatDocuments} prepares it at the end only when the chat has no message items.
      */
     private void stageChatDocument(TextItem item) throws IOException {
         if (item.text != null) {
@@ -501,15 +508,22 @@ public final class TextPreparation implements Closeable {
     }
 
     /**
-     * The staged rendered conversations whose chat got no sequence (no message with text, a failed
-     * sequence) are prepared now, as the documents they are; the others are covered by their
-     * messages.
+     * The staged rendered conversations: covered by their messages when the chat got sequences; with
+     * no text when the chat has messages and none has text (the rendering is names, dates and parser
+     * markers); otherwise (no message items, as when a parser does not extract them, or a failed
+     * sequence) prepared now, as the documents they are.
      */
     private void prepareChatDocuments() throws IOException, InterruptedException {
         List<Integer> ids = staging.chatDocuments();
         int prepared = 0;
+        int textless = 0;
         for (int id : ids) {
             if (sequencedChats.contains(id)) {
+                continue;
+            }
+            if (textlessChats.contains(id)) {
+                safeStatus(id, CoverageReason.NO_TEXT, "conversation without text");
+                textless++;
                 continue;
             }
             String stopped = stop.reason();
@@ -531,8 +545,10 @@ public final class TextPreparation implements Closeable {
             }
             prepared++;
         }
-        LOGGER.info("Semantic text: {} rendered conversations covered by their messages, {} prepared as documents "
-                + "(their chat got no sequence)", ids.size() - prepared, prepared);
+        long covered = ids.stream().filter(sequencedChats::contains).count();
+        LOGGER.info("Semantic text: {} rendered conversations covered by their messages, {} without text in any "
+                + "message, {} prepared as documents (their chat has no message items or its sequence failed)",
+                covered, textless, prepared);
     }
 
     /**
@@ -766,7 +782,9 @@ public final class TextPreparation implements Closeable {
             }
             List<ChatSequenceBuilder.Window> windows = sequences.build(messages);
             if (windows.isEmpty()) {
-                // no message with text: the chat's rendered conversation is prepared instead, at the end
+                // no message with text (any non-blank message makes a window): the conversation has
+                // nothing anyone wrote, and its rendered text is not prepared either
+                textlessChats.add(chatId);
                 for (StagingStore.Message m : messages) {
                     safeStatus(m.itemId, CoverageReason.NO_TEXT, null);
                 }

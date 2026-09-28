@@ -170,7 +170,7 @@ anterior à preparação.
 |---|---|---|---|
 | `COVERED` | coberto | — | — |
 | `COVERED_TRUNCATED` | coberto até o limite (excedente declarado) | limite de texto | sim ("texto acima do limite") |
-| `NO_TEXT` | sem texto | item sem texto extraído nem transcrição; mensagem sem texto próprio (corpo vazio, só marcador do parser, ou sem `Message-Body`: research D7) | sim |
+| `NO_TEXT` | sem texto | item sem texto extraído nem transcrição; mensagem sem texto próprio (corpo vazio, só marcador do parser, ou sem `Message-Body`) e conversa renderizada de chat cujas mensagens não têm texto (research D7) | sim |
 | `ANALYSIS_NOT_RUN` | análise não executada (OCR/transcrição) | item que teria texto se a análise rodasse | sim |
 | `IMAGE_TOO_SMALL` | imagem abaixo do tamanho mínimo | `minImageSize` | sim |
 | `IMAGE_UNDECODABLE` | imagem não decodificável | falha de leitura da miniatura | sim |
@@ -248,7 +248,7 @@ anterior à preparação.
 ## E11 — Mensagem em montagem (`StagingMessage`)
 
 Registro temporário em `semantic/staging.mv.db`: `chatId`, `itemId`, `date`, `position`
-(`parentViewPosition`), `sender` (`Communication:From`), `text` (`Message:Body`). No mesmo arquivo, a conversa renderizada de cada chat (`itemId`, texto já cortado e limitado, excedente), preparada no fim só se o chat não ganhar sequência (research D6, revisão de 2026-09-28). É apagado depois do
+(`parentViewPosition`), `sender` (`Communication:From`), `text` (`Message:Body`). No mesmo arquivo, a conversa renderizada de cada chat (`itemId`, texto já cortado e limitado, excedente), preparada no fim só se o chat não tiver itens de mensagem ou a sequência falhar (research D6, revisão de 2026-09-28). A mensagem de tipo listado sem `Message-Body` também entra, com `text` vazio: é por ela que o fim sabe que o chat tem mensagens, nenhuma com texto. É apagado depois do
 commit das sequências e sobrevive a `--continue`.
 
 ---

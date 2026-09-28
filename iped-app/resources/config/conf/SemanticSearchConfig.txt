@@ -84,7 +84,8 @@ messageContainerMediaTypes = application/x-whatsapp-db; application/x-whatsapp-d
 
 # Rendered conversations: the chat items the parsers write beside their messages.
 # Their text is the conversation the messages already form, so it is prepared only
-# at the end of processing, and only for a chat that got no conversation sequence.
+# at the end of processing, and only for a chat with no message items (or whose
+# sequence failed). A chat whose messages have no text leaves it "no text".
 chatMediaTypes = application/x-whatsapp-chat; application/x-telegram-chat; application/x-threema-chat; application/x-ufed-chat; application/x-ufed-chat-preview; application/x-ufed-chat-preview-discord; application/x-ufed-chat-preview-facebook; application/x-ufed-chat-preview-instagram; application/x-ufed-chat-preview-signal; application/x-ufed-chat-preview-skype; application/x-ufed-chat-preview-snapchat; application/x-ufed-chat-preview-telegram; application/x-ufed-chat-preview-threema; application/x-ufed-chat-preview-tiktok; application/x-ufed-chat-preview-viber; application/x-ufed-chat-preview-whatsapp
 
 # Text IPED draws from binaries by strings extraction: executables and libraries,
