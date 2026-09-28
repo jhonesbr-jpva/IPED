@@ -573,3 +573,26 @@ Coverage: covered 1,148,539 → 1,103,222; `BINARY_TEXT` 70,401 → 115,718 (+45
 pages); `COVERED_BY_MESSAGES` 2,912 and `NO_TEXT` 517 unchanged. By text volume, the rendered
 conversations were most of the saving: 97.3 million characters (about 122,000 passages and
 323,000 focus windows) against 18.8 million for the unreadable items.
+
+The bench then showed two faults in reading message bodies, fixed in `717906ec8` (research D7):
+Telegram's attachment marker (`! Attachment: image/jpeg`) did not match the parser-marker
+expression, so ~207,000 attachment-only messages entered the sequences as text; and messages with
+no `Message-Body` at all (70,128) took the document path, where their empty content, read by the
+strings fallback, met the binary rule. Third run, same evidence and workstation:
+
+| Run | Total | Pipeline phase | Sequences at the end | Model time, summed over threads |
+|---|---|---|---|---|
+| With `717906ec8` | **46.1 min** | 21.8 min | 23.5 min | 10.4 h |
+
+- Sequences 241,424 → **191,041**; 2,697 chats covered by their messages (158 chats had only
+  attachments and body-less messages, and their rendered conversation is now prepared as a
+  document: 11,307). Passages 327,153, focus windows 92,571.
+- Coverage: covered 896,758; `NO_TEXT` 277,267 (517 as before, 70,128 body-less messages, 206,622
+  attachment-only messages); `BINARY_TEXT` 45,590 (the unreadable items and 273 others);
+  `COVERED_BY_MESSAGES` 2,754.
+- Captions are still the text of the message: 235,187 messages with a caption and a marker stay
+  covered. The 56 single bodies that start with "!" and are still covered are what people wrote
+  (bot commands, links, sentences), not markers.
+
+Against the first run: 77.6 → 46.1 min, with the conversations represented by what people wrote.
+The capability-off time of this evidence was not measured, so this is not an SC-010 figure.
