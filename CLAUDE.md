@@ -287,5 +287,5 @@ A árvore de releases está em `ReleaseNotes.txt` (180 KB) — referência detal
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-[specs/003-java21-migration/plan.md](specs/003-java21-migration/plan.md).
+[specs/010-neo4j-optional-plugin/plan.md](specs/010-neo4j-optional-plugin/plan.md).
 <!-- SPECKIT END -->
