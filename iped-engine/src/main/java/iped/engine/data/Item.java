@@ -684,16 +684,23 @@ public class Item implements IItem {
             return true;
         }
         try (InputStream is = this.getSeekableInputStream()) {
-            data = new byte[length.intValue()];
+            byte[] buf = new byte[length.intValue()];
             int i, offset = 0;
-            while (offset < data.length && (i = is.read(data, offset, data.length - offset)) != -1) {
+            while (offset < buf.length && (i = is.read(buf, offset, buf.length - offset)) != -1) {
                 offset += i;
             }
+            if (offset < buf.length) {
+                // Short read: do not cache a partially (zero) filled buffer. Later readers
+                // will hit the real I/O error and flag the item properly.
+                return false;
+            }
+            // Only publish the buffer after a complete successful read, so a failed read
+            // never leaves a zero-filled buffer being served as the item content.
+            data = buf;
             return true;
         } catch (IOException e) {
-            // ignore
+            return false;
         }
-        return false;
     }
 
     /**
