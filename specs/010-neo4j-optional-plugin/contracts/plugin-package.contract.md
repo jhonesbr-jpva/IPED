@@ -10,7 +10,7 @@ iped-graph-neo4j/
 ├── neo4j/                          # pilha isolada (nunca no classpath principal)
 │   ├── iped-graph-server-<versão>.jar
 │   ├── neo4j-*.jar … antlr4-runtime-4.13.x.jar … (motor Neo4j CE 5.26.0 + transitivas)
-├── plugin.properties               # plugin.version=…  spi.version=1  iped.version=…
+├── plugin.properties               # plugin.version=…  spi.version=1  iped.version=…  built.on=… (informativo)
 ├── LICENSE.txt                     # GPL v3
 ├── ThirdParty.txt                  # avisos de terceiros do plugin
 └── README.md                       # instalação, compatibilidade, remoção
@@ -55,7 +55,7 @@ Apagar `iped-graph-neo4j-<versão>.jar` e a pasta `iped-graph-neo4j/` da pasta d
 
 ## Cópia para o caso (FR-010)
 
-Quando o plugin está `AVAILABLE` na criação de um caso, o `Manager` copia o jar e a pasta `iped-graph-neo4j/` para `<caso>/plugins/` (irmã de `<caso>/iped/`, que é o app root da cópia autocontida). Abrir o caso a partir da própria cópia (`IPED-SearchApp` do caso) resolve `../plugins/` para esse local.
+Quando o plugin está `AVAILABLE` na criação de um caso, o `Manager` copia o jar e a pasta `iped-graph-neo4j/` para `<caso>/plugins/` (irmã de `<caso>/iped/`, que é o app root da cópia autocontida). O mesmo ocorre em `--append` quando `<caso>/plugins/` ainda não contém o plugin. Abrir o caso a partir da própria cópia (`IPED-SearchApp` do caso) resolve `../plugins/` para esse local.
 
 ## Construção (FR-014)
 
@@ -65,4 +65,4 @@ Quando o plugin está `AVAILABLE` na criação de um caso, o `Manager` copia o j
 
 ## Avisos de terceiros do plugin (`ThirdParty.txt`)
 
-Neo4j Community Edition 5.26.0 (GPL v3); Neo4j Java Driver 5.26.0 (Apache 2.0); Netty (Apache 2.0); Project Reactor `reactor-core` (Apache 2.0); Reactive Streams (MIT-0); ANTLR 4 runtime 4.13.x (BSD-3); demais transitivas do motor conforme `mvn dependency:list` do módulo `iped-graph-server`. O `LICENSE.txt` do plugin é a GPL v3.
+Neo4j Community Edition 5.26.0 (GPL v3); Neo4j Java Driver 5.26.0 (Apache 2.0); Netty (Apache 2.0); Project Reactor `reactor-core` (Apache 2.0); Reactive Streams (MIT-0); ANTLR 4 runtime 4.13.x (BSD-3); demais transitivas do motor conforme `mvn dependency:list` do módulo `iped-graph-server`. O `LICENSE.txt` do plugin é a GPL v3. O `ThirdParty.txt` **raiz** do repositório mantém uma seção equivalente ("Optional plugin iped-graph-neo4j … NOT bundled in the standard distribution"), exigida pela constituição para toda dependência do repositório, e `licenses/MIT-0.txt` cobre o reactive-streams.

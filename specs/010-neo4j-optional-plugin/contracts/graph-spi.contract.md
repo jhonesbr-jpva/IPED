@@ -62,20 +62,20 @@ Semântica igual à de `GraphGenerator.generate` atual: importação em lote dos
 
 ## Tipos de modelo
 
-`GraphLabel`, `GraphRelationshipType`, `GraphEntity`, `GraphNode`, `GraphRelationship`, `GraphPath`, `GraphQueryException`, `GraphPluginException` — ver [data-model.md §6](../data-model.md). Regras: `GraphEntity.getProperty(key)` retorna `null` quando ausente (nunca lança); `GraphLabel`/`GraphRelationshipType` têm igualdade por nome.
+`GraphLabel`, `GraphRelationshipType`, `GraphEntity`, `GraphNode`, `GraphRelationship`, `GraphPath`, `GraphQueryException`, `GraphPluginException` — ver [data-model.md §6](../data-model.md). Regras: `GraphEntity.getProperty(key)` retorna `null` quando ausente (nunca lança); `GraphLabel`/`GraphRelationshipType` têm igualdade por nome; `GraphNode.getDegree()` devolve o grau total do nó como snapshot do momento da consulta (0 se desconhecido) — consumido por `GraphModel` para dimensionar nós e arestas.
 
 ## Regras do registro (`GraphPluginRegistry`)
 
 | Situação | Estado | Log (uma vez) |
 |---|---|---|
-| Nenhum provedor | `ABSENT` | `WARN Graph plugin not installed (plugin folder: <path>)` |
-| ≥ 2 provedores | `REJECTED(MULTIPLE_COPIES)` | `ERROR Graph plugin rejected (multiple copies): <jar1>, <jar2>` |
+| Nenhum recurso `META-INF/services/iped.engine.graph.GraphServiceProvider` no classpath | `ABSENT` | `INFO Graph plugin not installed (plugin folder: <path>)` (INFO: estado padrão da distribuição; não conta como aviso para FR-004/SC-002) |
+| ≥ 2 jars contendo esse recurso (contagem por URL via `ClassLoader.getResources`, **antes** do `ServiceLoader`, que deduplica provedores pelo nome da classe) | `REJECTED(MULTIPLE_COPIES)` | `ERROR Graph plugin rejected (multiple copies): <jar1>, <jar2>` |
 | Erro ao instanciar | `REJECTED(LOAD_ERROR)` | `ERROR Graph plugin rejected (load error): <exceção>` |
 | `getSpiVersion() != 1` | `REJECTED(SPI_MISMATCH)` | `ERROR Graph plugin rejected (SPI mismatch): plugin SPI v<p> (<nome> <versão>), core SPI v1 (IPED <versão>)` |
 | `validate()` falha | `REJECTED(INCOMPLETE)` | `ERROR Graph plugin rejected (incomplete): <detalhe>` |
 | OK | `AVAILABLE` | `INFO Graph plugin loaded: <nome> <versão> (SPI v1, built for IPED <v>) from <jar>` |
 
-API pública mínima: `static GraphPluginRegistry get()`, `boolean isAvailable()`, `GraphPluginState getState()`, `Optional<RejectionReason> getRejection()`, `String getDetail()`, `GraphServiceProvider getProvider()` (lança `IllegalStateException` se não disponível), `Path getPluginJar()`, `Path getPluginHome()`.
+API pública mínima: `static GraphPluginRegistry get()`, `boolean isAvailable()`, `GraphPluginState getState()`, `Optional<GraphPluginRejection> getRejection()`, `String getDetail()`, `GraphServiceProvider getProvider()`, `GraphService getGraphService()` e `GraphDatabaseGenerator getDatabaseGenerator()` (instâncias cacheadas por JVM; todos lançam `IllegalStateException` se não disponível), `Path getPluginJar()`, `Path getPluginHome()`, `static void resetForTesting(ClassLoader)` (somente testes).
 
 Fachada preservada: `GraphServiceFactoryImpl.getInstance().getGraphService()` delega ao registro (cache de uma instância por JVM) e lança `IllegalStateException("Graph plugin not available")` quando `!isAvailable()`.
 

@@ -33,6 +33,6 @@ ls iped-graph-neo4j/target/*.zip                     # esperado: iped-graph-neo4
 
 ## Documentação associada
 
-- `ThirdParty.txt` (núcleo) sem as entradas Neo4j CE / Neo4j Java Driver; nota apontando para o plugin.
+- `ThirdParty.txt` (raiz) sem Neo4j/driver/antlr 4.13 descritos como componentes embarcados em `lib/`; em seu lugar, a seção "Optional plugin iped-graph-neo4j (built from this repository, NOT bundled in the standard distribution)" registrando as dependências do módulo do plugin (exigência da constituição) e `licenses/MIT-0.txt` presente.
 - `plugins/Readme.txt` do release menciona o plugin de análise de vínculos como exemplo de plugin opcional.
 - `README.md` lista "Graph analysis for communications" como funcionalidade **via plugin opcional**.

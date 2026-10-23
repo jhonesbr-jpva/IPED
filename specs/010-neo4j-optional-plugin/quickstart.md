@@ -5,7 +5,7 @@ Guia de desenvolvimento e validação da feature `010-neo4j-optional-plugin`. Co
 ## 1. Pré-requisitos
 
 - JDK 21 com JavaFX (Liberica Full), Maven 3.6+, `JAVA_HOME` configurado (ver `CLAUDE.md` §5).
-- Um baseline de comparação: um release da versão anterior (com Neo4j embarcado) e uma evidência de referência pequena com comunicações (e-mails/chats) para gerar grafo.
+- Um baseline de comparação: um release da versão anterior (com Neo4j embarcado) e uma evidência de referência pequena com comunicações (e-mails/chats) para gerar grafo. O baseline (tarefa T004) registra: estatísticas finais do processamento, exportação CSV das propriedades de todos os itens (UI → selecionar tudo → exportar propriedades), contagens de nós/relacionamentos, o resultado do **roteiro fixo de 10 operações** (com as entidades de partida escolhidas) e uma segunda execução com `process-proximity-relationships=true` e entidades por regex ativas (FR-009).
 
 ## 2. Construir
 
@@ -46,23 +46,45 @@ Remover: apagar o jar e a pasta `iped-graph-neo4j/`; reiniciar.
 | # | Passo | Esperado | Critério |
 |---|---|---|---|
 | 1 | Inventário da distribuição (seção 2) | 0 arquivos Neo4j; enforcer e CI verdes | SC-001, SC-009 |
-| 2 | Processar a evidência de referência **sem** o plugin, perfil padrão (`enableGraphGeneration=true`) | Conclui; 1 `WARN` "Graph generation is enabled but the graph plugin is not installed"; 0 erros; sem `iped/neo4j/`; campos forenses iguais ao baseline (hashes, MIME, texto, categorias, carved, YARA, timeline) | SC-002, FR-004 |
+| 2 | Processar a evidência de referência **sem** o plugin, perfil padrão (`enableGraphGeneration=true`); repetir com um perfil customizado copiado do baseline cuja `TaskInstaller.xml` lista `GraphTask` | Conclui; 1 `WARN` "Graph generation is enabled but the graph plugin is not installed" (a linha `INFO` do registro não conta); 0 erros; sem `iped/neo4j/`; paridade forense com o baseline pelo **método de paridade** abaixo | SC-002, FR-004, FR-005 |
 | 3 | Abrir o caso do passo 2 na UI sem o plugin | Sem aba "Vínculos", sem item "adicionar ao grafo", sem diálogo de erro, sem stack trace; checklist de smoke 100% | SC-005, FR-006 |
 | 4 | Abrir um caso **com** dados de vínculos (baseline) na UI sem o plugin | Diálogo modeless único "Link analysis unavailable"; tudo o mais funciona | FR-007 |
-| 5 | `--append` no caso do passo 4 sem o plugin | Recusa com a mensagem e exit ≠ 0; caso intocado | FR-008 |
+| 5 | `--append` no caso do passo 4 sem o plugin; em seguida `--yara-only` no mesmo caso | `--append`: recusa com a mensagem e exit ≠ 0, caso intocado. `--yara-only`: **não** bloqueado | FR-008 |
 | 6 | Repetir com `--ignore-missing-graph-plugin` | Prossegue; `WARN` em log e console | FR-008 |
 | 7 | Instalar o plugin (seção 3); cronometrar | ≤ 3 passos, < 5 min, 0 edições de config | SC-003 |
-| 8 | Processar a evidência de referência **com** o plugin | `iped/neo4j/csv` e `data` criados; contagens de nós/relacionamentos iguais ao baseline | SC-004, FR-009 |
-| 9 | UI com o plugin: roteiro fixo de 10 operações (expandir, expandir com filtro, conexões, caminhos, buscar entidades, buscar vínculos, mostrar evidência, remover, desfazer/refazer, exportar vínculos) | Resultados idênticos ao baseline | SC-004 |
+| 8 | Processar a evidência de referência **com** o plugin (perfil padrão e, numa segunda execução, com `process-proximity-relationships=true` e entidades por regex ativas no `GraphConfig.json`) | `iped/neo4j/csv` e `data` criados; contagens de nós/relacionamentos iguais ao baseline equivalente nas duas execuções | SC-004, FR-009 |
+| 9 | UI com o plugin: roteiro fixo de 10 operações (expandir, expandir com filtro, conexões, caminhos, buscar entidades, buscar vínculos, mostrar evidência, remover, desfazer/refazer, exportar vínculos), com as mesmas entidades de partida e parâmetros registrados no baseline (§1) | Resultados idênticos ao baseline | SC-004 |
 | 10 | `--append` e remoção de evidência com o plugin | Grafo atualizado como no baseline | FR-009 |
 | 11 | Caso criado com o plugin: conferir `<caso>/plugins/`; abrir pelo `IPED-SearchApp` do caso em outra máquina sem o plugin instalado | Aba "Vínculos" disponível a partir da cópia | FR-010 |
 | 12 | Multi-caso (2 casos com grafo) com o plugin | Grafo combinado gerado e aba funcional | FR-009 |
 | 13 | Remover o plugin; repetir 2 e 3 | Mesmo resultado; 0 erros residuais | SC-008, FR-015 |
 | 14 | Perfis/configs da versão anterior (cópia de `profiles/*`, `TaskInstaller.xml` com `GraphTask`) com e sem o plugin | Carregam sem edição; sem erro | SC-007, FR-005 |
-| 15 | Medir tempo de inicialização (CLI e UI) com/sem plugin vs. versão anterior | Diferença < 1 s | SC-006 |
+| 15 | Medir tempo de inicialização (CLI e UI) com/sem plugin vs. versão anterior (a medição "com plugin" inclui a home `iped-graph-neo4j/` na pasta de plugins) | Diferença < 1 s | SC-006 |
 | 16 | Plugin corrompido (apagar `iped-graph-neo4j/neo4j/`), duas cópias do jar, jar com `IPED-Graph-SPI-Version: 2` | Rejeitado com o motivo no log; IPED segue sem grafo | FR-011, FR-012 |
 | 17 | `--restart` sem o plugin num caso com grafo | Não bloqueia; `iped/neo4j/` removido; caso final sem dados de vínculos | FR-008 |
 | 18 | Linux (WSL): passos 2, 3, 7, 8 | Idênticos | FR-017 |
+
+### Método de paridade (SC-002)
+
+Reutiliza o contrato da feature 003 (`specs/003-java21-migration/contracts/parity-validation.contract.md`): campos C1–C8 (hashes, MIME, contagens, categorias, texto normalizado, carved, YARA, timeline), exclusões E1–E5 e casamento por trackID. Procedimento prático, sem ferramenta dedicada:
+
+1. Comparar as estatísticas finais do log de processamento (total de itens, subitens, carved, exceções de parsing, erros de I/O) — devem ser iguais.
+2. Na UI de cada caso, selecionar todos os itens e exportar as propriedades para CSV; ordenar os dois CSVs por trackID e fazer `diff` restrito às colunas C1–C8 (texto: comparar após a normalização do contrato).
+3. Qualquer divergência é triada como no contrato: benigna (documentar como exclusão) ou regressão (corrigir antes de prosseguir).
+
+### Checklist de smoke da UI (SC-005)
+
+Executar sem o plugin, num caso com dados de vínculos e noutro sem, e registrar cada linha em `validation-results.md`:
+
+1. Abrir o caso (sem diálogo de erro) e conferir que a aba "Vínculos" e o item de menu "adicionar ao grafo" não existem.
+2. Busca por termo, por propriedade e com filtro de categoria; navegação na tabela e ordenação.
+3. Galeria (miniaturas de imagem e de vídeo) e visualizadores (texto, hex, imagem, PDF/Office via LibreOffice, e-mail, HTML).
+4. Painéis de metadados/filtros (facetas, incluindo `yara:*` quando houver) e evidências.
+5. Criar, renomear, excluir e exportar bookmark; exportar itens selecionados e propriedades para CSV.
+6. Timeline e mapa (quando há itens georreferenciados).
+7. Gerar relatório HTML a partir do caso.
+8. Multi-caso (dois casos) — abertura e busca.
+9. Fechar a UI: nenhum `ERROR`/stack trace no log atribuível à ausência do plugin.
 
 ## 5. Testes automatizados
 

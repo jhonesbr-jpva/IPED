@@ -29,7 +29,7 @@ Nenhum diálogo de erro e nenhum `ERROR`/stack trace no log atribuível à ausê
 - Frequência: uma vez por sessão da UI (flag estática), mesmo abrindo vários casos.
 - Texto (EN; PT-BR no bundle `iped-desktop-messages`):
   - Título `GraphPlugin.Notice.Title`: `Link analysis unavailable`
-  - Corpo `GraphPlugin.Notice.Text`: `This case contains link analysis (graph) data, but the graph plugin is not installed, so the "Links" tab is not available. Install the iped-graph-neo4j plugin into the plugins folder and reopen the case. Details: {0}` — `{0}` = estado/motivo do registro (ex.: `not installed`, `rejected: SPI mismatch (plugin v2, IPED v1)`).
+  - Corpo `GraphPlugin.Notice.Text`: `This case contains link analysis (graph) data, but the graph plugin is not available, so the "Links" tab is not shown. Install the iped-graph-neo4j plugin into the plugins folder and reopen the case. Reason: {0}` — `{0}` = motivo **localizado** por chave: `GraphPlugin.Reason.NotInstalled` = `not installed`; `GraphPlugin.Reason.MultipleCopies` = `more than one copy found in the plugins folder`; `GraphPlugin.Reason.SpiMismatch` = `incompatible version (plugin SPI v{0}, IPED SPI v{1})`; `GraphPlugin.Reason.Incomplete` = `incomplete installation`; `GraphPlugin.Reason.LoadError` = `failed to load`. Nenhum texto técnico em inglês no diálogo; o detalhe completo (`getDetail()`) vai só para o log.
 - Log: `INFO` com a mesma informação.
 
 ## Caso sem dados de vínculos, plugin disponível

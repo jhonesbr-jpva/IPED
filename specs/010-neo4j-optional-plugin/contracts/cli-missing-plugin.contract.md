@@ -28,6 +28,8 @@ Entradas: `modo ∈ {append, continue, removeEvidence, restart, yaraOnly, novo}`
 | restart | qualquer | sim | qualquer | Como hoje. |
 | yaraOnly / novo | — | — | — | Sem efeito do guard. |
 
+**Atenção**: `--yara-only` faz `CmdLineArgs.isContinue()` retornar `true` (feature 001, `SkipCommitedTask`); o guard testa `isYaraOnly()` **antes** de avaliar `isContinue()`, e `GraphPluginGuardTest` cobre esse caso com `isContinue()==true`.
+
 Mensagem de recusa (EN; PT-BR equivalente no bundle `iped-engine-messages`):
 
 ```text
@@ -51,7 +53,7 @@ Exposta em `iped.engine.CmdLineArgs#isIgnoreMissingGraphPlugin()`; persistida em
 
 ## D. Log do registro no processamento (FR-003)
 
-Primeira linha relevante do log de processamento após o carregamento das configurações: uma das linhas de estado definidas em [graph-spi.contract.md](graph-spi.contract.md) (loaded / not installed / rejected).
+Primeira linha relevante do log de processamento após o carregamento das configurações: uma das linhas de estado definidas em [graph-spi.contract.md](graph-spi.contract.md) (`INFO` loaded / `INFO` not installed / `ERROR` rejected). Nenhuma delas conta como o aviso de etapa pulada de FR-004, que é o único `WARN` esperado no processamento sem o plugin.
 
 ## E. Outros modos e pontos de entrada
 

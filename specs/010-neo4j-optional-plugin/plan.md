@@ -50,7 +50,7 @@ Tornar a análise de vínculos (grafo Neo4j) um **plugin opcional**: a distribui
 | **IV. Integridade Forense e Determinismo** | Charset explícito (UTF-8) ao ler manifesto/`plugin.properties`; logging SLF4J; CSVs do grafo byte-a-byte iguais aos atuais (teste golden); processamento sem o plugin produz os mesmos campos forenses (SC-002). Bloqueio de modificação sem o plugin evita grafo silenciosamente desatualizado; override é explícito e logado. `SleuthkitClient` intocado. | ✅ PASS |
 | **V. Concorrência e Isolamento de Processo** | `GraphTask` continua uma instância por worker (writer estático compartilhado como hoje); o motor Neo4j segue **fora do processo** (JVM filha com classpath isolado), agora lançado pelo plugin; aviso da UI na EDT (`invokeLater`); registro resolvido uma vez (sem contenção). | ✅ PASS |
 
-**Restrições de Build/Distribuição**: dependências removidas/adicionadas registradas em `ThirdParty.txt` (núcleo) e no `ThirdParty.txt` + `LICENSE.txt` **do plugin** (`licenses/GPL 3.txt` já existe); `.github/workflows/maven.yml` atualizado no mesmo PR (verificação do release + publicação do zip do plugin); novo módulo no reactor do POM pai (construído por padrão; `iped-app` não depende dele — FR-014).
+**Restrições de Build/Distribuição**: as dependências do módulo do plugin continuam registradas no `ThirdParty.txt` raiz (seção "Optional plugin … NOT bundled", exigência da constituição para toda dependência do repositório) **e** no `ThirdParty.txt` + `LICENSE.txt` **do plugin**; `licenses/GPL 3.txt` já existe e `licenses/MIT-0.txt` (reactive-streams) é adicionado; `.github/workflows/maven.yml` atualizado no mesmo PR (verificação do release + publicação do zip do plugin); novo módulo no reactor do POM pai (construído por padrão; `iped-app` não depende dele — FR-014).
 
 **Resultado do gate**: PASS, condicionado a (a) enforcer + verificação de CI verdes (SC-001), (b) teste gated de integração do pacote (relocação do driver, R-05), (c) matriz do quickstart executada. Sem violação que exija abandonar princípio.
 
@@ -87,7 +87,7 @@ iped-engine/src/main/java/iped/engine/graph/
 ├── GraphServiceProvider.java        (novo)               # SPI (ServiceLoader), CURRENT_SPI_VERSION = 1
 ├── GraphDatabaseGenerator.java      (novo)               # interface (absorve GraphGenerator.generate + ImportListener)
 ├── GraphLabel.java, GraphRelationshipType.java (novos)   # substituem DynLabel / DynRelationshipType (Label/RelationshipType)
-├── GraphEntity.java, GraphNode.java, GraphRelationship.java, GraphPath.java (novos)  # modelo neutro
+├── GraphEntity.java, GraphNode.java, GraphRelationship.java, GraphPath.java (novos)  # modelo neutro (GraphNode inclui getDegree())
 ├── GraphQueryException.java, GraphPluginException.java (novos)
 ├── GraphPluginRegistry.java         (novo)               # descoberta, validação, estados ABSENT/AVAILABLE/REJECTED, log único
 ├── GraphPluginGuard.java            (novo)               # bloqueio append/continue/remove sem plugin; --restart apaga neo4j/
@@ -115,7 +115,7 @@ iped-graph-neo4j/                                         # NOVO MÓDULO (plugin
 │   ├── Neo4jDatabaseGenerator.java                       # ex-GraphGenerator (importação + pós-importação)
 │   ├── Neo4jImportRunner.java, Neo4jChildLauncher.java   # -cp <home>/neo4j/* ; add-opens preservados
 ├── src/main/resources/META-INF/services/iped.engine.graph.GraphServiceProvider
-├── src/main/resources/plugin-home/{plugin.properties,LICENSE.txt,ThirdParty.txt,README.md}
+├── src/plugin-home/{plugin.properties,LICENSE.txt,ThirdParty.txt,README.md}   # fora do jar; copiado para o zip
 ├── src/test/java/iped/graph/neo4j/                        # Neo4jGraphServiceProviderTest; Neo4jPluginPackageIT (gated)
 └── CLAUDE.md                                             # docs do módulo
 
