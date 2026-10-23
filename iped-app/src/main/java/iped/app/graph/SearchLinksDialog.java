@@ -29,13 +29,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 
-import org.neo4j.graphdb.Node;
 
 import iped.app.graph.CheckboxListCellRenderer.CheckboxListItem;
 import iped.app.graph.CheckboxListCellRenderer.CheckboxSelectionMouseAdapter;
 import iped.app.ui.App;
 import iped.app.ui.Messages;
-import iped.engine.graph.DynLabel;
+import iped.engine.graph.GraphLabel;
+import iped.engine.graph.GraphNode;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
@@ -236,12 +236,12 @@ public class SearchLinksDialog extends JDialog {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
             GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            graphService.search(DynLabel.label("DATASOURCE"), Collections.emptyMap(), this, "name");
+            graphService.search(GraphLabel.of("DATASOURCE"), Collections.emptyMap(), this, "name");
             return null;
         }
 
         @Override
-        public boolean nodeFound(Node node) {
+        public boolean nodeFound(GraphNode node) {
             String id = node.getProperty("evidenceId").toString();
             String name = node.getProperty("name").toString();
             ids.add(id);

@@ -21,9 +21,9 @@ import javax.swing.table.AbstractTableModel;
 
 import org.kharon.GraphPane;
 import org.kharon.GraphPreviewPane;
-import org.neo4j.graphdb.Node;
 
 import iped.app.ui.Messages;
+import iped.engine.graph.GraphNode;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
@@ -97,7 +97,7 @@ public class GraphSidePanel extends JPanel {
         }
 
         @Override
-        public boolean nodeFound(Node node) {
+        public boolean nodeFound(GraphNode node) {
             GraphSidePanel.this.nodePropertiesDataModel.read(node);
             return false;
         }
@@ -148,7 +148,7 @@ public class GraphSidePanel extends JPanel {
             return results.get(rowIndex)[columnIndex];
         }
 
-        public void read(Node node) {
+        public void read(GraphNode node) {
             results.clear();
 
             addResult(Messages.getString("GraphAnalysis.Type"), getLabels(node));
@@ -163,7 +163,7 @@ public class GraphSidePanel extends JPanel {
             }
         }
 
-        private String getLabels(Node node) {
+        private String getLabels(GraphNode node) {
             String labels = StreamSupport.stream(node.getLabels().spliterator(), false).map(l -> l.name())
                     .collect(Collectors.joining(","));
             return labels;

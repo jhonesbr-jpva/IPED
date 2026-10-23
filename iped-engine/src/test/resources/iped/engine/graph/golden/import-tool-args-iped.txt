@@ -1,0 +1,12 @@
+--nodes=nodes_ORGANIZATION_headers_iped.csv,nodes_ORGANIZATION_iped.csv
+--nodes=nodes_PERSON_headers_iped.csv,nodes_PERSON_iped.csv
+--nodes=nodes_MAC-ADDRESS_headers_iped.csv,nodes_MAC-ADDRESS_iped.csv
+--nodes=nodes_PHONE_headers_iped.csv,nodes_PHONE_iped.csv
+--nodes=nodes_DATASOURCE_headers_iped.csv,nodes_DATASOURCE_iped.csv
+--nodes=nodes_DOCUMENT_headers_iped.csv,nodes_DOCUMENT_iped.csv
+--nodes=nodes_EMAIL_headers_iped.csv,nodes_EMAIL_iped.csv
+--relationships=relationships_wirelessnetwork_headers_iped.csv,relationships_wirelessnetwork_iped.csv
+--relationships=relationships_near-hit_headers_iped.csv,relationships_near-hit_iped.csv
+--relationships=relationships_contact_headers_iped.csv,relationships_contact_iped.csv
+--relationships=relationships_message_headers_iped.csv,relationships_message_iped.csv
+--relationships=relationships_email_headers_iped.csv,relationships_email_iped.csv

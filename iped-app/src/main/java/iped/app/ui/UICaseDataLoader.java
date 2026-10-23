@@ -112,7 +112,12 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
             }
 
             if (!updateItems) {
-                App.get().appGraphAnalytics.initGraphService();
+                if (App.get().appGraphAnalytics != null) {
+                    App.get().appGraphAnalytics.initGraphService();
+                } else {
+                    // no graph plugin: tell the user once if the case has link analysis data
+                    GraphPluginNotice.showIfNeeded(App.get().appCase);
+                }
 
                 LOGGER.info("Loading Columns"); //$NON-NLS-1$
                 App.get().resultsModel.initCols();

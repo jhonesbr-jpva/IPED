@@ -12,13 +12,12 @@ import java.util.Iterator;
 
 import javax.swing.SwingWorker;
 
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.Messages;
 import iped.engine.graph.ExportLinksQuery;
+import iped.engine.graph.GraphNode;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.LinkQueryListener;
@@ -43,7 +42,7 @@ public class ExportLinksWorker extends SwingWorker<Void, Void> implements LinkQu
     }
 
     @Override
-    public void linkFound(Node node1, Node node2) {
+    public void linkFound(GraphNode node1, GraphNode node2) {
         try {
 
             writeNode(node1);
@@ -56,23 +55,20 @@ public class ExportLinksWorker extends SwingWorker<Void, Void> implements LinkQu
         }
     }
 
-    private void writeNode(Node node) throws IOException {
+    private void writeNode(GraphNode node) throws IOException {
         String[] fieldNames = model.getDefaultFieldNames(node);
 
         String type = model.getType(node);
         String field = null;
         String value = null;
         for (String fieldName : fieldNames) {
-            try {
-                if (value == null || value.isEmpty()) {
-                    Object property = node.getProperty(fieldName);
-                    if (property != null) {
-                        value = property.toString();
-                        field = fieldName;
-                    }
+            if (value == null || value.isEmpty()) {
+                // absent properties are null
+                Object property = node.getProperty(fieldName);
+                if (property != null) {
+                    value = property.toString();
+                    field = fieldName;
                 }
-            } catch (NotFoundException e) {
-                // Nothing to do.
             }
         }
         if (value == null) {

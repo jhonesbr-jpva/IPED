@@ -1,0 +1,2 @@
+# Golden outputs of GraphFileWriter (CRLF line endings by design): keep them byte for byte.
+* -text

@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-
+/**
+ * Queries and lifecycle of the graph database of a case. Implemented by the graph plugin (see
+ * {@link GraphServiceProvider}); methods that receive a query text expect it in the dialect of the
+ * current provider.
+ */
 public interface GraphService {
 
     void start(File path) throws IOException;
@@ -39,22 +41,30 @@ public interface GraphService {
     void getNeighboursWithRelationships(Collection<String> relationships, Long nodeId, NodeEdgeQueryListener listener,
             int maxNodes);
 
-    List<Node> search(Label label, Map<String, Object> params);
+    List<GraphNode> search(GraphLabel label, Map<String, Object> params);
 
-    void search(Label label, Map<String, Object> params, NodeQueryListener listener, String... ordering);
+    void search(GraphLabel label, Map<String, Object> params, NodeQueryListener listener, String... ordering);
 
     void findLabels(LabelQueryListener listener);
 
     void findLinks(ExportLinksQuery query, LinkQueryListener listener);
 
+    /**
+     * Runs a free query typed by the user and reports its columns and rows.
+     *
+     * @throws GraphQueryException
+     *             if the query is invalid or fails
+     */
     void advancedSearch(String string, FreeQueryListener listener);
 
     /**
-     * Runs an arbitrary Cypher query expected to return a column named {@code path} and reports
-     * each resulting path. Used by the {@code SearchLinksQuery} SPI (replaces the former direct
-     * embedded {@code GraphDatabaseService} access).
+     * Runs an arbitrary query (in the dialect of the current provider) expected to return a column
+     * named {@code path} and reports each resulting path. Used by the {@code SearchLinksQuery} SPI.
+     *
+     * @throws GraphQueryException
+     *             if the query is invalid or fails
      */
-    void searchPaths(String cypher, Map<String, Object> params, PathQueryListener listener);
+    void searchPaths(String query, Map<String, Object> params, PathQueryListener listener);
 
     void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
 

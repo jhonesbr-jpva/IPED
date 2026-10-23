@@ -127,7 +127,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--yara-only", description = "rerun the pipeline over an already processed case to refresh YARA-X matches in the existing Lucene index. Requires -d (the original datasource(s) so item content can be re-read) and -o (the case output dir). Implies --continue: committed items keep flowing through the pipeline so their full doc is rebuilt, and IndexTask updates them in place. Incompatible with --append/--restart/-remove/explicit --continue.")
     private boolean yaraOnly;
-    
+
+    @Parameter(names = "--ignore-missing-graph-plugin", description = "proceed with --append/--continue/-remove on a case that has graph data even if the graph plugin is not installed (the graph will not be updated)")
+    private boolean ignoreMissingGraphPlugin;
+
     @Parameter(names = { "-splash" }, description = "custom message to be shown in the splash screen")
     private String splashMessage;    
 
@@ -149,6 +152,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public boolean isYaraOnly() {
         return yaraOnly;
+    }
+
+    @Override
+    public boolean isIgnoreMissingGraphPlugin() {
+        return ignoreMissingGraphPlugin;
     }
 
     @Override

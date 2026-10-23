@@ -82,12 +82,22 @@ Some of IPED several features are listed below:
 - Fast nudity detection for images and videos using random forests algorithm (thanks to its author @tc-wleite)
 - Nudity detection using Yahoo open-nsfw deeplearning model (needs keras and tensorflow)
 - Audio Transcription, local and remote implementations with Azure and Google Cloud services
-- Graph analysis for communications (calls, emails, instant messages...)
+- Graph analysis for communications (calls, emails, instant messages...) — via the optional iped-graph-neo4j plugin
 - Stable processing with out-of-process file system decoding and file parsing
 - Resuming or restarting stopped or aborted processing (--continue/--restart options)
 - Web API for searching remote cases, get file metadata, raw content, decoded text, thumbnails and posting bookmarks
 - Creation of bookmarks/tags for interesting data
 - HTML, CSV reports and portable cases with tagged data
+
+### Optional plugins
+
+Some features depend on components that are not bundled with IPED because of their licenses. They are
+installed as plugins in the `plugins` folder next to the IPED application folder (`pluginFolder` in
+`LocalConfig.txt`), without any configuration change. The **link analysis** (communications graph and the
+"Links" tab) is provided by the **iped-graph-neo4j** plugin (Neo4j Community Edition, GPL v3), published as
+`iped-graph-neo4j-<version>.zip` together with each release: extract it inside the `plugins` folder and restart
+IPED. Without it, IPED works normally, just without link analysis. See the `README.md` inside the plugin zip
+for details.
 
 ## Screenshots
 

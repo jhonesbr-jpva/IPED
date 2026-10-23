@@ -18,7 +18,8 @@
         its required antlr4-runtime 4.13.x naturally (this module does NOT depend on
         libfqlite, which pins antlr 4.9.2 and conflicts with it). The main IPED process
         keeps antlr 4.9.2 for libfqlite and talks to this server via the Neo4j Bolt
-        driver. Assembled as a self-contained zip and unpacked into the release lib/neo4j/.
+        driver. Assembled as a self-contained zip, unpacked by the optional iped-graph-neo4j
+        plugin into its home folder (iped-graph-neo4j/neo4j/); not part of the standard release.
     </description>
 
     <dependencies>

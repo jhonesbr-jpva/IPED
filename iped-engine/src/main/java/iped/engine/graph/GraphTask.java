@@ -16,13 +16,12 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.RelationshipType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +106,9 @@ public class GraphTask extends AbstractTask {
 
     private static Map<String, NodeValues> datasourceOwnerMap = new HashMap<>();
 
+    /** There is one task instance per worker: warn about the missing graph plugin only once. */
+    private static final AtomicBoolean missingPluginWarned = new AtomicBoolean();
+
     @Override
     public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new GraphTaskConfig());
@@ -115,7 +117,14 @@ public class GraphTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
         GraphTaskConfig config = configurationManager.findObject(GraphTaskConfig.class);
-        enabled = config.isEnabled();
+        // enableGraphGeneration means "generate link analysis data when the graph plugin is available"
+        GraphPluginRegistry graphPlugin = GraphPluginRegistry.get();
+        enabled = config.isEnabled() && graphPlugin.isAvailable();
+        if (config.isEnabled() && !graphPlugin.isAvailable() && missingPluginWarned.compareAndSet(false, true)) {
+            logger.warn(
+                    "Graph generation is enabled but the graph plugin is not installed ({}): link analysis will be skipped for this case.",
+                    graphPlugin.getState() + graphPlugin.getRejection().map(r -> ", " + r).orElse(""));
+        }
         if (enabled) {
             configuration = config.getConfiguration();
 
@@ -158,8 +167,8 @@ public class GraphTask extends AbstractTask {
         logger.info("Generating graph database...");
         File graphDbHome = new File(output, DB_HOME_DIR);
         File graphCSVs = new File(output, CSVS_PATH);
-        GraphGenerator graphGenerator = new GraphGenerator();
-        graphGenerator.generate(graphDbHome, graphCSVs);
+        GraphDatabaseGenerator graphGenerator = GraphPluginRegistry.get().getDatabaseGenerator();
+        graphGenerator.generate(null, graphDbHome, graphCSVs);
         logger.info("Generating graph database finished.");
     }
 
@@ -282,12 +291,12 @@ public class GraphTask extends AbstractTask {
     }
 
     private static class NodeValues {
-        Label label;
+        GraphLabel label;
         String propertyName;
         Object propertyValue;
         Map<String, Object> props = new HashMap<>();
 
-        NodeValues(Label label, String propertyName, Object propertyValue) {
+        NodeValues(GraphLabel label, String propertyName, Object propertyValue) {
             this.label = label;
             this.propertyName = propertyName;
             this.propertyValue = propertyValue;
@@ -346,7 +355,7 @@ public class GraphTask extends AbstractTask {
     private NodeValues getPhoneNodeValues(String value) {
         Set<String> phones = getPhones(value);
         if (!phones.isEmpty()) {
-            return new NodeValues(DynLabel.label(GraphConfiguration.PHONE_LABEL), ExtraProperties.USER_PHONE,
+            return new NodeValues(GraphLabel.of(GraphConfiguration.PHONE_LABEL), ExtraProperties.USER_PHONE,
                     phones.iterator().next());
         }
         // System.out.println("invalid phone=" + value.trim());
@@ -354,11 +363,11 @@ public class GraphTask extends AbstractTask {
     }
 
     private NodeValues getGroupNodeValues(String value) {
-        return new NodeValues(DynLabel.label(GraphConfiguration.CONTACT_GROUP_LABEL), BasicProps.NAME, value.trim().toLowerCase());
+        return new NodeValues(GraphLabel.of(GraphConfiguration.CONTACT_GROUP_LABEL), BasicProps.NAME, value.trim().toLowerCase());
     }
 
     private NodeValues getGenericNodeValues(String value) {
-        return new NodeValues(DynLabel.label("GENERIC"), "entity", value.trim().toLowerCase());
+        return new NodeValues(GraphLabel.of("GENERIC"), "entity", value.trim().toLowerCase());
     }
 
     private SortedSet<String> getEmails(String text) {
@@ -380,7 +389,7 @@ public class GraphTask extends AbstractTask {
     private NodeValues getEmailNodeValues(String value) {
         Set<String> emails = getEmails(value, false);
         if (!emails.isEmpty()) {
-            NodeValues nv = new NodeValues(DynLabel.label(GraphConfiguration.EMAIL_LABEL), ExtraProperties.USER_EMAIL,
+            NodeValues nv = new NodeValues(GraphLabel.of(GraphConfiguration.EMAIL_LABEL), ExtraProperties.USER_EMAIL,
                     emails.iterator().next().toLowerCase());
             for (String email : emails) {
                 value = value.replace(email, "");
@@ -414,14 +423,14 @@ public class GraphTask extends AbstractTask {
         if (idx != -1 && value.endsWith(")")) {
             String account = value.substring(idx + 1, value.length() - 1);
             String name = value.substring(0, idx).trim();
-            nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
+            nv = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(account, service));
             if (!name.isEmpty()) {
                 nv.addProp(ExtraProperties.USER_NAME, name);
             }
         }
         if (nv == null) {
-            nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
+            nv = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(value.trim(), service));
         }
         return nv;
@@ -461,7 +470,7 @@ public class GraphTask extends AbstractTask {
 
         graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
 
-        RelationshipType relationshipType = DynRelationshipType.withName(relationType);
+        GraphRelationshipType relationshipType = GraphRelationshipType.of(relationType);
         Map<String, Object> relProps = new HashMap<>();
         relProps.put(RELATIONSHIP_ID, evidence.getId());
         relProps.put(RELATIONSHIP_SOURCE, evidence.getDataSource().getUUID());
@@ -578,20 +587,20 @@ public class GraphTask extends AbstractTask {
 
         NodeValues nv1;
         if (!msisdnPhones.isEmpty()) {
-            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE,
+            nv1 = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE,
                     msisdnPhones.first());
         } else if (!formattedPhones.isEmpty()) {
-            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE,
+            nv1 = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE,
                     formattedPhones.first());
         } else if (!emails.isEmpty()) {
-            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_EMAIL,
+            nv1 = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_EMAIL,
                     emails.first());
         } else if (accounts.length != 0 && accountType.length != 0) {
             String account = getNonUUIDAccount(accounts);
-            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
+            nv1 = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(account, accountType[0]));
         } else {
-            nv1 = new NodeValues(DynLabel.label("GENERIC"), "entity", item.getName());
+            nv1 = new NodeValues(GraphLabel.of("GENERIC"), "entity", item.getName());
         }
 
         nv1.addProp(ExtraProperties.USER_PHONE, formattedPhones);
@@ -608,20 +617,20 @@ public class GraphTask extends AbstractTask {
         String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
 
         for (String email : emails) {
-            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PERSON_LABEL),
+            graphFileWriter.writeNodeReplace(GraphLabel.of(GraphConfiguration.PERSON_LABEL),
                     ExtraProperties.USER_EMAIL, email, uniqueId);
-            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.EMAIL_LABEL), ExtraProperties.USER_EMAIL,
+            graphFileWriter.writeNodeReplace(GraphLabel.of(GraphConfiguration.EMAIL_LABEL), ExtraProperties.USER_EMAIL,
                     email, uniqueId);
         }
         for (String phone : formattedPhones) {
-            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PERSON_LABEL),
+            graphFileWriter.writeNodeReplace(GraphLabel.of(GraphConfiguration.PERSON_LABEL),
                     ExtraProperties.USER_PHONE, phone, uniqueId);
-            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PHONE_LABEL), ExtraProperties.USER_PHONE,
+            graphFileWriter.writeNodeReplace(GraphLabel.of(GraphConfiguration.PHONE_LABEL), ExtraProperties.USER_PHONE,
                     phone, uniqueId);
         }
         for (String account : accounts) {
             for (String service : accountType) {
-                graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PERSON_LABEL),
+                graphFileWriter.writeNodeReplace(GraphLabel.of(GraphConfiguration.PERSON_LABEL),
                         ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service), uniqueId);
             }
         }
@@ -674,7 +683,7 @@ public class GraphTask extends AbstractTask {
         synchronized (this.getClass()) {
             NodeValues nv1 = datasourceOwnerMap.get(evidenceUUID);
             if (nv1 == null) {
-                nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID,
+                nv1 = new NodeValues(GraphLabel.of(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID,
                         evidenceUUID);
                 nv1.addProp(BasicProps.NAME, Util.getRootName(item.getPath()));
                 graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
@@ -704,7 +713,7 @@ public class GraphTask extends AbstractTask {
         String contactOfAccount = item.getMetadata().get(ExtraProperties.CONTACT_OF_ACCOUNT);
         if (contactOfAccount != null) {
             String service = item.getMetadata().get(ExtraProperties.USER_ACCOUNT_TYPE);
-            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
+            nv1 = new NodeValues(GraphLabel.of(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(contactOfAccount, service));
             graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         }
@@ -714,7 +723,7 @@ public class GraphTask extends AbstractTask {
 
         NodeValues nv2 = writePersonNode(item, null);
 
-        RelationshipType relationshipType = DynRelationshipType.withName(relationType);
+        GraphRelationshipType relationshipType = GraphRelationshipType.of(relationType);
         Map<String, Object> relProps = new HashMap<>();
         relProps.put(RELATIONSHIP_ID, item.getId());
         relProps.put(RELATIONSHIP_SOURCE, item.getDataSource().getUUID());
@@ -739,17 +748,17 @@ public class GraphTask extends AbstractTask {
         String ssid = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "SSId");
 
         if (bssid != null) {
-            nv2 = new NodeValues(DynLabel.label("WIFI"), "mac_address", bssid.trim());
+            nv2 = new NodeValues(GraphLabel.of("WIFI"), "mac_address", bssid.trim());
             if (ssid != null) {
                 nodeProps.put("SSID", ssid.trim());
             }
         } else if (ssid != null) {
-            nv2 = new NodeValues(DynLabel.label("WIFI"), "SSID", ssid.trim());
+            nv2 = new NodeValues(GraphLabel.of("WIFI"), "SSID", ssid.trim());
         } else {
             return;
         }
 
-        RelationshipType relationshipType = DynRelationshipType.withName(relationType);
+        GraphRelationshipType relationshipType = GraphRelationshipType.of(relationType);
         Map<String, Object> relProps = new HashMap<>();
         relProps.put(RELATIONSHIP_ID, item.getId());
         relProps.put(RELATIONSHIP_SOURCE, item.getDataSource().getUUID());
@@ -790,16 +799,16 @@ public class GraphTask extends AbstractTask {
             Set<String> relationsAdded) throws IOException {
         String labelName = entity.getLabel();
         String propertyName = metadata.getProperty();
-        Label label = DynLabel.label(labelName);
+        GraphLabel label = GraphLabel.of(labelName);
 
         String labelName2 = entity2.getLabel();
         String propertyName2 = metadata2.getProperty();
-        Label label2 = DynLabel.label(labelName2);
+        GraphLabel label2 = GraphLabel.of(labelName2);
 
         if (matches != null && matches2 != null) {
-            // RelationshipType relationshipType =
-            // DynRelationshipType.withName(metadata.getRelationship());
-            RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
+            // GraphRelationshipType relationshipType =
+            // GraphRelationshipType.of(metadata.getRelationship());
+            GraphRelationshipType relationshipType = GraphRelationshipType.of(configuration.getDefaultRelationship());
 
             Map<String, Object> relProps = new HashMap<>();
             relProps.put(RELATIONSHIP_ID, evidence.getId());

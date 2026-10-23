@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>iped</groupId>
+        <artifactId>iped-parent</artifactId>
+        <version>4.4.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>iped-graph-neo4j</artifactId>
+    <packaging>jar</packaging>
+
+    <properties>
+        <!-- Version of the graph extension point (iped.engine.graph.GraphServiceProvider) implemented
+             by this plugin. Written to the jar manifest (IPED-Graph-SPI-Version) and plugin.properties;
+             it must equal GraphServiceProvider.CURRENT_SPI_VERSION (checked by a unit test). -->
+        <graph.spi.version>1</graph.spi.version>
+        <!-- Plugin "home": files that must stay off the main classpath (isolated Neo4j engine, notices). -->
+        <plugin.home>${project.build.directory}/plugin-home/iped-graph-neo4j</plugin.home>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+        <built.on>${maven.build.timestamp}</built.on>
+    </properties>
+
+    <description>
+        Optional IPED plugin that provides link analysis (graph) on top of Neo4j 5 (feature 010).
+        It implements the graph extension point of iped-engine (iped.engine.graph.GraphServiceProvider,
+        discovered via ServiceLoader): Bolt-based GraphService, CSV bulk import and post-import
+        operations, and the launcher of the out-of-process Neo4j JVMs. It is published as a separate
+        zip (one jar for the main classpath + an iped-graph-neo4j/ home folder holding the isolated
+        Neo4j engine taken from the iped-graph-server distribution). The standard IPED distribution
+        does not depend on this module and ships no Neo4j component.
+    </description>
+
+    <dependencies>
+        <!-- Provided by the IPED installation that loads the plugin (never bundled in the plugin). -->
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-engine</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.26.0</version>
+        </dependency>
+        <!-- Logging is provided by the IPED installation: override the compile scope inherited from
+             the parent POM so these jars never end up inside the plugin package. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-web</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Isolated Neo4j engine distribution (zip with a neo4j/ prefix), unpacked into the plugin
+             home. Declared here only so the reactor builds iped-graph-server first; the zip type and
+             the wildcard exclusion keep it and the full engine off this module's classpath. -->
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-graph-server</artifactId>
+            <version>${project.version}</version>
+            <classifier>neo4j</classifier>
+            <type>zip</type>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+        <plugins>
+            <!-- Isolated Neo4j engine: unpack the iped-graph-server distribution (jars under a neo4j/
+                 prefix) into the plugin home, i.e. iped-graph-neo4j/neo4j/*.jar in the package. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>unpack-graph-server</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>iped</groupId>
+                                    <artifactId>iped-graph-server</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>neo4j</classifier>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${plugin.home}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin home notices and plugin.properties (only the latter is filtered). -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-plugin-home</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${plugin.home}</outputDirectory>
+                            <encoding>UTF-8</encoding>
+                            <resources>
+                                <resource>
+                                    <directory>src/plugin-home</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>plugin.properties</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>src/plugin-home</directory>
+                                    <filtering>false</filtering>
+                                    <excludes>
+                                        <exclude>plugin.properties</exclude>
+                                    </excludes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Single plugin jar for the main classpath: plugin classes + Bolt driver, with the driver
+                 dependencies relocated so they never clash with other libraries in IPED lib/. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-plugin-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.neo4j.driver:neo4j-java-driver</include>
+                                    <include>io.netty:*</include>
+                                    <include>io.projectreactor:reactor-core</include>
+                                    <include>org.reactivestreams:reactive-streams</include>
+                                </includes>
+                            </artifactSet>
+                            <relocations>
+                                <relocation>
+                                    <pattern>io.netty</pattern>
+                                    <shadedPattern>iped.graph.neo4j.shaded.io.netty</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>reactor</pattern>
+                                    <shadedPattern>iped.graph.neo4j.shaded.reactor</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.reactivestreams</pattern>
+                                    <shadedPattern>iped.graph.neo4j.shaded.org.reactivestreams</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <IPED-Graph-SPI-Version>${graph.spi.version}</IPED-Graph-SPI-Version>
+                                        <Implementation-Title>iped-graph-neo4j</Implementation-Title>
+                                        <Implementation-Version>${project.version}</Implementation-Version>
+                                        <IPED-Target-Version>${project.version}</IPED-Target-Version>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- iped-graph-neo4j-<version>.zip: the jar + the iped-graph-neo4j/ home, to be extracted
+                 inside the IPED plugin folder. Not part of the standard release. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <executions>
+                    <execution>
+                        <id>plugin-zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>iped-graph-neo4j-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/assembly/plugin.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Gated integration test of the assembled package (driver relocation, child JVM launch):
+             IPED_GRAPH_PLUGIN_HOME=<folder where the zip was extracted> mvn -pl iped-graph-neo4j verify -Pgraph-it -->
+        <profile>
+            <id>graph-it</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.5.3</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

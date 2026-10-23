@@ -8,6 +8,7 @@ import javax.swing.SwingWorker;
 import org.kharon.Node;
 
 import iped.app.ui.Messages;
+import iped.engine.graph.GraphNode;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
@@ -32,12 +33,12 @@ class AddNodeWorker extends SwingWorker<Void, Node> implements NodeQueryListener
     }
 
     @Override
-    public boolean nodeFound(org.neo4j.graphdb.Node neo4jNode) {
+    public boolean nodeFound(GraphNode graphNode) {
         found++;
         app.increaseProgress((int) ((found / this.ids.size()) * 100));
-        Node node = this.app.addNode(neo4jNode);
+        Node node = this.app.addNode(graphNode);
         if (node != null) {
-            String nodeId = Long.toString(neo4jNode.getId());
+            String nodeId = Long.toString(graphNode.getId());
             this.added.add(nodeId);
             this.nodes.add(node);
 

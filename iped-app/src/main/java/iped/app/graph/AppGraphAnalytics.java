@@ -37,9 +37,6 @@ import org.kharon.StageMode;
 import org.kharon.layout.HistoryEnabledLayout;
 import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.renderers.Renderers;
-import org.neo4j.graphdb.Entity;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +53,10 @@ import iped.app.ui.Messages;
 import iped.engine.data.ItemId;
 import iped.engine.graph.EdgeQueryListener;
 import iped.engine.graph.GraphConfiguration;
+import iped.engine.graph.GraphEntity;
+import iped.engine.graph.GraphNode;
+import iped.engine.graph.GraphPath;
+import iped.engine.graph.GraphRelationship;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
@@ -489,7 +490,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         }
 
         @Override
-        public boolean edgeFound(Relationship relationship) {
+        public boolean edgeFound(GraphRelationship relationship) {
             found++;
             AppGraphAnalytics.this.graphStatusBar.increaseProgress((int) ((found / this.ids.length) * 100));
             super.nodeFound(relationship.getStartNode());
@@ -596,12 +597,12 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         }
 
         @Override
-        public boolean nodeFound(org.neo4j.graphdb.Node neo4jNode) {
-            String id = Long.toString(neo4jNode.getId());
+        public boolean nodeFound(GraphNode graphNode) {
+            String id = Long.toString(graphNode.getId());
             AppGraphAnalytics.this.graphStatusBar.increaseProgress(10);
             if (!AppGraphAnalytics.this.graph.containsNode(id)) {
                 currentDegree++;
-                Node newNode = AppGraphAnalytics.this.graphModel.convert(neo4jNode);
+                Node newNode = AppGraphAnalytics.this.graphModel.convert(graphNode);
                 // AppGraphAnalytics.this.graph.addNode(newNode);
                 Point position = getPosition(newNode);
                 newNode.setX(position.x);
@@ -612,11 +613,11 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         }
 
         @Override
-        public boolean edgeFound(Relationship relationship) {
+        public boolean edgeFound(GraphRelationship relationship) {
             String id = Long.toString(relationship.getId());
             if (!AppGraphAnalytics.this.graph.containsEdge(id)) {
-                String startNodeId = Long.toString(relationship.getStartNodeId());
-                String endNodeId = Long.toString(relationship.getEndNodeId());
+                String startNodeId = Long.toString(relationship.getStartNode().getId());
+                String endNodeId = Long.toString(relationship.getEndNode().getId());
                 Edge edge = new Edge(id, startNodeId, endNodeId);
                 setEdgeLabel(edge, relationship);
                 // AppGraphAnalytics.this.graph.addEdge(edge);
@@ -655,12 +656,12 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         }
 
         @Override
-        public boolean edgeFound(Relationship relationship) {
+        public boolean edgeFound(GraphRelationship relationship) {
             AppGraphAnalytics.this.graphStatusBar.increaseProgress(10);
             String id = Long.toString(relationship.getId());
             if (!AppGraphAnalytics.this.graph.containsEdge(id)) {
-                String startNodeId = Long.toString(relationship.getStartNodeId());
-                String endNodeId = Long.toString(relationship.getEndNodeId());
+                String startNodeId = Long.toString(relationship.getStartNode().getId());
+                String endNodeId = Long.toString(relationship.getEndNode().getId());
                 Edge edge = new Edge(id, startNodeId, endNodeId);
                 setEdgeLabel(edge, relationship);
                 this.newEdges.add(edge);
@@ -739,33 +740,33 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         }
 
         @Override
-        public boolean pathFound(Path path) {
+        public boolean pathFound(GraphPath path) {
 
             int length = path.length();
             int hop = 1;
 
-            org.neo4j.graphdb.Node endNode = path.endNode();
+            GraphNode endNode = path.endNode();
             boolean inverted = this.leftmost.getId().equals(Long.toString(endNode.getId()));
             if (inverted) {
                 hop = length - 1;
             }
 
-            org.neo4j.graphdb.Node startNode = path.startNode();
-            org.neo4j.graphdb.Node currentStart = startNode;
-            for (Entity propertyContainer : path) {
+            GraphNode startNode = path.startNode();
+            GraphNode currentStart = startNode;
+            for (GraphEntity propertyContainer : path) {
                 AppGraphAnalytics.this.graphStatusBar.increaseProgress(10);
-                if (propertyContainer instanceof org.neo4j.graphdb.Relationship) {
+                if (propertyContainer instanceof GraphRelationship) {
 
-                    Relationship relationShip = (Relationship) propertyContainer;
+                    GraphRelationship relationShip = (GraphRelationship) propertyContainer;
                     nodeFound(relationShip.getStartNode());
                     nodeFound(relationShip.getEndNode());
                     edgeFound(relationShip);
 
-                } else if (propertyContainer instanceof org.neo4j.graphdb.Node) {
-                    org.neo4j.graphdb.Node neo4jNode = (org.neo4j.graphdb.Node) propertyContainer;
-                    if (startNode.getId() != neo4jNode.getId() && endNode.getId() != neo4jNode.getId()) {
+                } else if (propertyContainer instanceof GraphNode) {
+                    GraphNode graphNode = (GraphNode) propertyContainer;
+                    if (startNode.getId() != graphNode.getId() && endNode.getId() != graphNode.getId()) {
                         String startNodeId = Long.toString(currentStart.getId());
-                        String endNodeId = Long.toString(neo4jNode.getId());
+                        String endNodeId = Long.toString(graphNode.getId());
 
                         if (newlyAdded.contains(endNodeId)) {
                             newlyAdded.remove(endNodeId);
@@ -782,7 +783,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
                             newNode.setX(position.x);
                             newNode.setY(position.y);
                         }
-                        currentStart = neo4jNode;
+                        currentStart = graphNode;
                         if (inverted) {
                             hop--;
                         } else {
@@ -795,22 +796,22 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
             return true;
         }
 
-        public void nodeFound(org.neo4j.graphdb.Node neo4jNode) {
-            String id = Long.toString(neo4jNode.getId());
+        public void nodeFound(GraphNode graphNode) {
+            String id = Long.toString(graphNode.getId());
             AppGraphAnalytics.this.graphStatusBar.increaseProgress(10);
             if (!AppGraphAnalytics.this.graph.containsNode(id)) {
-                Node newNode = AppGraphAnalytics.this.graphModel.convert(neo4jNode);
+                Node newNode = AppGraphAnalytics.this.graphModel.convert(graphNode);
                 AppGraphAnalytics.this.graph.addNode(newNode);
                 newlyAdded.add(id);
                 newNodes.add(newNode);
             }
         }
 
-        private void edgeFound(Relationship relationship) {
+        private void edgeFound(GraphRelationship relationship) {
             String id = Long.toString(relationship.getId());
             if (!AppGraphAnalytics.this.graph.containsEdge(id)) {
-                String startNodeId = Long.toString(relationship.getStartNodeId());
-                String endNodeId = Long.toString(relationship.getEndNodeId());
+                String startNodeId = Long.toString(relationship.getStartNode().getId());
+                String endNodeId = Long.toString(relationship.getEndNode().getId());
                 Edge edge = new Edge(id, startNodeId, endNodeId);
                 setEdgeLabel(edge, relationship);
                 AppGraphAnalytics.this.graph.addEdge(edge);
@@ -858,17 +859,17 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         this.graph.addNodes(nodes);
     }
 
-    private Node prepareDBNode(org.neo4j.graphdb.Node neo4jNode) {
-        Node node = this.graphModel.convert(neo4jNode);
+    private Node prepareDBNode(GraphNode graphNode) {
+        Node node = this.graphModel.convert(graphNode);
         node.setX((int) (100 + Math.random() * 400));
         node.setY((int) (100 + Math.random() * 400));
         return node;
     }
 
-    public Node addNode(org.neo4j.graphdb.Node neo4jNode) {
-        String nodeId = Long.toString(neo4jNode.getId());
+    public Node addNode(GraphNode graphNode) {
+        String nodeId = Long.toString(graphNode.getId());
         if (!this.graph.containsNode(nodeId)) {
-            Node node = prepareDBNode(neo4jNode);
+            Node node = prepareDBNode(graphNode);
             this.graph.addNode(node);
             return node;
         }
@@ -879,23 +880,23 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         this.graph.addElements(graphElements.getNodes(), graphElements.getEdges());
     }
 
-    public GraphElements addPaths(Collection<Path> paths, GraphElements graphElements) {
-        for (Path path : paths) {
-            for (org.neo4j.graphdb.Node neo4jNode : path.nodes()) {
-                String nodeId = Long.toString(neo4jNode.getId());
+    public GraphElements addPaths(Collection<GraphPath> paths, GraphElements graphElements) {
+        for (GraphPath path : paths) {
+            for (GraphNode graphNode : path.nodes()) {
+                String nodeId = Long.toString(graphNode.getId());
                 if (!this.graph.containsNode(nodeId)) {
-                    Node node = prepareDBNode(neo4jNode);
+                    Node node = prepareDBNode(graphNode);
                     graphElements.add(node);
                 }
 
             }
-            for (org.neo4j.graphdb.Relationship relationship : path.relationships()) {
+            for (GraphRelationship relationship : path.relationships()) {
                 String edgeId = Long.toString(relationship.getId());
                 boolean relationshipInGraph = this.containsEdge(edgeId);
                 boolean relationshipInNewEdges = graphElements.containsEdge(edgeId);
                 if (!relationshipInGraph && !relationshipInNewEdges) {
-                    String startNodeId = Long.toString(relationship.getStartNodeId());
-                    String endNodeId = Long.toString(relationship.getEndNodeId());
+                    String startNodeId = Long.toString(relationship.getStartNode().getId());
+                    String endNodeId = Long.toString(relationship.getEndNode().getId());
                     boolean inGraph = this.containsNode(startNodeId) && this.containsNode(endNodeId);
                     boolean inNewNodes = graphElements.containsNode(startNodeId)
                             && graphElements.containsNode(endNodeId);
@@ -911,23 +912,23 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         return graphElements;
     }
 
-    public GraphElements addPaths(Collection<Path> paths) {
+    public GraphElements addPaths(Collection<GraphPath> paths) {
         return addPaths(paths, new GraphElements());
     }
 
-    public void addPath(Path path) {
+    public void addPath(GraphPath path) {
         addPaths(Arrays.asList(path));
     }
 
-    public void addPath(Path path, GraphElements graphElements) {
+    public void addPath(GraphPath path, GraphElements graphElements) {
         addPaths(Arrays.asList(path), graphElements);
     }
 
-    public Edge addRelationship(Relationship relationship) {
+    public Edge addRelationship(GraphRelationship relationship) {
         String edgeId = Long.toString(relationship.getId());
         if (!this.containsEdge(edgeId)) {
-            String startNodeId = Long.toString(relationship.getStartNodeId());
-            String endNodeId = Long.toString(relationship.getEndNodeId());
+            String startNodeId = Long.toString(relationship.getStartNode().getId());
+            String endNodeId = Long.toString(relationship.getEndNode().getId());
             if (this.containsNode(startNodeId) && this.containsNode(endNodeId)) {
                 Edge edge = new Edge(edgeId, startNodeId, endNodeId);
                 setEdgeLabel(edge, relationship);
@@ -938,7 +939,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         return null;
     }
 
-    private void setEdgeLabel(Edge edge, Relationship relationship) {
+    private void setEdgeLabel(Edge edge, GraphRelationship relationship) {
         String sourceUUID = (String) relationship.getProperty(GraphTask.RELATIONSHIP_SOURCE);
         String relId = (String) relationship.getProperty(GraphTask.RELATIONSHIP_ID);
         edge.setLabel(sourceUUID + "_" + relId);

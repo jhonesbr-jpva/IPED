@@ -33,6 +33,8 @@ IPED/
 │   └── iped-carvers-impl/
 ├── iped-geo/         → docs em [iped-geo/CLAUDE.md](iped-geo/CLAUDE.md)
 ├── iped-engine/      → docs em [iped-engine/CLAUDE.md](iped-engine/CLAUDE.md)
+├── iped-graph-server/                       # motor Neo4j 5 isolado (GraphServer/GraphPostImport); seu zip é consumido pelo plugin
+├── iped-graph-neo4j/ → docs em [iped-graph-neo4j/CLAUDE.md](iped-graph-neo4j/CLAUDE.md)  # plugin OPCIONAL de análise de vínculos (fora do release padrão)
 └── iped-app/                                # binário final (sem CLAUDE.md próprio — ver seção 8 aqui)
     ├── src/main/java/iped/app/{bootstrap,config,processing,ui,graph,timelinegraph,metadata}
     └── resources/{config,scripts,localization,plugins,root,checkstyle}
@@ -53,7 +55,7 @@ IPED/
 | PDF | Apache PDFBox 2.0.27, IcePDF 7.0.0 |
 | SQLite | xerial-sqlite-jdbc 3.41.2.2, libfqlite 1.57.05 (undelete) |
 | Office | LibreOffice 7.2.2 via UNO bridge + NOA-Libre |
-| Graph | Neo4j 5.26.0 (engine full embarcado **out-of-process via Bolt**, isolado em `lib/neo4j/` pelo módulo `iped-graph-server`; o engine consome só `neo4j-graphdb-api` + `neo4j-java-driver`) |
+| Graph | Neo4j 5.26.0 como **plugin opcional** `iped-graph-neo4j` (zip separado, GPL v3; feature 010). O núcleo (`iped-engine`/`iped-app`) **não depende de Neo4j** (enforcer `ban-neo4j` + CI): conhece só o SPI `iped.engine.graph.GraphServiceProvider` (versão 1) e tipos neutros (`GraphNode`, `GraphRelationship`, `GraphPath`, `GraphLabel`...). O plugin traz o driver Bolt (netty/reactor relocados) e o motor isolado em `plugins/iped-graph-neo4j/neo4j/` (módulo `iped-graph-server`), sempre **out-of-process via Bolt** |
 | Web API | Jersey 2.41 + Grizzly + Swagger |
 | Storage opcional | MinIO 8.3.8, OpenSearch 2.1 |
 | Scripting | Nashorn 15.4 (JS), JEP 4.0.3 (Python embarcado) |
@@ -103,26 +105,31 @@ O CI (`.github/workflows/maven.yml`) instala várias dependências nativas (`lib
 
 ## 6. Como rodar
 
-Estrutura do release (`target/release/iped-<version>/`):
+Estrutura do release (`target/release/`):
 ```
-iped-<version>/
-├── iped.jar                          # main class: iped.app.bootstrap.Bootstrap
-├── lib/                              # dependências (copy-dependencies)
-│   ├── iped-search-app.jar          # main: iped.app.bootstrap.BootstrapUI
-│   ├── iped-webapi.jar              # main: iped.engine.webapi.Main
-│   └── iped-hashdb.jar              # main: iped.engine.hashdb.HashDBTool
-├── conf/                             # configurações editáveis
-├── localization/                     # bundles
-├── tools/                            # ferramentas externas (Sleuthkit, Tesseract, ImageMagick, LibreOffice, yara-x, ...)
-├── scripts/                          # tasks JS/Python
-├── models/                           # modelos AI (DIE, NSFW, Vosk)
-├── jre/                              # JRE embutido (Windows)
-├── plugins/                          # JARs externos (Stanford CoreNLP, telegram-decoder, java-dbx, ...)
-└── iped.exe / bin/                   # launchers
+target/release/
+├── iped-<version>/                   # app root (LocalConfig.txt → pluginFolder = ../plugins/)
+│   ├── iped.jar                      # main class: iped.app.bootstrap.Bootstrap
+│   ├── lib/                          # dependências (copy-dependencies) — sem Neo4j (não existe mais lib/neo4j/)
+│   │   ├── iped-search-app.jar       # main: iped.app.bootstrap.BootstrapUI
+│   │   ├── iped-webapi.jar           # main: iped.engine.webapi.Main
+│   │   └── iped-hashdb.jar           # main: iped.engine.hashdb.HashDBTool
+│   ├── conf/                         # configurações editáveis
+│   ├── localization/                 # bundles
+│   ├── tools/                        # ferramentas externas (Sleuthkit, Tesseract, ImageMagick, LibreOffice, yara-x, ...)
+│   ├── scripts/                      # tasks JS/Python
+│   ├── models/                       # modelos AI (DIE, NSFW, Vosk)
+│   ├── jre/                          # JRE embutido (Windows)
+│   └── iped.exe / bin/               # launchers
+└── plugins/                          # pasta de plugins, IRMÃ do app root: JARs externos (Stanford CoreNLP,
+                                      # telegram-decoder, java-dbx, ...); o plugin opcional iped-graph-neo4j
+                                      # (jar + pasta iped-graph-neo4j/) é extraído aqui pelo usuário
 ```
 
+Só os jars do **primeiro nível** de `plugins/` entram no classpath das JVMs filhas (`Bootstrap` adiciona `pluginFolder/*`); subpastas (ex.: `plugins/iped-graph-neo4j/neo4j/`) ficam fora dele. Num caso autocontido o app root é `<caso>/iped/`, logo a pasta de plugins é `<caso>/plugins/` — o `Manager` copia para lá o plugin de grafo quando ele está disponível.
+
 CLI principais (entry points):
-- `iped.app.bootstrap.Bootstrap` — processamento de caso (CLI). Flags principais: `-d`/`-data` (datasource), `-o`/`-output` (saída), `-profile` (forensic/pedo/triage/fastmode/blind), `--append`/`--continue`/`--restart`, `--yara-only` (refresca `yara:*` sobre um caso pronto; requer `-d`+`-o`, implica `--continue`; `SkipCommitedTask` deixa itens commitados fluindo e `IndexTask` os atualiza via `updateDocuments`. Ver `iped-engine/CLAUDE.md` §22 + `specs/001-yara-rules-engine/contracts/cli-yara-only.contract.md`).
+- `iped.app.bootstrap.Bootstrap` — processamento de caso (CLI). Flags principais: `-d`/`-data` (datasource), `-o`/`-output` (saída), `-profile` (forensic/pedo/triage/fastmode/blind), `--append`/`--continue`/`--restart`, `--yara-only` (refresca `yara:*` sobre um caso pronto; requer `-d`+`-o`, implica `--continue`; `SkipCommitedTask` deixa itens commitados fluindo e `IndexTask` os atualiza via `updateDocuments`. Ver `iped-engine/CLAUDE.md` §22 + `specs/001-yara-rules-engine/contracts/cli-yara-only.contract.md`), `--ignore-missing-graph-plugin` (permite `--append`/`--continue`/`-remove` num caso com dados de vínculos quando o plugin de grafo não está instalado — o grafo não é atualizado; sem a flag essas operações são recusadas. Ver `specs/010-neo4j-optional-plugin/contracts/cli-missing-plugin.contract.md`).
 - `iped.app.bootstrap.BootstrapUI` — UI de busca/análise.
 - `iped.engine.webapi.Main` — Web API.
 - `iped.engine.hashdb.HashDBTool` — ferramenta de base de hashes.
@@ -171,8 +178,10 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 | `iped-viewers` | Renderização de itens na UI: PDF, HTML, imagens, áudio, hex, Office (LibreOffice UNO), e-mail, CAD, multi-viewer. | [iped-viewers/CLAUDE.md](iped-viewers/CLAUDE.md) |
 | `iped-carvers` | Data carving (recuperação por assinatura) usando Aho-Corasick. | [iped-carvers/CLAUDE.md](iped-carvers/CLAUDE.md) |
 | `iped-geo` | Georreferenciamento e visualização cartográfica (Leaflet/Google Maps em JavaFX WebView, parsing KML/GPX). | [iped-geo/CLAUDE.md](iped-geo/CLAUDE.md) |
-| `iped-engine` | **Core**: orquestração, workers, indexação, busca, Sleuthkit out-of-process, configs, Web API, graph (Neo4j), scripting. | [iped-engine/CLAUDE.md](iped-engine/CLAUDE.md) |
-| `iped-app` | Empacotamento final + UI Swing principal: `Bootstrap`/`BootstrapUI`, `App` (JFrame singleton), gallery, bookmarks, filtros, AppGraphAnalytics (Neo4j+Kharon), timeline (JFreeChart), recursos de release. | [iped-app/CLAUDE.md](iped-app/CLAUDE.md) |
+| `iped-engine` | **Core**: orquestração, workers, indexação, busca, Sleuthkit out-of-process, configs, Web API, módulo de análise de vínculos (modelagem/CSVs + SPI do grafo, sem Neo4j), scripting. | [iped-engine/CLAUDE.md](iped-engine/CLAUDE.md) |
+| `iped-graph-server` | Motor Neo4j 5 embarcado (`GraphServer` Bolt, `GraphPostImport`), executado só em JVM filha; empacotado como zip consumido pelo plugin. | — |
+| `iped-graph-neo4j` | **Plugin opcional** de análise de vínculos: implementação Neo4j do SPI do grafo (Bolt, importação, lançador), zip separado `iped-graph-neo4j-<versão>.zip`. Nenhum módulo do núcleo depende dele. | [iped-graph-neo4j/CLAUDE.md](iped-graph-neo4j/CLAUDE.md) |
+| `iped-app` | Empacotamento final + UI Swing principal: `Bootstrap`/`BootstrapUI`, `App` (JFrame singleton), gallery, bookmarks, filtros, AppGraphAnalytics (Kharon + tipos neutros do grafo; só criada com o plugin), timeline (JFreeChart), recursos de release. | [iped-app/CLAUDE.md](iped-app/CLAUDE.md) |
 
 ## 9. Onde editar configurações (não código)
 
@@ -204,6 +213,8 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 | Lógica de match YARA / engine YARA-X | `iped-engine/.../task/yara/` (subpacote dedicado: `YaraScanTask`, `YaraEngine` JNA, `YaraScanner`, `YaraRulesetLoader`, `YaraReportRenderer`, `YaraInstallPaths`). O modo `--yara-only` é orquestrado pelo `Manager` normal — branches específicas vivem em `SkipCommitedTask` + `IndexTask`. |
 | Novo Configurable | `iped-engine/.../config/` |
 | Novo endpoint REST | `iped-engine/.../webapi/` |
+| Ponto de extensão do grafo (SPI `GraphServiceProvider`, tipos neutros, `GraphPluginRegistry`, `GraphPluginGuard`), modelagem/CSVs (`GraphTask`, `GraphFileWriter`) | `iped-engine/.../graph/` (nunca importar `org.neo4j` — o enforcer `ban-neo4j` e o CI falham) |
+| Implementação Neo4j do grafo (consultas Bolt, importação, lançador das JVMs filhas, empacotamento do plugin) | `iped-graph-neo4j` (+ `iped-graph-server` para o código que roda dentro do motor) |
 | UI principal (gallery, filtros, bookmarks, timeline) | `iped-app` |
 
 ## 11. Padrões de design recorrentes
@@ -245,6 +256,7 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 ## 13. Histórico recente (alta-frequência)
 
 Recentes (top `git log`):
+- **`spec 010-neo4j-optional-plugin` (4.4.0)** — Neo4j vira **plugin opcional** (`iped-graph-neo4j`, zip separado): o release padrão não traz nenhum componente Neo4j (nem `lib/neo4j/`, driver, netty/reactor, `eclipse-collections`); núcleo usa o SPI `iped.engine.graph.GraphServiceProvider` (v1) + tipos neutros; sem o plugin a etapa de grafo é pulada com 1 `WARN`, a aba "Vínculos" some, caso com grafo mostra aviso modeless e `--append`/`--continue`/`-remove` são recusados salvo `--ignore-missing-graph-plugin`. Casos criados com o plugin recebem cópia dele em `<caso>/plugins/`. Ver `iped-engine/CLAUDE.md` (graph), `iped-graph-neo4j/CLAUDE.md` e `specs/010-neo4j-optional-plugin/`.
 - **`spec 001-yara-rules-engine` (4.4.0)** — adicionada engine de regras YARA-X via `libyara-x-capi` 1.16.0 (JNA, in-process). Nova `YaraScanTask` no pipeline (entre carving e indexação), faceta UI dedicada, integração no HTML report, modo `--yara-only` para reaplicar catálogo sobre caso já processado. Ver `iped-engine/CLAUDE.md` §22 + `specs/001-yara-rules-engine/`.
 - `#2873` — fix python warnings (escapes).
 - `#2874` `#2875` — fix shutdown JavaFX (race condition em `EmbeddedScene/GlassScene`).

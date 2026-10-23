@@ -30,10 +30,10 @@ import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 
-import org.neo4j.graphdb.Node;
 
 import iped.app.ui.App;
 import iped.app.ui.Messages;
+import iped.engine.graph.GraphNode;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
@@ -136,7 +136,7 @@ public class EntitySearchDialog extends JDialog implements KeyListener, MouseLis
         }
 
         @Override
-        public boolean nodeFound(Node node) {
+        public boolean nodeFound(GraphNode node) {
             Set<Entry<String, Object>> entrySet = node.getAllProperties().entrySet();
             for (Entry<String, Object> entry : entrySet) {
                 Object value = entry.getValue();

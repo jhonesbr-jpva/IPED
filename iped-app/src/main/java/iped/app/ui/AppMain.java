@@ -21,6 +21,7 @@ import iped.engine.config.AnalysisConfig;
 import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.core.Manager;
+import iped.engine.graph.GraphPluginRegistry;
 import iped.engine.util.Util;
 import iped.io.URLUtil;
 import iped.utils.IOUtil;
@@ -181,6 +182,10 @@ public class AppMain {
             }
 
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
+
+            // resolve (and log) the optional graph plugin state once: App decides on it whether to
+            // create the link analysis tab
+            GraphPluginRegistry.get();
 
             SystemOut.println(Bootstrap.SUB_PROCESS_TEMP_FOLDER + System.getProperty("java.io.tmpdir"));
 

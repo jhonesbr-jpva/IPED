@@ -36,7 +36,6 @@ import java.util.TreeSet;
 
 import javax.swing.KeyStroke;
 
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -545,7 +544,7 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public RoaringBitmap getBookmarksUnion(Set<String> bookmarkNames) {
-        IntArrayList bookmarkIds = new IntArrayList();
+        Set<Integer> bookmarkIds = new HashSet<>();
         for (String bookmarkName : bookmarkNames) {
             bookmarkIds.add(getBookmarkId(bookmarkName));
         }
@@ -560,7 +559,7 @@ public class BitmapBookmarks implements IBookmarks {
     }
 
     public RoaringBitmap getBookmarksOrNoBookmarksUnion(Set<String> bookmarkNames) {
-        IntArrayList bookmarkIds = new IntArrayList();
+        Set<Integer> bookmarkIds = new HashSet<>();
         for (String bookmarkName : bookmarkNames) {
             bookmarkIds.add(getBookmarkId(bookmarkName));
         }

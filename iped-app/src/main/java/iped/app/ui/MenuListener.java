@@ -451,7 +451,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.resetColLayout) {
             ColumnsManagerUI.getInstance().resetToDefaultLayout();
-        } else if (e.getSource() == menu.addToGraph) {
+        } else if (e.getSource() == menu.addToGraph && App.get().appGraphAnalytics != null) {
             int[] rows = App.get().resultsTable.getSelectedRows();
             List<ItemId> items = new ArrayList<>(rows.length);
             for (int selIdx : rows) {

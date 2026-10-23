@@ -4,8 +4,9 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
     <!-- Self-contained set of jars for the out-of-process Neo4j graph server:
          this module's jar (GraphServer) + the full embedded Neo4j 5 engine and its
-         transitive deps, including antlr4-runtime 4.13.x. Unpacked into lib/neo4j/
-         and used only as the classpath of the GraphServer / neo4j-admin child JVMs. -->
+         transitive deps, including antlr4-runtime 4.13.x. Unpacked into the home of the
+         optional iped-graph-neo4j plugin (iped-graph-neo4j/neo4j/) and used only as the
+         classpath of the GraphServer / GraphPostImport / neo4j-admin child JVMs. -->
     <id>neo4j</id>
     <formats>
         <format>zip</format>

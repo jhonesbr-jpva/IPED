@@ -15,9 +15,10 @@ import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.data.IPEDSource;
+import iped.engine.graph.GraphDatabaseGenerator;
+import iped.engine.graph.GraphDatabaseGenerator.ImportListener;
 import iped.engine.graph.GraphFileWriter;
-import iped.engine.graph.GraphGenerator;
-import iped.engine.graph.GraphImportRunner.ImportListener;
+import iped.engine.graph.GraphPluginRegistry;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
@@ -126,7 +127,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                         .collect(Collectors.toList());
                 File preparedCSVs = new File(graphHome, GraphTask.CSVS_DIR);
                 GraphFileWriter.prepareMultiCaseCSVs(preparedCSVs, csvParents);
-                GraphGenerator graphGenerator = new GraphGenerator();
+                GraphDatabaseGenerator graphGenerator = GraphPluginRegistry.get().getDatabaseGenerator();
                 return graphGenerator.generate(this, graphHome, preparedCSVs.listFiles());
             } finally {
                 progress.close();

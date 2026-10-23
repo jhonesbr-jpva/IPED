@@ -8,6 +8,7 @@ import iped.app.ui.App;
 import iped.app.ui.FileProcessor;
 import iped.app.ui.Messages;
 import iped.engine.data.ItemId;
+import iped.engine.graph.GraphNode;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.NodeQueryListener;
@@ -25,7 +26,7 @@ class ShowEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQuer
     }
 
     @Override
-    public boolean nodeFound(org.neo4j.graphdb.Node node) {
+    public boolean nodeFound(GraphNode node) {
         evidenceId = (String) node.getProperty("evidenceId");
         return true;
     }

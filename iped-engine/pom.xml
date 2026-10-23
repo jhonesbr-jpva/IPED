@@ -275,21 +275,10 @@
             <artifactId>libphonenumber</artifactId>
             <version>8.9.14</version>
         </dependency>
-        <!-- Java 21 migration (003): the embedded Neo4j 5 engine runs out-of-process (module
-             iped-graph-server, isolated antlr 4.13.x). This process only needs the graphdb-api
-             interfaces (the Bolt-snapshot boundary type, see BoltNode/BoltRelationship/BoltPath)
-             and the Bolt driver to talk to GraphServer. It must NOT pull the full engine, which
-             would drag antlr 4.13.x onto this classpath and clash with libfqlite's antlr 4.9.2. -->
-        <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>neo4j-graphdb-api</artifactId>
-            <version>5.26.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.neo4j.driver</groupId>
-            <artifactId>neo4j-java-driver</artifactId>
-            <version>5.26.0</version>
-        </dependency>
+        <!-- Feature 010: no Neo4j dependency here. Link analysis is reached only through the graph
+             extension point (iped.engine.graph.GraphServiceProvider) implemented by the optional
+             plugin module iped-graph-neo4j (Bolt driver, import, isolated Neo4j engine). The
+             maven-enforcer-plugin below bans org.neo4j artifacts from this module. -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-jdk15on</artifactId>
@@ -333,4 +322,37 @@
             <version>7.0.2</version>
         </dependency>
      </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Feature 010: the core must never depend on Neo4j again (directly or transitively);
+                 link analysis comes only from the optional iped-graph-neo4j plugin. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>ban-neo4j</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.neo4j:*</exclude>
+                                        <exclude>org.neo4j.driver:*</exclude>
+                                    </excludes>
+                                    <searchTransitive>true</searchTransitive>
+                                    <message>Neo4j must not be a dependency of the IPED core: it belongs to the optional iped-graph-neo4j plugin (feature 010).</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

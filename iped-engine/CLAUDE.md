@@ -14,7 +14,7 @@
 - **Sleuthkit out-of-process**: cliente/servidor C++ isola crashes nativos.
 - **Relatórios**: HTML, CSV, casos portáteis, bookmarks.
 - **Web API**: REST/Swagger (Jersey + Grizzly) para busca remota de casos.
-- **Graph**: análise de relacionamentos em Neo4j (chamadas, e-mails, mensagens, redes wireless).
+- **Graph**: análise de vínculos (chamadas, e-mails, mensagens, redes wireless): modelagem e CSVs no núcleo; o banco/consultas vêm do **plugin opcional** `iped-graph-neo4j` através do SPI `GraphServiceProvider` (o engine não depende de Neo4j — ver §23).
 - **Extensibilidade**: scripts JavaScript (Nashorn) e Python (Jep) para tarefas customizadas.
 
 Versão: `4.4.0-SNAPSHOT`. Java 21+. Lucene 9.2.0, Tika 2.4.0, Sleuthkit 4.12.0.p1.
@@ -39,7 +39,7 @@ iped/engine/
 ├── lucene/       # AppAnalyzer, StandardASCIIAnalyzer, ConfiguredFSDirectory, CustomIndexDeletionPolicy
 ├── search/       # IPEDSearcher, ItemSearcher, LuceneSearchResult, QueryBuilder, SimilarImagesSearch
 ├── io/           # ParsingReader, ParsingProcess (out-of-process), MetadataInputStreamFactory, FragmentingReader
-├── graph/        # GraphTask, GraphService (Neo4j), Cypher templates
+├── graph/        # GraphTask, GraphFileWriter (CSVs), SPI do grafo (GraphServiceProvider, GraphService, tipos neutros), GraphPluginRegistry, GraphPluginGuard, Cypher templates
 ├── webapi/       # Jersey REST endpoints: Search, Sources, Content, Text, Thumbnail, Bookmarks
 ├── preview/      # PreviewRepositoryManager, MinIO, filesystem
 ├── localization/ # Messages bundle
@@ -132,7 +132,7 @@ public abstract class AbstractTask {
 | 20 | `JumpListTask`, `EmbeddedDiskProcessTask`, `DuplicateTask`, `EntropyTask`, `QRCodeTask` | Análises auxiliares. |
 | 21 | **`IndexTask`** | Cria `Document` Lucene e adiciona ao `IndexWriter`. |
 | 22 | `ElasticSearchIndexTask` | (opcional) indexa em paralelo no OpenSearch/ES. |
-| 23 | `GraphTask` | Constrói grafo Neo4j. |
+| 23 | `GraphTask` | Gera os CSVs de vínculos e, no `finish()`, o banco de grafo via plugin. Sem o plugin de grafo fica desabilitada (1 `WARN`, nenhum `neo4j/`). |
 | 24 | `HTMLReportTask`, `ExportFileTask`, `ExportCSVTask` | Relatórios finais. |
 | 25 | `ScriptTask`, `PythonTask` | Tarefas customizadas. |
 | 26 | `MinIOTask` | Upload para storage. |
@@ -282,7 +282,6 @@ Veja exemplos: `ExampleScriptTask.js`, `PythonScriptTask.py`, `AgeEstimationTask
 | `org.sleuthkit:sleuthkit` | 4.12.0.p1 | Imagens forenses |
 | `org.apache.pdfbox:pdfbox(+tools+xmpbox)`, `jbig2-imageio` | 2.0.27 / 3.0.4 | PDF |
 | `org.xerial:sqlite-jdbc` | 3.41.2.2 | SQLite |
-| `org.neo4j:neo4j-graphdb-api` + `org.neo4j.driver:neo4j-java-driver` | 5.26.0 | Graph (engine full Neo4j 5 isolado no módulo `iped-graph-server` → `lib/neo4j/`, acessado **out-of-process via Bolt**; o engine só carrega a API + o driver) |
 | `org.glassfish.jersey.containers:jersey-container-grizzly2-servlet` + jersey-hk2 | 2.41 | Web API |
 | `io.swagger:swagger-jersey2-jaxrs` | 1.6.10 | Swagger |
 | `org.glassfish.jersey.media:jersey-media-json-jackson` | 2.41 | JSON |
@@ -501,7 +500,27 @@ mvn -pl iped-engine -Dtest='Yara*' test
 
 Sem a engine nativa, os testes `YaraEngineTest`/`YaraScanTaskIntegrationTest` skipam via `Assume`; os demais (sem dependência nativa) sempre rodam.
 
-## 23. Checklist de PR
+## 23. Análise de vínculos (graph) e o plugin opcional (feature 010)
+
+O engine **não depende de Neo4j** (nem `import org.neo4j`, nem dependência Maven — o `maven-enforcer-plugin` `ban-neo4j` deste POM falha o build e o CI verifica o release). O motor de grafo é fornecido pelo plugin opcional `iped-graph-neo4j` ([iped-graph-neo4j/CLAUDE.md](../iped-graph-neo4j/CLAUDE.md)). Contratos em `specs/010-neo4j-optional-plugin/contracts/`.
+
+**Ponto de extensão (SPI v1)** — pacote `iped.engine.graph`:
+- `GraphServiceProvider` — descoberto por `ServiceLoader` (`META-INF/services/iped.engine.graph.GraphServiceProvider` no jar do plugin, que está em `pluginFolder/*`). `CURRENT_SPI_VERSION = 1`: o plugin só é aceito se `getSpiVersion()` for igual (números de release são informativos). Incrementar a constante a cada mudança incompatível em `GraphService`, `GraphDatabaseGenerator`, tipos de modelo ou no próprio SPI; métodos `default` aditivos não incrementam.
+- `GraphService` (consultas/ciclo de vida; textos de consulta no dialeto do provedor — Cypher 5 hoje) e `GraphDatabaseGenerator` (importação dos CSVs + pós-importação).
+- Tipos neutros: `GraphLabel`, `GraphRelationshipType` (igualdade por nome), `GraphEntity`/`GraphNode` (`getDegree()` = snapshot)/`GraphRelationship`/`GraphPath` (snapshots somente leitura; `getProperty` ausente → `null`), `GraphQueryException` (unchecked, mensagem exibível), `GraphPluginException`.
+
+**`GraphPluginRegistry`** — resolve o plugin **uma vez por JVM** (`get()`), chamado logo após `loadConfigurables` em `iped.app.processing.Main` e `AppMain`. Estados `ABSENT` / `AVAILABLE` / `REJECTED` (`MULTIPLE_COPIES` — contados pelos descritores de serviço **antes** do `ServiceLoader`, que deduplica por nome de classe —, `SPI_MISMATCH`, `INCOMPLETE`, `LOAD_ERROR`), uma linha de log (`INFO` loaded/not installed, `ERROR` rejected). `getGraphService()`/`getDatabaseGenerator()` são cacheados; `getPluginJar()`/`getPluginHome()` (pasta com o nome do plugin ao lado do jar). `resetForTesting(ClassLoader)` só para testes. `GraphServiceFactoryImpl` continua como fachada (lança `IllegalStateException` sem plugin).
+
+**Degradação sem plugin**:
+- `GraphTask.init`: `enabled = enableGraphGeneration && plugin disponível`; um único `WARN` (flag estática) e nenhum `neo4j/` criado. `TaskInstaller.xml`/perfis antigos continuam válidos.
+- `GraphPluginGuard` (chamado no início de `Manager.process()`, antes de qualquer escrita): `--append`/`--continue`/`-remove` num caso com `neo4j/data` ou `neo4j/csv` → `IPEDException` localizada (`GraphPlugin.MissingForCaseModification`), salvo `--ignore-missing-graph-plugin` (`CmdLineArgs#isIgnoreMissingGraphPlugin`, `WARN` + mensagem `MSG` no console); `--yara-only` (que faz `isContinue()==true`) é testado antes e não é afetado; `--restart` sem plugin apaga `neo4j/`. Em `removeEvidence` sem plugin o banco não é tocado, mas os CSVs são limpos.
+- `Manager.copyGraphPluginIfMissing`: com o plugin disponível, caso novo (ou `--append` em caso sem cópia) recebe o jar + a pasta do plugin em `<caso>/plugins/` (o app root do caso é `<caso>/iped`, então `pluginFolder = ../plugins/` resolve para lá).
+
+**Determinismo**: `GraphFileWriter` grava CSVs byte a byte iguais aos de antes da feature (`GraphFileWriterTest` + golden em `src/test/resources/iped/engine/graph/golden/`, com `.gitattributes` `-text`). O nome do arquivo de argumentos da importação (`GraphFileWriter.ARGS_FILE_NAME`) mora aqui; o plugin o reutiliza.
+
+**Testes**: `GraphPluginRegistryTest` (todos os estados, provedores de teste em `src/test/java/iped/engine/graph/testproviders/` + descritores em `src/test/resources/iped/engine/graph/providers/`), `GraphPluginGuardTest` (matriz da tabela B do contrato), `GraphFileWriterTest` (golden).
+
+## 24. Checklist de PR
 
 - [ ] Nova task tem `Config` correspondente (mesmo que minimal).
 - [ ] `IPEDConfig.txt` documenta a nova flag.

@@ -21,9 +21,9 @@ import org.neo4j.graphdb.GraphDatabaseService;
  * The main IPED process keeps antlr4-runtime 4.9.2 (required by libfqlite). The
  * Neo4j 5 Cypher engine needs antlr 4.13.x, whose ATN serialization is incompatible
  * with 4.9.x. To avoid that hard classpath clash, the embedded engine runs here, in a
- * dedicated JVM whose classpath ({@code lib/neo4j/}) carries antlr 4.13.x and no
- * libfqlite. The IPED UI talks to this process through the Neo4j Bolt driver
- * (see {@code iped.engine.graph.GraphServiceImpl}).
+ * dedicated JVM whose classpath (the {@code iped-graph-neo4j/neo4j/} home folder of the
+ * optional graph plugin) carries antlr 4.13.x and no libfqlite. IPED talks to this process
+ * through the Neo4j Bolt driver (see {@code iped.graph.neo4j.Neo4jGraphService}).
  * </p>
  *
  * <p>

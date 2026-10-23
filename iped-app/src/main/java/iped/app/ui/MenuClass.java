@@ -325,11 +325,14 @@ public class MenuClass extends JPopupMenu {
         openViewfile.setEnabled(item != null && (item.getViewFile() != null || item.hasPreview()));
         this.add(openViewfile);
 
-        this.addSeparator();
-        addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
-        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
-        addToGraph.addActionListener(menuListener);
-        this.add(addToGraph);
+        // link analysis (graph) actions only exist when the optional graph plugin is available
+        if (App.get().appGraphAnalytics != null) {
+            this.addSeparator();
+            addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+            addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_FROM) != null && item.getMetadata().get(ExtraProperties.COMMUNICATION_TO) != null);
+            addToGraph.addActionListener(menuListener);
+            this.add(addToGraph);
+        }
 
         this.addSeparator();
 

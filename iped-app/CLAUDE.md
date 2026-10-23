@@ -41,7 +41,7 @@ iped-app/
     ├── config/                          # LogConfiguration, XMLResultSetViewerConfiguration
     ├── processing/                      # Main (entry), CmdLineArgsImpl, ui/ProgressFrame, ui/ProgressConsole
     ├── metadata/                        # MetadataSearch, ValueCount, RangeCount, MoneyCount, LookupOrd
-    ├── graph/                           # AppGraphAnalytics (Neo4j+Kharon) + renderers/
+    ├── graph/                           # AppGraphAnalytics (Kharon + tipos neutros do grafo; só existe com o plugin de grafo) + renderers/
     ├── timelinegraph/                   # IpedChartsPanel, IpedXYPlot, eixos, swingworkers, cache
     └── ui/                              # App + ~150 classes Swing
         ├── ai/                          # filtros de IA (nudity/CSAM)
@@ -72,7 +72,7 @@ Lança uma **JVM filha** com classpath e flags montados dinamicamente. Responsab
 4. **Classpath dinâmico**:
    - `iped.jar` (ou `lib/iped-search-app.jar` quando `iped.ui.report` está setado).
    - `pluginConfig.getTskJarFile()` — JAR do Sleuthkit.
-   - `pluginConfig.getPluginFolder() + "/*"` — todos os JARs em `plugins/`.
+   - `pluginConfig.getPluginFolder() + "/*"` — todos os JARs do **primeiro nível** de `plugins/` (pasta irmã do app root: `pluginFolder = ../plugins/`). Subpastas ficam fora do classpath — é assim que o plugin de grafo isola o motor Neo4j em `plugins/iped-graph-neo4j/neo4j/`.
    - JARs do UNO (LibreOffice) via `LibreOfficeFinder` + `UNOLibFinder.addUNOJars(...)`.
 5. **Flags JVM fixas** (sempre passadas):
    ```
@@ -178,7 +178,7 @@ Roda na JVM filha de `BootstrapUI`. Sobe a UI:
 
 **Visualização**:
 - `ViewerController` — orquestra `MultiViewer` (de `iped-viewers`) + viewers específicos.
-- `AppGraphAnalytics` — grafo Neo4j interativo.
+- `AppGraphAnalytics` — grafo interativo (aba "Vínculos"); criado em `App.createGUI` **só** se `GraphPluginRegistry.get().isAvailable()` — sem o plugin `appGraphAnalytics`/`graphDock` ficam `null` e o filtro `FilterSelectedEdges` não é registrado.
 - `IpedChartsPanel` — timeline.
 - Aba "Map" — fornecida por `MapViewer` (em `iped-geo`).
 
@@ -201,13 +201,15 @@ App.get().init(...)
 
 ## 5. Visualizações especializadas
 
-### `graph/` — Análise de comunicações (Neo4j)
+### `graph/` — Análise de comunicações (plugin de grafo)
 
-Renderização interativa via **Kharon** (`com.github.filipesimoes:kharon:0.1.6`).
+Renderização interativa via **Kharon** (`com.github.filipesimoes:kharon:0.1.6`). Desde a feature 010 nenhuma classe do `iped-app` importa `org.neo4j` (enforcer `ban-neo4j` no POM + verificação no CI): a UI usa só o `GraphService` e os tipos neutros do SPI do engine (`GraphNode`, `GraphRelationship`, `GraphPath`, `GraphLabel`, `GraphQueryException`), implementados pelo plugin opcional `iped-graph-neo4j`.
 
 Classes-chave:
-- `AppGraphAnalytics` — componente Swing principal; integra com Neo4j via `GraphService` (engine).
-- `GraphModel` — converte nós Neo4j em `Node` da Kharon (sizing, labels, types).
+- `AppGraphAnalytics` — componente Swing principal; integra com o grafo via `GraphService` (fachada `GraphServiceFactoryImpl` → `GraphPluginRegistry`).
+- `GraphModel` — converte `GraphNode` em `Node` da Kharon (sizing pelo `getDegree()` snapshot, labels, types; propriedade ausente = `null`).
+- `LoadGraphDatabaseWorker` — inicia o serviço sobre `<caso>/iped/neo4j`; no multi-caso gera o grafo combinado com `GraphPluginRegistry.get().getDatabaseGenerator()`.
+- Sem o plugin: `MenuClass` omite "adicionar ao grafo", `UICaseDataLoader` não chama `initGraphService()` e chama `GraphPluginNotice.showIfNeeded(appCase)` (pacote `ui`): diálogo **modeless**, uma vez por sessão, quando alguma fonte do caso tem `iped/neo4j/data` (textos `GraphPlugin.Notice.*`/`GraphPlugin.Reason.*` em `iped-desktop-messages*`).
 - `GraphSidePanel`, `GraphStatusBar`, `GraphToolBar` — UI auxiliar.
 - `GraphVizIpedResolver` — usa GraphViz (em `tools/graphviz/`) para layouts.
 - Renderers por tipo de nó em [`graph/renderers/`](src/main/java/iped/app/graph/renderers): `PersonNodeRenderer`, `EmailNodeRenderer`, `PhoneNodeRenderer`, `CarNodeRenderer`, `MoneyNodeRenderer`, etc.
@@ -298,10 +300,10 @@ Estatísticas sobre valores únicos por campo (counts, ranges, money).
 - `copy-localization` — `resources/localization/` em `${release.dir}/localization`.
 - `copy-licenses` — `licenses/` em `${release.dir}/licenses`.
 - `copy-config` — `resources/config/` em `${release.dir}/` (vira `IPEDConfig.txt`, `LocalConfig.txt`, `conf/`, `profiles/`).
-- `copy-plugin-resources` — `resources/plugins/` em `${plugin.dir}`.
+- `copy-plugin-resources` — `resources/plugins/` em `${plugin.dir}` (= `${release.dir}/../plugins`, pasta **irmã** de `iped-<versão>/`). O plugin de grafo **não** é copiado: o `iped-app` não depende de `iped-graph-neo4j` (zip publicado à parte).
 - `copy-scripts` — `resources/scripts/` em `${release.dir}/scripts`.
 
-### Resultado final em `target/release/iped-4.4.0/`
+### Resultado final em `target/release/iped-4.4.0/` (a pasta de plugins é a irmã `target/release/plugins/`)
 
 ```
 ├── iped.jar                         (Bootstrap)
@@ -318,7 +320,6 @@ Estatísticas sobre valores únicos por campo (counts, ranges, money).
 ├── profiles/                        (presets)
 ├── scripts/{tasks,parsers,regex_validators}/
 ├── localization/
-├── plugins/
 ├── models/                          (DIE, NSFW, Vosk)
 ├── licenses/
 ├── bin/, help/, htmlreport/
@@ -448,7 +449,7 @@ Estenda `BookmarksController` ou adicione listeners em `BookmarksTreeListener`. 
 ## 12. Dependências externas (runtime)
 
 Cargo de plugins/tools que o release espera encontrar:
-- **Plugins** (`plugins/`): Stanford CoreNLP 3.8.0, java-dbx 1.1-p6, telegram-decoder-impl 1.0.14, qualquer drop-in do usuário (TSK jar customizado, PhotoDNA jar restrito, etc.). Carregados pelo `PluginConfig` (engine).
+- **Plugins** (`plugins/`, irmã do app root): Stanford CoreNLP 3.8.0, java-dbx 1.1-p6, telegram-decoder-impl 1.0.14, qualquer drop-in do usuário (TSK jar customizado, PhotoDNA jar restrito, etc.) e, opcionalmente, o plugin de análise de vínculos `iped-graph-neo4j-<versão>.jar` + `iped-graph-neo4j/` (extraído do zip do plugin). Carregados pelo `PluginConfig` (engine); o plugin de grafo é resolvido pelo `GraphPluginRegistry`.
 - **Tools** (`tools/`): RegRipper, ImageMagick, Tesseract, MPlayer, GraphViz, libpff/libesedb/libagdb/libmsiecf/evt*export/sccainfo/rifiuti2, Sleuthkit DLLs, CaffViewer, LibreOffice zip.
 - **Models** (`models/`): DIE (rfdie.dat), NSFW (Yahoo Keras h5), Vosk pt/en.
 - **JRE**: `jre/` (Windows) — Liberica 21.0.11 Full FX (artefato `java:jre:21.0.11` do repo iped-maven, descompactado pela execution `unpack-jre`).

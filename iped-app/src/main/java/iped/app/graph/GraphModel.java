@@ -12,10 +12,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.kharon.Node;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.NotFoundException;
 
 import iped.engine.graph.GraphConfiguration;
+import iped.engine.graph.GraphLabel;
+import iped.engine.graph.GraphNode;
 import iped.properties.BasicProps;
 import iped.properties.ExtraProperties;
 
@@ -31,17 +31,17 @@ public class GraphModel {
             GraphConfiguration.PHONE_LABEL, GraphConfiguration.DATASOURCE_LABEL,
             GraphConfiguration.CONTACT_GROUP_LABEL);
 
-    public Node convert(org.neo4j.graphdb.Node neo4jNode) {
-        String nodeId = Long.toString(neo4jNode.getId());
+    public Node convert(GraphNode graphNode) {
+        String nodeId = Long.toString(graphNode.getId());
         Node node = new Node(nodeId);
 
-        String[] fieldNames = getDefaultFieldNames(neo4jNode);
-        String type = getFullType(neo4jNode);
+        String[] fieldNames = getDefaultFieldNames(graphNode);
+        String type = getFullType(graphNode);
         node.setType(type);
-        String label = getLabel(neo4jNode, fieldNames);
+        String label = getLabel(graphNode, fieldNames);
         node.setLabel(label);
 
-        int dynSize = (int) (2 * Math.ceil(Math.log(neo4jNode.getDegree() + 1)));
+        int dynSize = (int) (2 * Math.ceil(Math.log(graphNode.getDegree() + 1)));
 
         if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
             node.setSize(20 + dynSize);
@@ -54,9 +54,9 @@ public class GraphModel {
         return node;
     }
 
-    private String getFullType(org.neo4j.graphdb.Node neo4jNode) {
+    private String getFullType(GraphNode graphNode) {
         Set<String> labels = new HashSet<>();
-        Iterator<Label> iterator = neo4jNode.getLabels().iterator();
+        Iterator<GraphLabel> iterator = graphNode.getLabels().iterator();
         while (iterator.hasNext()) {
             String type = iterator.next().name();
             labels.add(type);
@@ -64,9 +64,9 @@ public class GraphModel {
         return labels.stream().sorted().collect(Collectors.joining(","));
     }
 
-    public String getType(org.neo4j.graphdb.Node neo4jNode) {
+    public String getType(GraphNode graphNode) {
         Set<String> labels = new HashSet<>();
-        Iterator<Label> iterator = neo4jNode.getLabels().iterator();
+        Iterator<GraphLabel> iterator = graphNode.getLabels().iterator();
         String type = null;
         while (iterator.hasNext()) {
             type = iterator.next().name();
@@ -82,9 +82,9 @@ public class GraphModel {
         return type;
     }
 
-    public String[] getDefaultFieldNames(org.neo4j.graphdb.Node neo4jNode) {
+    public String[] getDefaultFieldNames(GraphNode graphNode) {
         // TODO Move to configuration file
-        String type = getType(neo4jNode);
+        String type = getType(graphNode);
         if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
             return new String[] { BasicProps.NAME, BasicProps.EVIDENCE_UUID, "cpf", "cnpj" };
         } else if (type.contains(GraphConfiguration.DOCUMENT_LABEL)) {
@@ -103,7 +103,7 @@ public class GraphModel {
         } else if (type.equals(GraphConfiguration.CONTACT_GROUP_LABEL)) {
             return new String[] { BasicProps.NAME };
         } else {
-            Iterable<String> keys = neo4jNode.getPropertyKeys();
+            Iterable<String> keys = graphNode.getPropertyKeys();
             List<String> props = new ArrayList<>();
 
             for (String key : keys) {
@@ -115,15 +115,15 @@ public class GraphModel {
         }
     }
 
-    public String getLabel(org.neo4j.graphdb.Node neo4jNode, String... labels) {
+    public String getLabel(GraphNode graphNode, String... labels) {
         for (String label : labels) {
-            try {
-                return neo4jNode.getProperty(label).toString();
-            } catch (NotFoundException e) {
-                // Nothing to do.
+            // absent properties are null: try the next field
+            Object value = graphNode.getProperty(label);
+            if (value != null) {
+                return value.toString();
             }
         }
-        return neo4jNode.getAllProperties().values().iterator().next().toString();
+        return graphNode.getAllProperties().values().iterator().next().toString();
     }
 
     public Point calculateRelativePosition(Node source, Node newNode, int nodeDegree) {

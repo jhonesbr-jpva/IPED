@@ -21,9 +21,10 @@ import org.neo4j.graphdb.Transaction;
 
 /**
  * Runs the post-import graph operations against the embedded Neo4j 5 engine, in the isolated graph
- * JVM (antlr 4.13.x). Invoked once by {@code iped.engine.graph.GraphGenerator} after the bulk CSV
- * import. The logic was moved here (from GraphGenerator) so the embedded Cypher engine never loads
- * in the main IPED process, which keeps antlr 4.9.2 for libfqlite. Java 21 migration (003).
+ * JVM (antlr 4.13.x). Invoked once by {@code iped.graph.neo4j.Neo4jDatabaseGenerator} (optional
+ * iped-graph-neo4j plugin) after the bulk CSV import. The logic lives here so the embedded Cypher
+ * engine never loads in the main IPED process, which keeps antlr 4.9.2 for libfqlite. Java 21
+ * migration (003).
  *
  * <p>
  * Arguments: {@code <dbHome> <dbName> <defaultRelationship> <postGenStatementsFile>}. The statements

@@ -1,16 +1,24 @@
 package iped.engine.graph;
 
+/**
+ * Entry point used by the graph UI and the {@code Manager} to obtain the {@link GraphService}. The
+ * service is provided by the graph plugin through {@link GraphPluginRegistry} (one instance per JVM).
+ */
 public class GraphServiceFactoryImpl implements GraphServiceFactory {
 
     private static GraphServiceFactory instance;
-    private static GraphService serviceInstance;
 
+    /**
+     * @throws IllegalStateException
+     *             if the graph plugin is not available
+     */
     @Override
-    public synchronized GraphService getGraphService() {
-        if (serviceInstance == null) {
-            serviceInstance = new GraphServiceImpl();
+    public GraphService getGraphService() {
+        GraphPluginRegistry registry = GraphPluginRegistry.get();
+        if (!registry.isAvailable()) {
+            throw new IllegalStateException("Graph plugin not available");
         }
-        return serviceInstance;
+        return registry.getGraphService();
     }
 
     public synchronized static GraphServiceFactory getInstance() {

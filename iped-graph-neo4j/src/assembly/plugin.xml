@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+    <!-- iped-graph-neo4j-<version>.zip, to be extracted INSIDE the IPED plugin folder:
+           iped-graph-neo4j-<version>.jar   main classpath (plugin + relocated Bolt driver)
+           iped-graph-neo4j/                plugin home, never on the main classpath:
+             neo4j/*.jar                    isolated Neo4j engine (iped-graph-server distribution)
+             plugin.properties, LICENSE.txt, ThirdParty.txt, README.md -->
+    <id>plugin</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <files>
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}.jar</source>
+            <outputDirectory>/</outputDirectory>
+        </file>
+    </files>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/plugin-home</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>

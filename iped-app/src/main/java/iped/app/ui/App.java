@@ -148,6 +148,7 @@ import iped.engine.data.Category;
 import iped.engine.data.IPEDMultiSource;
 import iped.engine.data.IPEDSource;
 import iped.engine.data.ItemId;
+import iped.engine.graph.GraphPluginRegistry;
 import iped.engine.search.IPEDSearcher;
 import iped.engine.search.ImageSimilarityLowScoreFilter;
 import iped.engine.search.ImageSimilarityScorer;
@@ -635,7 +636,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        appGraphAnalytics = new AppGraphAnalytics();
+        // link analysis (graph) UI only exists when the optional graph plugin is available
+        if (GraphPluginRegistry.get().isAvailable()) {
+            appGraphAnalytics = new AppGraphAnalytics();
+        }
 
         viewerController = new ViewerController();
 
@@ -831,7 +835,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         filterManager.addQueryFilterer(similarDocumentFilterer);
         filterManager.addQueryFilterer(TableHeaderFilterManager.get());
         filterManager.addResultSetFilterer(bookmarksListener);
-        filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
+        if (appGraphAnalytics != null) {
+            filterManager.addResultSetFilterer(FilterSelectedEdges.getInstance());
+        }
         filterManager.addResultSetFilterer(duplicatesFilterer);
         filterManager.addResultSetFilterer(similarImagesFilterer);
         filterManager.addResultSetFilterer(similarFacesSearchFilterer);
@@ -978,7 +984,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
-        graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+        if (appGraphAnalytics != null) {
+            graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+        }
 
         CCheckBox butToggleVideoFramesMode = new CCheckBox(Messages.getString("Gallery.ToggleVideoFrames"), IconUtil.getToolbarIcon("video", resPath)) {
             protected void changed() {

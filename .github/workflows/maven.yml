@@ -74,6 +74,29 @@ jobs:
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+    - name: Verify no Neo4j in standard release
+      # Feature 010: Neo4j ships only in the optional iped-graph-neo4j plugin (separate artifact below).
+      shell: bash
+      run: |
+          found=$(find target/release -iname '*neo4j*')
+          if [ -n "$found" ]; then
+            echo "Neo4j components found in the standard release:"
+            echo "$found"
+            exit 1
+          fi
+          if grep -rl "import org.neo4j" iped-engine/src iped-app/src; then
+            echo "org.neo4j imports found in the IPED core sources (above)"
+            exit 1
+          fi
+          echo "OK: no Neo4j in target/release nor in the iped-engine/iped-app sources"
+
+    - name: Upload graph plugin
+      uses: actions/upload-artifact@v4
+      with:
+        name: iped-graph-neo4j-${{ github.sha }}
+        path: iped-graph-neo4j/target/iped-graph-neo4j-*.zip
+
     - shell: bash
       run:
         cd target && mv release iped-snapshot-$GITHUB_SHA && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$GITHUB_SHA

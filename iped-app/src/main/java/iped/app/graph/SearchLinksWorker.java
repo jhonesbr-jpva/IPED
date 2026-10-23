@@ -13,11 +13,11 @@ import java.util.stream.Collectors;
 
 import javax.swing.SwingWorker;
 
-import org.neo4j.graphdb.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped.app.ui.Messages;
+import iped.engine.graph.GraphPath;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.PathQueryListener;
@@ -93,7 +93,7 @@ public class SearchLinksWorker extends SwingWorker<Void, Void> implements PathQu
     }
 
     @Override
-    public boolean pathFound(Path path) {
+    public boolean pathFound(GraphPath path) {
         app.addPath(path, this.graphElements);
         found++;
         app.setStatus(Messages.getString("GraphAnalysis.LinksSearching", (done / total) * 100));

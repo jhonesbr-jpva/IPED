@@ -26,26 +26,6 @@
             <artifactId>iped-geo</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- Out-of-process Neo4j graph server distribution (zip). Declared only so the reactor
-             builds it before iped-app and the unpack-graph-server execution can resolve it; the
-             zip type keeps it off this module's classpath (and excludeTypes=zip keeps it out of
-             the flat lib/). Java 21 migration (003). -->
-        <dependency>
-            <groupId>iped</groupId>
-            <artifactId>iped-graph-server</artifactId>
-            <version>${project.version}</version>
-            <classifier>neo4j</classifier>
-            <type>zip</type>
-            <!-- The zip already bundles the full embedded Neo4j stack (unpacked into lib/neo4j/).
-                 Exclude its transitive POM deps so the embedded engine + antlr 4.13.x do NOT also
-                 leak into the flat lib/ (which keeps antlr 4.9.2 for libfqlite). -->
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
       	<dependency>
           <groupId>com.beust</groupId>
           <artifactId>jcommander</artifactId>
@@ -73,9 +53,37 @@
 	  		<version>5d6b903557dac49a925a7a62d5c6592bd07482c5</version>
 	  	</dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
+            <!-- Feature 010: the standard release must never ship Neo4j (directly or transitively);
+                 link analysis comes only from the optional iped-graph-neo4j plugin. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>ban-neo4j</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.neo4j:*</exclude>
+                                        <exclude>org.neo4j.driver:*</exclude>
+                                    </excludes>
+                                    <searchTransitive>true</searchTransitive>
+                                    <message>Neo4j must not be a dependency of the IPED core: it belongs to the optional iped-graph-neo4j plugin (feature 010).</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -130,31 +138,6 @@
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <!-- Out-of-process Neo4j graph stack (embedded engine + antlr 4.13.x), unpacked
-                         into lib/neo4j/ and used only as the classpath of the GraphServer /
-                         GraphPostImport / neo4j-admin child JVMs. Java 21 migration (003). -->
-                    <execution>
-                        <id>unpack-graph-server</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>iped</groupId>
-                                    <artifactId>iped-graph-server</artifactId>
-                                    <version>${project.version}</version>
-                                    <classifier>neo4j</classifier>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <!-- The zip stores jars under a neo4j/ prefix; unpack into lib/
-                                         so they land in lib/neo4j/ (see Neo4jChildLauncher). -->
-                                    <outputDirectory>${lib.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -629,8 +612,10 @@
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
                             <excludeScope>provided</excludeScope>
-                            <!-- The iped-graph-server distribution is a zip; it is unpacked into
-                                 lib/neo4j/ (unpack-graph-server below), not copied flat into lib/. -->
+                            <!-- Only jars belong in the flat lib/: zip distributions are never
+                                 copied there. The Neo4j engine is no longer part of the standard
+                                 release at all (feature 010): it ships inside the optional
+                                 iped-graph-neo4j plugin, which this module does not depend on. -->
                             <excludeTypes>zip</excludeTypes>
                         </configuration>
                     </execution>

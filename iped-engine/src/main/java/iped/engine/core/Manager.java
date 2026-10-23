@@ -66,6 +66,8 @@ import iped.engine.data.Item;
 import iped.engine.datasource.ItemProducer;
 import iped.engine.datasource.SleuthkitReader;
 import iped.engine.graph.GraphFileWriter;
+import iped.engine.graph.GraphPluginGuard;
+import iped.engine.graph.GraphPluginRegistry;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 import iped.engine.graph.GraphTask;
@@ -245,6 +247,11 @@ public class Manager {
         output = output.getCanonicalFile();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+
+        // before anything is written to the case: protect its link analysis data when the graph plugin
+        // is not available (refuse or warn on modification, clean up on --restart)
+        GraphPluginGuard.checkCaseModification(args, output);
+        GraphPluginGuard.handleRestart(args, output);
 
         prepareOutputFolder();
 
@@ -487,13 +494,16 @@ public class Manager {
         LOGGER.log(CONSOLE, "Deleting connections from graph...");
         GraphService graphService = null;
         try {
-            if (new File(output, GraphTask.DB_DATA_PATH).exists()) {
+            if (!new File(output, GraphTask.DB_DATA_PATH).exists()) {
+                LOGGER.log(CONSOLE, "Graph database not found.");
+            } else if (!GraphPluginRegistry.get().isAvailable()) {
+                // only reached with --ignore-missing-graph-plugin (see GraphPluginGuard)
+                LOGGER.warn("Graph plugin not available: graph connections of the removed evidence were not deleted from the graph database (graph not updated)."); //$NON-NLS-1$
+            } else {
                 graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
                 graphService.start(new File(output, GraphTask.DB_HOME_DIR));
                 int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
                 LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
-            } else {
-                LOGGER.log(CONSOLE, "Graph database not found.");
             }
         } finally {
             if (graphService != null) {
@@ -919,6 +929,12 @@ public class Manager {
                     IOUtil.copyFile(exe, new File(output.getParentFile(), exe.getName()));
                 }
             }
+
+            copyGraphPluginIfMissing(output.getParentFile());
+
+        } else if (args.isAppendIndex()) {
+            // case created without the graph plugin and now extended with it
+            copyGraphPluginIfMissing(output.getParentFile());
         }
 
         if (palavrasChave != null) {
@@ -932,6 +948,37 @@ public class Manager {
             }
         }
 
+    }
+
+    /**
+     * Copies the graph plugin (jar + home folder) into {@code <case>/plugins/}, sibling of the case
+     * {@code iped/} folder, so the case opened from its own copy of the application resolves the plugin
+     * folder there ({@code pluginFolder = ../plugins/}) and keeps link analysis on machines without the
+     * plugin (FR-010). Nothing else of the plugin folder is copied, and nothing is copied when the
+     * plugin is not available or the case already has a copy of it.
+     */
+    private void copyGraphPluginIfMissing(File caseDir) throws IOException {
+        GraphPluginRegistry graphPlugin = GraphPluginRegistry.get();
+        if (!graphPlugin.isAvailable() || graphPlugin.getPluginJar() == null || graphPlugin.getPluginHome() == null) {
+            return;
+        }
+        File pluginJar = graphPlugin.getPluginJar().toFile();
+        File pluginHome = graphPlugin.getPluginHome().toFile();
+        if (!pluginJar.isFile() || !pluginHome.isDirectory()) {
+            return;
+        }
+        File casePlugins = new File(caseDir, "plugins"); //$NON-NLS-1$
+        String jarPrefix = pluginHome.getName() + "-"; //$NON-NLS-1$
+        File[] existingJars = casePlugins.listFiles((dir, name) -> name.startsWith(jarPrefix) && name.endsWith(".jar")); //$NON-NLS-1$
+        if ((existingJars != null && existingJars.length > 0) || new File(casePlugins, pluginHome.getName()).exists()) {
+            return;
+        }
+        LOGGER.info("Copying graph plugin {} to {}", pluginJar.getName(), casePlugins.getAbsolutePath()); //$NON-NLS-1$
+        if (!casePlugins.exists() && !casePlugins.mkdirs()) {
+            throw new IOException("Fail to create folder " + casePlugins.getAbsolutePath()); //$NON-NLS-1$
+        }
+        IOUtil.copyFile(pluginJar, new File(casePlugins, pluginJar.getName()));
+        IOUtil.copyDirectory(pluginHome, new File(casePlugins, pluginHome.getName()));
     }
 
     // See https://github.com/sepinf-inc/IPED/issues/1142

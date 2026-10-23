@@ -6,10 +6,10 @@ import java.util.HashSet;
 import javax.swing.SwingWorker;
 
 import org.kharon.Edge;
-import org.neo4j.graphdb.Relationship;
 
 import iped.app.ui.Messages;
 import iped.engine.graph.EdgeQueryListener;
+import iped.engine.graph.GraphRelationship;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 
@@ -40,7 +40,7 @@ class AddRelationshipWorker extends SwingWorker<Void, Void> implements EdgeQuery
     }
 
     @Override
-    public boolean edgeFound(Relationship relationship) {
+    public boolean edgeFound(GraphRelationship relationship) {
         found++;
         app.increaseProgress((int) ((found / this.ids.size()) * 100));
         Edge edge = app.addRelationship(relationship);

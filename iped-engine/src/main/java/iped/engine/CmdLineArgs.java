@@ -77,4 +77,18 @@ public interface CmdLineArgs {
         return false;
     }
 
+    /**
+     * When {@code true}, {@code --append}, {@code --continue} and {@code -remove} are allowed on a case
+     * that has link analysis (graph) data even if the graph plugin is not available; the graph data is
+     * then not updated. Without this option such operations are refused (feature 010). No effect when
+     * the graph plugin is available.
+     *
+     * <p>
+     * {@code default} to keep existing implementations of {@code CmdLineArgs} compatible.
+     * </p>
+     */
+    default boolean isIgnoreMissingGraphPlugin() {
+        return false;
+    }
+
 }

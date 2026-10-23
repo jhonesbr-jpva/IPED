@@ -41,14 +41,14 @@ import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.graphdb.Relationship;
 
 import iped.app.ui.App;
 import iped.app.ui.Messages;
 import iped.engine.graph.FreeQueryListener;
+import iped.engine.graph.GraphNode;
+import iped.engine.graph.GraphPath;
+import iped.engine.graph.GraphQueryException;
+import iped.engine.graph.GraphRelationship;
 import iped.engine.graph.GraphService;
 import iped.engine.graph.GraphServiceFactoryImpl;
 
@@ -268,7 +268,7 @@ public class AdvancedSearchDialog extends JDialog {
             GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
             try {
                 graphService.advancedSearch(query, this);
-            } catch (QueryExecutionException e) {
+            } catch (GraphQueryException e) {
                 JOptionPane.showMessageDialog(AdvancedSearchDialog.this, e.getLocalizedMessage());
             }
             return null;
@@ -360,7 +360,7 @@ public class AdvancedSearchDialog extends JDialog {
                 start = System.currentTimeMillis();
                 graphService.advancedSearch(query, dataModel);
                 end = System.currentTimeMillis();
-            } catch (QueryExecutionException e) {
+            } catch (GraphQueryException e) {
                 JOptionPane.showMessageDialog(AdvancedSearchDialog.this, e.getLocalizedMessage());
             }
             return null;
@@ -394,20 +394,20 @@ public class AdvancedSearchDialog extends JDialog {
             for (int index = 0; index < rowCount; index++) {
                 for (int col = 0; col < dataModel.getColumnCount(); col++) {
                     Object value = dataModel.getValueAt(index, col);
-                    if (value instanceof Node) {
-                        Node node = (Node) value;
+                    if (value instanceof GraphNode) {
+                        GraphNode node = (GraphNode) value;
                         idEntities.add(node.getId());
-                    } else if (value instanceof Relationship) {
-                        Relationship rel = (Relationship) value;
-                        idEntities.add(rel.getStartNodeId());
-                        idEntities.add(rel.getEndNodeId());
+                    } else if (value instanceof GraphRelationship) {
+                        GraphRelationship rel = (GraphRelationship) value;
+                        idEntities.add(rel.getStartNode().getId());
+                        idEntities.add(rel.getEndNode().getId());
                         idRelationships.add(rel.getId());
-                    } else if (value instanceof Path) {
-                        Path path = (Path) value;
-                        for (Node node : path.nodes()) {
+                    } else if (value instanceof GraphPath) {
+                        GraphPath path = (GraphPath) value;
+                        for (GraphNode node : path.nodes()) {
                             idEntities.add(node.getId());
                         }
-                        for (Relationship rel : path.relationships()) {
+                        for (GraphRelationship rel : path.relationships()) {
                             idRelationships.add(rel.getId());
                         }
                     }
@@ -481,7 +481,7 @@ public class AdvancedSearchDialog extends JDialog {
                 value = resultMap.get(columns.get(index));
                 result[index] = value;
                 if (!enabled) {
-                    enabled = value instanceof Node || value instanceof Relationship || value instanceof Path;
+                    enabled = value instanceof GraphNode || value instanceof GraphRelationship || value instanceof GraphPath;
                     addButton.setEnabled(enabled);
                 }
             }

@@ -41,6 +41,7 @@ import iped.engine.config.Configuration;
 import iped.engine.config.ConfigurationManager;
 import iped.engine.config.YaraConfig;
 import iped.engine.core.Manager;
+import iped.engine.graph.GraphPluginRegistry;
 import iped.engine.localization.Messages;
 import iped.engine.preview.PreviewRepositoryManager;
 import iped.engine.util.UIPropertyListenerProvider;
@@ -336,7 +337,10 @@ public class Main {
             }
 
             Configuration.getInstance().loadConfigurables(iped.configPath, true);
-            
+
+            // resolve (and log) the optional graph plugin state once, before processing starts
+            GraphPluginRegistry.get();
+
             SystemOut.println(Bootstrap.SUB_PROCESS_TEMP_FOLDER + System.getProperty("java.io.tmpdir"));
 
             success = iped.execute();

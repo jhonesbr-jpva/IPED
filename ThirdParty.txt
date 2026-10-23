@@ -202,24 +202,39 @@ JNA — Java Native Access 5.14.0
 - Usage: JVM-to-native bridge used by iped.engine.task.yara.YaraEngine to call
   into libyara-x-capi without forking the official yara-x CLI per item.
 
-Neo4j Community Edition 5.26.0
-- Site: https://github.com/neo4j/neo4j
-- License: GNU GPL v3 (text in licenses/GPL 3.txt)
-- Usage: graph database engine for IPED's link analysis (calls, e-mails,
-  messages, wireless networks). The full embedded engine 5.26.0 (plus its
-  Cypher/antlr 4.13 stack) is bundled isolated under lib/neo4j/ and run as a
-  separate child JVM (GraphServer) speaking the Bolt protocol — this isolates
-  Cypher's antlr 4.13 from the antlr 4.9.2 required by libfqlite on the main
-  classpath. The processing/UI JVMs only carry the API jar (neo4j-graphdb-api)
-  and the Bolt client (see below); they never load the full engine.
-  Imports use neo4j-admin (org.neo4j.cli.AdminTool) from the same lib/neo4j/.
-
-Neo4j Java Driver 5.26.0
-- Site: https://github.com/neo4j/neo4j-java-driver
-- License: Apache License, Version 2.0 (text in licenses/Apache 2.0.txt)
-- Usage: Bolt client (org.neo4j.driver) used by iped.engine.graph.GraphServiceImpl
-  to query the out-of-process GraphServer; results are exposed to the UI through
-  read-only Bolt{Node,Relationship,Path} adapters over neo4j-graphdb-api.
+Optional plugin iped-graph-neo4j (built from this repository, NOT bundled in the standard distribution)
+- Link analysis (graph) is provided by this optional plugin, distributed separately
+  with its own LICENSE.txt (GPL v3) and ThirdParty.txt (iped-graph-neo4j-<version>.zip,
+  extracted into the IPED plugins folder). The standard IPED distribution contains
+  none of the components below. Third-party components of the plugin package:
+- Neo4j Community Edition 5.26.0
+  - Site: https://github.com/neo4j/neo4j
+  - License: GNU GPL v3 (text in licenses/GPL 3.txt)
+  - Usage: graph database engine (bulk import via neo4j-admin, post-import operations
+    and the Bolt GraphServer), always run in child JVMs from the isolated plugin home
+    folder iped-graph-neo4j/neo4j/, never on the IPED classpath.
+- Neo4j Java Driver 5.26.0
+  - Site: https://github.com/neo4j/neo4j-java-driver
+  - License: Apache License, Version 2.0 (text in licenses/Apache 2.0.txt)
+  - Usage: Bolt client embedded in the plugin jar (iped.graph.neo4j.Neo4jGraphService).
+- Netty 4.1.114 (netty-buffer, -codec, -common, -handler, -resolver, -transport,
+  -transport-native-unix-common; netty-tcnative-classes 2.0.66)
+  - Site: https://netty.io/
+  - License: Apache License, Version 2.0 (text in licenses/Apache 2.0.txt)
+  - Usage: network layer of the Neo4j driver, relocated inside the plugin jar.
+- Project Reactor reactor-core 3.6.10
+  - Site: https://github.com/reactor/reactor-core
+  - License: Apache License, Version 2.0 (text in licenses/Apache 2.0.txt)
+  - Usage: dependency of the Neo4j driver, relocated inside the plugin jar.
+- Reactive Streams 1.0.4
+  - Site: https://www.reactive-streams.org/
+  - License: MIT No Attribution (text in licenses/MIT-0.txt)
+  - Usage: dependency of the Neo4j driver, relocated inside the plugin jar.
+- ANTLR 4 Runtime 4.13.2
+  - Site: https://www.antlr.org/
+  - License: BSD 3 clause (https://www.antlr.org/license.html)
+  - Usage: required by the Neo4j 5 Cypher parser; only in the plugin home
+    (iped-graph-neo4j/neo4j/), kept apart from the antlr 4.9.2 used by IPED.
 
 Jersey / Grizzly / HK2 — REST Web API stack (Jersey 2.41, Grizzly 2.4.4, HK2 2.6.1)
 - Site: https://eclipse-ee4j.github.io/jersey/ ; https://github.com/eclipse-ee4j/grizzly ; https://github.com/eclipse-ee4j/glassfish-hk2
@@ -233,9 +248,9 @@ ANTLR 4 Runtime
 - Site: https://www.antlr.org/
 - License: BSD 3 clause (https://www.antlr.org/license.html)
 - Usage: parser runtime distributed in lib/ as antlr4-runtime-4.9.2.jar (required
-  by libfqlite, SQLite undelete) and, on a separate isolated classpath, in
-  lib/neo4j/ as antlr4-runtime-4.13.2.jar (required by the Neo4j 5 Cypher parser).
-  The two versions are kept apart on purpose (see the Neo4j entry above).
+  by libfqlite, SQLite undelete). The antlr4-runtime 4.13.2 required by the Neo4j 5
+  Cypher parser is not part of the standard distribution: it ships only inside the
+  optional iped-graph-neo4j plugin, on an isolated classpath (see the plugin section above).
 
 launch4j — Windows .exe launcher generator
 - Site: https://launch4j.sourceforge.net/
