@@ -3,7 +3,9 @@ package iped.parsers.browsers.chrome;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +69,19 @@ public class CacheIndexParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
+    /**
+     * Returns a copy of {@code items} with the non-deleted ones first, keeping the relative order of
+     * items in the same state. {@code CacheAddr} resolves a block file ({@code data_N}) or an external
+     * file ({@code f_...}) by taking the first sibling with a matching name, and the search result order
+     * is not deterministic, so without this a deleted older copy of a block file (e.g. {@code data_4})
+     * next to the live one would hijack the lookups at random.
+     */
+    static List<IItemReader> preferLiveFiles(List<IItemReader> items) {
+        List<IItemReader> sorted = new ArrayList<>(items);
+        sorted.sort(Comparator.comparing(IItemReader::isDeleted));
+        return sorted;
+    }
+
     @Override
     public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
 
@@ -81,8 +96,8 @@ public class CacheIndexParser extends AbstractParser {
             String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTID + ":" + item.getParentId() + " AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE
                     + ":slack AND NOT " + BasicProps.TYPE + ":fileslack AND NOT " + BasicProps.NAME + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR + ":true AND NOT " + BasicProps.PATH + ":gpucache";
 
-            List<IItemReader> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
-            List<IItemReader> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")");
+            List<IItemReader> externalFiles = preferLiveFiles(searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f"));
+            List<IItemReader> dataFiles = preferLiveFiles(searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\" OR \"data_4\" OR \"data_5\")"));
 
             Index index;
             try {

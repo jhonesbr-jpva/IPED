@@ -206,7 +206,7 @@ public class CacheEntry {
             return key;
 
         } catch (Exception exe) {
-            logger.warn("Failed to retrieve URL. Cache file:", getName());
+            logger.warn("Failed to retrieve URL. Cache file: {}", getName());
             return "";
         }
     }
