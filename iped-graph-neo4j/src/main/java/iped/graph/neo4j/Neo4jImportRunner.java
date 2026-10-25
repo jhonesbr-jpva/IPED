@@ -1,9 +1,7 @@
 package iped.graph.neo4j;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -11,13 +9,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -156,6 +159,9 @@ public class Neo4jImportRunner {
     /** Empty quoted value appended to short rows, one per missing column. */
     private static final byte[] PADDING = ",\"\"".getBytes(StandardCharsets.US_ASCII);
 
+    /** Size of the read and write buffers used to check and pad the data files. */
+    static final int BUFFER_SIZE = 1 << 16;
+
     /**
      * The Neo4j 5 bulk importer requires every data row to carry exactly the header's column count,
      * while Neo4j 4.4 silently treated missing trailing columns as empty values. {@link GraphFileWriter}
@@ -202,8 +208,11 @@ public class Neo4jImportRunner {
 
     /**
      * Pads the rows of {@code dataFile} that have fewer fields than the first line of
-     * {@code headerFile} with empty quoted values. The data file is processed byte by byte, so every
-     * other byte (values, control characters, the original line terminators) is preserved.
+     * {@code headerFile} with empty quoted values. The data file is first only read, up to its first
+     * short row, so complete files (such as every relationship file, whose writer knows all its columns
+     * from the start) are left untouched. Otherwise a padded copy is written to
+     * {@code <data file>.padding.tmp}, synced and moved over the data file. Every other byte (values,
+     * control characters, the original line terminators) is preserved.
      *
      * @return number of padded rows, 0 when the file was left untouched
      */
@@ -221,51 +230,102 @@ public class Neo4jImportRunner {
         if (columns == 0) {
             return 0;
         }
+        try (InputStream in = new FileInputStream(dataFile)) {
+            if (!hasShortRow(in, columns, BUFFER_SIZE)) {
+                return 0;
+            }
+        }
         File tmp = new File(dataFile.getParentFile(), dataFile.getName() + ".padding.tmp");
-        int padded = 0;
-        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(dataFile), 1 << 16);
-                BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp), 1 << 16)) {
-            ByteArrayOutputStream line = new ByteArrayOutputStream(1024);
-            while (true) {
-                int b = in.read();
-                if (b != -1 && b != '\n') {
-                    line.write(b);
-                    continue;
-                }
-                byte[] bytes = line.toByteArray();
-                int contentLength = bytes.length;
-                if (contentLength > 0 && bytes[contentLength - 1] == '\r') {
-                    contentLength--;
-                }
-                out.write(bytes, 0, contentLength);
-                if (contentLength > 0) {
-                    int fields = countFields(bytes, contentLength);
-                    if (fields < columns) {
-                        for (int i = fields; i < columns; i++) {
-                            out.write(PADDING);
-                        }
-                        padded++;
-                    }
-                }
-                // original terminator: optional '\r' kept from the line buffer plus the '\n' just read
-                out.write(bytes, contentLength, bytes.length - contentLength);
-                if (b == '\n') {
-                    out.write('\n');
-                }
-                line.reset();
-                if (b == -1) {
-                    break;
+        boolean replaced = false;
+        try {
+            int padded;
+            try (InputStream in = new FileInputStream(dataFile);
+                    FileOutputStream fileOut = new FileOutputStream(tmp);
+                    OutputStream out = new BufferedOutputStream(fileOut, BUFFER_SIZE)) {
+                padded = padRows(in, out, columns, BUFFER_SIZE);
+                out.flush();
+                // the copy replaces a file of the case: make it durable first
+                fileOut.getFD().sync();
+            }
+            if (padded > 0) {
+                replace(tmp.toPath(), dataFile.toPath());
+                replaced = true;
+                LOGGER.info("Padded {} row(s) of {} to {} columns, as required by the Neo4j 5 importer.", padded,
+                        dataFile.getName(), columns);
+            }
+            return padded;
+        } finally {
+            if (!replaced) {
+                if (dataFile.exists()) {
+                    deleteQuietly(tmp);
+                } else {
+                    // a failed non-atomic replace may delete the target first: the copy is then the only one left
+                    LOGGER.warn("Kept {}: {} is missing after a failed replace, the copy holds its data.",
+                            tmp.getAbsolutePath(), dataFile.getName());
                 }
             }
         }
-        if (padded == 0) {
-            Files.delete(tmp.toPath());
-            return 0;
+    }
+
+    /**
+     * Read-only check: tells whether {@code in} has a non-empty row with fewer fields than
+     * {@code columns}, reading no further than the first such row.
+     */
+    static boolean hasShortRow(InputStream in, int columns, int bufferSize) throws IOException {
+        RowReader rows = new RowReader(in, bufferSize);
+        while (rows.next()) {
+            int fields = countFields(rows.row, rows.contentLength());
+            if (fields > 0 && fields < columns) {
+                return true;
+            }
         }
-        Files.move(tmp.toPath(), dataFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        LOGGER.info("Padded {} row(s) of {} to {} columns, as required by the Neo4j 5 importer.", padded,
-                dataFile.getName(), columns);
+        return false;
+    }
+
+    /**
+     * Copies {@code in} to {@code out}, inserting one {@link #PADDING} per missing column before the line
+     * terminator of every non-empty row with fewer fields than {@code columns}. Empty rows, complete rows
+     * and rows longer than the header are copied as they are.
+     *
+     * @return number of padded rows
+     */
+    static int padRows(InputStream in, OutputStream out, int columns, int bufferSize) throws IOException {
+        RowReader rows = new RowReader(in, bufferSize);
+        int padded = 0;
+        while (rows.next()) {
+            int contentLength = rows.contentLength();
+            int fields = countFields(rows.row, contentLength);
+            out.write(rows.row, 0, contentLength);
+            if (fields > 0 && fields < columns) {
+                for (int i = fields; i < columns; i++) {
+                    out.write(PADDING);
+                }
+                padded++;
+            }
+            // the original line terminator, if any
+            out.write(rows.row, contentLength, rows.length - contentLength);
+        }
         return padded;
+    }
+
+    /**
+     * Replaces {@code target} with {@code source}, with an atomic rename when the file system supports it.
+     */
+    private static void replace(Path source, Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    /** Best-effort removal of a temporary file: a failure is logged, never thrown. */
+    private static void deleteQuietly(File file) {
+        try {
+            Files.deleteIfExists(file.toPath());
+        } catch (IOException | RuntimeException e) {
+            LOGGER.warn("Could not delete temporary file {}: {}", file.getAbsolutePath(), e.toString());
+        }
     }
 
     /**
@@ -293,12 +353,104 @@ public class Neo4jImportRunner {
         return fields;
     }
 
+    /**
+     * Reads the rows of a CSV file with bulk reads. A row is everything up to and including a
+     * {@code '\n'}, or up to the end of the input for the last row. It is kept in a buffer reused from
+     * row to row, which grows to the longest row.
+     */
+    private static final class RowReader {
+
+        /** Largest array size the JVM reliably allocates. */
+        private static final int MAX_ROW_LENGTH = Integer.MAX_VALUE - 8;
+
+        private final InputStream in;
+        private final byte[] buffer;
+        private int position;
+        private int limit;
+
+        /** Bytes of the current row, line terminator included, in {@code row[0..length)}. */
+        byte[] row = new byte[1024];
+        int length;
+
+        RowReader(InputStream in, int bufferSize) {
+            this.in = in;
+            this.buffer = new byte[bufferSize];
+        }
+
+        /**
+         * @return {@code false} at the end of the input, when there is no further row
+         */
+        boolean next() throws IOException {
+            length = 0;
+            while (true) {
+                if (position == limit) {
+                    int read = in.read(buffer);
+                    if (read == -1) {
+                        return length > 0;
+                    }
+                    position = 0;
+                    limit = read;
+                }
+                int end = position;
+                while (end < limit && buffer[end] != '\n') {
+                    end++;
+                }
+                boolean newline = end < limit;
+                if (newline) {
+                    end++;
+                }
+                append(position, end - position);
+                position = end;
+                if (newline) {
+                    return true;
+                }
+            }
+        }
+
+        private void append(int offset, int count) throws IOException {
+            if (count > MAX_ROW_LENGTH - length) {
+                throw new IOException("CSV row longer than " + MAX_ROW_LENGTH + " bytes");
+            }
+            if (length + count > row.length) {
+                // doubling, without int overflow on huge rows
+                int grown = row.length > MAX_ROW_LENGTH / 2 ? MAX_ROW_LENGTH : 2 * row.length;
+                row = Arrays.copyOf(row, Math.max(length + count, grown));
+            }
+            System.arraycopy(buffer, offset, row, length, count);
+            length += count;
+        }
+
+        /**
+         * @return length of the row without its line terminator ({@code "\n"}, {@code "\r\n"}, or a
+         *         {@code '\r'} ending the input)
+         */
+        int contentLength() {
+            int end = length;
+            if (end > 0 && row[end - 1] == '\n') {
+                end--;
+            }
+            if (end > 0 && row[end - 1] == '\r') {
+                end--;
+            }
+            return end;
+        }
+
+    }
+
+    /**
+     * Accepts only the import argument files written by {@link GraphFileWriter},
+     * {@code import-tool-args-<suffix>.txt} (e.g. {@code import-tool-args-iped.txt}, also in the folders
+     * prepared for a multi-case graph). Any other name is ignored, such as {@code import-tool-args.txt},
+     * a compressed copy (not UTF-8 text) or a copy made by hand (which would repeat every option).
+     */
     private static class ArgsFileFilter implements FileFilter {
+
+        private static final Pattern NAME = Pattern
+                .compile(Pattern.quote(GraphFileWriter.ARGS_FILE_NAME) + "-[A-Za-z0-9_]+\\.txt");
 
         @Override
         public boolean accept(File pathname) {
-            return pathname.getName().startsWith(GraphFileWriter.ARGS_FILE_NAME)
-                    && !pathname.getName().equals(GraphFileWriter.ARGS_FILE_NAME + ".txt");
+            return NAME.matcher(pathname.getName()).matches();
         }
 
     }

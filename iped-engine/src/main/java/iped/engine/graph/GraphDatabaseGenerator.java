@@ -20,6 +20,10 @@ public interface GraphDatabaseGenerator {
     }
 
     /**
+     * Implementations may normalize the CSV files of {@code csvFolders} in place without changing their
+     * logical content (for example, the Neo4j provider pads data rows shorter than their header before
+     * the bulk import), so callers must pass writable folders.
+     *
      * @param listener
      *            receives the import output, may be {@code null}
      * @param dbHome
