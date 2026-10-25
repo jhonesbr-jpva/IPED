@@ -321,6 +321,13 @@
             <artifactId>HikariCP</artifactId>
             <version>7.0.2</version>
         </dependency>
+        <dependency>
+            <!-- same version as iped-parsers-impl -->
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.8.0</version>
+            <scope>test</scope>
+        </dependency>
      </dependencies>
 
     <build>

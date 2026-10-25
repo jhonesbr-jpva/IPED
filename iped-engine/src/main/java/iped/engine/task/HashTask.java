@@ -26,9 +26,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -128,6 +129,11 @@ public class HashTask extends AbstractTask {
             return;
         }
 
+        // each hashing job releases one permit when it ends
+        Semaphore finishedJobs = new Semaphore(0);
+        // jobs submitted and not waited for yet, they may still be running
+        int pendingJobs = 0;
+
         try (InputStream in = evidence.getBufferedInputStream()) {
 
             byte[] readBuf = new byte[HASH_BUFFER_LEN];
@@ -135,16 +141,15 @@ public class HashTask extends AbstractTask {
             byte[] tempBuf = null;
             int len;
 
-            AtomicReference<CountDownLatch> countDown = new AtomicReference<>(null);
-            AtomicReference<Exception> ex = new AtomicReference<Exception>(null);
+            AtomicReference<Throwable> ex = new AtomicReference<Throwable>(null);
 
             while ((len = in.read(readBuf)) >= 0 && !Thread.currentThread().isInterrupted()) {
 
-                if (countDown.get() != null) {
-                    countDown.get().await();
-                }
+                // wait for the jobs of the previous chunk
+                finishedJobs.acquire(pendingJobs);
+                pendingJobs = 0;
 
-                countDown.set(new CountDownLatch(digestMap.size()));
+                throwIfJobFailed(ex);
 
                 // swap hashBuf <-> readBuf
                 tempBuf = hashBuf;
@@ -161,22 +166,24 @@ public class HashTask extends AbstractTask {
                             } else {
                                 updateEd2k(currHashBuf, currLen);
                             }
-                        } catch (Exception e) {
-                            ex.set(e);
+                        } catch (Throwable t) {
+                            // Errors too, otherwise they would only end this pool thread and the item would get an
+                            // incomplete hash; nothing is allocated here, as an OutOfMemoryError could strike again
+                            ex.set(t);
                         } finally {
-                            countDown.get().countDown();
+                            finishedJobs.release();
                         }
                     });
-                }
-
-                if (ex.get() != null) {
-                    throw ex.get();
+                    pendingJobs++;
                 }
             }
 
-            if (countDown.get() != null) {
-                countDown.get().await();
-            }
+            // wait for the jobs of the last chunk; throws InterruptedException if the thread is interrupted, even
+            // without pending jobs, so an interrupted read never produces a hash
+            finishedJobs.acquire(pendingJobs);
+            pendingJobs = 0;
+
+            throwIfJobFailed(ex);
 
             boolean defaultHash = true;
             for (String algo : digestMap.keySet()) {
@@ -196,6 +203,11 @@ public class HashTask extends AbstractTask {
                 defaultHash = false;
             }
 
+        } catch (InterruptedException e) {
+            // not completely hashed: no hash, and the worker must still see the interruption (partial digests are
+            // discarded below)
+            Thread.currentThread().interrupt();
+
         } catch (Exception e) {
             if (e instanceof IOException) {
                 evidence.setExtraAttribute("ioError", "true"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -205,8 +217,24 @@ public class HashTask extends AbstractTask {
                     e.toString());
             // e.printStackTrace();
 
+        } finally {
+            // digests are reused by the next item of this worker: never return while a job of this item may still
+            // update them, and never leave them with partial data (after success they were already reset)
+            finishedJobs.acquireUninterruptibly(pendingJobs);
+            resetDigests();
         }
 
+    }
+
+    /**
+     * Rethrows the failure of a hashing job, if any, on the worker thread. An Error is wrapped here rather than in
+     * the job, so that it is reported as a failure of the item.
+     */
+    private static void throwIfJobFailed(AtomicReference<Throwable> jobFailure) throws Exception {
+        Throwable failure = jobFailure.get();
+        if (failure != null) {
+            throw failure instanceof Exception ? (Exception) failure : new ExecutionException(failure);
+        }
     }
 
     private static int CHUNK_SIZE = 9500 * 1024;
@@ -249,6 +277,18 @@ public class HashTask extends AbstractTask {
         out = new ByteArrayOutputStream();
 
         return ed2k;
+    }
+
+    /**
+     * Discards any data already added to the digests, eDonkey state included.
+     */
+    private void resetDigests() {
+        for (MessageDigest digest : digestMap.values()) {
+            digest.reset();
+        }
+        chunk = 0;
+        total = 0;
+        out = new ByteArrayOutputStream();
     }
 
     public static String getHashString(byte[] hash) {
