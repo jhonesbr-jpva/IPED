@@ -1,6 +1,6 @@
 # Validation Results — Neo4j como plugin opcional (010)
 
-Registro das validações da feature (tarefas T004, T030, T041–T043, T054–T057, T068–T070, T079, T081–T084). Cada seção indica **o que foi executado**, **como** e **o resultado**. Itens que dependem de interação manual com a UI ficam marcados como **PENDENTE (manual)** — não foram executados nesta sessão de implementação.
+Registro das validações da feature (tarefas T004, T030, T041–T043, T054–T057, T068–T070, T079, T081–T084) e da rodada de regressão com a imagem de referência (T085–T091). Cada seção indica **o que foi executado**, **como** e **o resultado**. Itens que dependem de interação manual com a UI ficam marcados como **PENDENTE (manual)** — não foram executados nesta sessão de implementação. As seções T004–T084 usam a evidência lógica de 28 MB descrita em "Baseline (T004)"; a seção "Rodada de regressão com a imagem de referência (2026-10-23)" usa uma imagem E01 de 68 GB, com o IPED 4.3.1 como baseline.
 
 Ambiente: Windows 11 Pro for Workstations (10.0.26300), Liberica JDK 21.0.11 Full (build) e JRE 21.0.11 embarcado (execução), Maven 3.9.16.
 
@@ -140,6 +140,7 @@ Executado com o release 010 **sem** o plugin:
 
 - Estatísticas por label e por tipo de relacionamento: **idênticas** ao baseline nas duas execuções (`diff` dos relatórios `GraphStats` vazio).
 - CSVs: mesmos nomes de arquivo (23 e 29); conteúdo idêntico (ordenado) em todos os arquivos de nós, cabeçalhos e `replace.csv`, e colunas `start,end,type` dos relacionamentos idênticas — a única diferença é o id do nó `DATASOURCE`, derivado do UUID da evidência gerado a cada processamento (E4); mapeado esse id, os relacionamentos `contact` também são idênticos. As colunas `dataSource`/`relId` diferem pelo mesmo motivo (UUID e ids de item por execução).
+- **Alcance**: validado só com a evidência de 28 MB, que não tem linhas de CSV mais curtas que o cabeçalho. Na imagem de referência de 68 GB, a importação com o plugin **falhou** até o commit `841f52128` (R-15); ver "Rodada de regressão com a imagem de referência (2026-10-23)".
 
 ## T057 — Cópia autocontida e remoção (FR-010, FR-015, SC-008)
 
@@ -220,6 +221,118 @@ O WSL (Ubuntu 26.04) desta máquina não tem mais um JDK 21 instalado (o usado n
 - Zip do plugin contém `iped-graph-neo4j-4.4.0-SNAPSHOT.jar` + `iped-graph-neo4j/{LICENSE.txt, ThirdParty.txt, README.md, plugin.properties, neo4j/}`.
 - **PENDENTE**: "CI da branch verde com o artefato do plugin publicado" — exige enviar a branch ao GitHub (não feito nesta sessão). O passo novo do workflow (`Verify no Neo4j in standard release`) foi executado localmente com o mesmo script sobre `target/release`: saída `OK`, exit 0.
 
+## Rodada de regressão com a imagem de referência (2026-10-23) — T085–T088
+
+**Objetivo**: repetir num caso grande e real as validações feitas com a evidência de 28 MB, tendo como baseline o **IPED 4.3.1** (Java 11, Neo4j 4.4 embarcado). A rodada foi feita em outras sessões e exercita também a migração Java 21/Neo4j 5 da feature 003, herdada por esta branch. Números tirados dos logs de processamento e da UI, das listas de arquivos e das pastas dos casos (fora do repositório, citados pelo nome da pasta do caso).
+
+**Entrada**: imagem E01 de 68 GB (a "imagem de referência"; volume descoberto 739.430.928.687 bytes), perfil `forensic`, mesma máquina (28 núcleos, `numThreads = 26`, `-Xmx32500M`).
+
+| # | Caso | Build | Plugin | `LocalConfig.txt` | Tempo | Total Indexed | Subitems | Carved | Parsing Exc. | I/O read errors | `ERROR` | Grafo |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `test_IPED_4.3.1_reference_image` | 4.3.1, Java 11.0.13 | — (Neo4j 4.4.4 embarcado) | baseline: `indexTempOnSSD = true` (`indexTemp` local), `hashesDB` configurado, `locale = pt-BR` | 4.619 s | 2.318.160 | 677.043 | 515.975 | 48.360 | 1 | 0 | `IMPORT DONE`: 12.545 nós, 242.555 relacionamentos |
+| 2 | `test_iped_java21_neo4j_plugin` | release 010, Java 21.0.11 | ausente | padrão do release: `indexTempOnSSD = false`, `indexTemp = default`, sem `hashesDB`, `locale = en` | 6.669 s | 2.318.825 | 677.732 | 515.951 | 48.419 | 24 | 1 (`HashDBLookupTask`: `hashesDB` ausente) | pulado: 1 `INFO` do registro + 1 `WARN` da `GraphTask`; sem `iped/neo4j/` |
+| 3 | `test_iped_java21_plugin_sameconfig` | release 010, Java 21.0.11; engine com T087 (jar trocado à mão antes da execução); parsers e plugin **anteriores** a T088/T086 | instalado (Neo4j 5.26.0) | **cópia do baseline** | 4.589 s | 2.320.332 | 679.248 | 515.942 | 48.358 | 24 | 1 (`Error generating database.`) | `IMPORT FAILED` (`Error in input data`); regenerado depois com o plugin corrigido: 12.545 / 242.569 |
+
+Nas três execuções: Active Items 347.044, volume processado igual ao descoberto, Timeouts 3, Ignored Items 0.
+
+**Comparabilidade**
+
+- **Só o par 1 × 3 é comparável.** A execução 2 rodou com o `LocalConfig.txt` padrão: `TempFileTask` desligada, `HashDBLookupTask` desligada (1 `ERROR`), outro `locale` (nomes e bytes de subitens gerados; lista de arquivos `FileList.csv` em vez de `Lista de Arquivos.csv`) e índice gravado direto na unidade de saída. Cerca de 1% dos itens e o tempo ficaram sem comparação possível — daí o item 4 do método de paridade do [quickstart](quickstart.md).
+- A execução 2 confirma o comportamento sem plugin num caso grande: `INFO Graph plugin not installed (…)`, 1 `WARN` da `GraphTask`, nenhum `iped/neo4j/` nem `<caso>/plugins/`, exit 0; no log da UI do caso, só a linha do registro.
+- **Par 1 × 3**:
+  - tempo 4.589 s × 4.619 s (−0,6%); por task: `TempFileTask` 699 × 663 s, `HashTask` 147 × 158 s, `HashDBLookupTask` 172 × 360 s, `ParsingTask` 1.253 × 1.145 s, `IndexTask` 843 × 930 s;
+  - Total Indexed +2.172 (+0,09%), Subitems +2.205, Carved −33, Parsing Exceptions −2, Text Splits 446 × 446;
+  - os +2.172 itens são exatamente a diferença de linhas sob o `index` do cache do Chrome (`Default/Cache`) nas listas de arquivos (21.240 × 19.068) — coincidência aritmética, causa não estabelecida;
+  - na comparação item a item feita na sessão de testes, 99,9% dos itens saíram idênticos; as diferenças restantes não foram triadas campo a campo (C1–C8): fica para T091.
+
+**Achado 1 — importação do grafo com o Neo4j 5** (regressão herdada da feature 003; corrigida em `841f52128`, T086, [R-15](research.md)):
+
+- Execução 3: `IMPORT FAILED in 86ms` … `Error in input data`, antes de importar qualquer nó (pico de memória 0 B, arquivos do store vazios), com o aviso do Neo4j de que o store "likely [is] in an unusable state". Em seguida `ERROR [graph.neo4j.Neo4jDatabaseGenerator] Error generating database.` (`RuntimeException: Could not import graph database.`). A `GraphTask` ainda registrou `Generating graph database finished.`, compactou os CSVs, e o processamento terminou com exit 0.
+- O log não identifica o arquivo; a investigação na sessão de testes apontou `UnexpectedEndOfInputException` na última linha de `nodes_PERSON`.
+- Causa: o `GraphFileWriter` amplia o cabeçalho quando surgem propriedades novas, e as linhas gravadas antes ficam mais curtas. Nos CSVs do baseline (nunca completados, importados pelo Neo4j 4.4.4 sem erro): `nodes_PERSON` com 157 de 190 linhas com 8 dos 9 campos e `nodes_GENERIC` com 2 de 1.057 linhas com 3 de 9; os demais arquivos estão completos.
+- Depois da correção, o grafo do caso 3 foi regenerado com o jar corrigido do plugin, fora do processamento (não há log do IPED dessa regeneração, só o `debug.log` do Neo4j): importação em 2,8 s com 12.545 nós (= 4.3.1), 242.569 relacionamentos e 515.905 propriedades; pós-importação com os 3 índices de `EVIDENCIA`; `graph.db` com 31 MB, como o da 4.3.1. O store da importação falha foi preservado em `<caso>/neo4j-data.failed-import-20261023`.
+- Nos CSVs regenerados, todas as linhas têm a largura do cabeçalho (`nodes_GENERIC` 1.057 × 9, `nodes_PERSON` 190 × 9, `nodes_DATASOURCE` 1 × 4, `nodes_EMAIL` 11.297 × 4, `relationships_contact` 244 × 5, `relationships_message` 3 × 5, `relationships_email` 242.322 × 5), somando exatamente as contagens importadas.
+- Os +14 relacionamentos em relação à 4.3.1 estão todos em `relationships_email` (242.322 × 242.308 linhas): vêm do processamento, não da importação. A triar em T091.
+- As propriedades a mais (+28) são exatamente as 2 de cada um dos 14 relacionamentos a mais: os campos completados não viraram propriedades.
+- Como a regeneração foi feita fora do processamento, a linha `Padded … row(s)` não aparece em nenhum log examinado: T091 precisa confirmar o completamento dentro do processamento.
+
+**Achado 2 — itens ilegíveis indexados como zeros** (defeito pré-existente, também na 4.3.1; fora do escopo; corrigido em `a9df70e05`, T087):
+
+- 24 itens apagados não são lidos pelo Sleuthkit em nenhuma das versões (`SleuthkitServer N error: Error reading file`): 17 `Report.wer` (8 em `$OrphanFiles`, 9 em `WER/ReportQueue/AppCrash_chrome.exe_*`), 5 `WER*.tmp.*` e 2 `Windows/Prefetch/ReadyBoot/Trace*.fx`.
+- Na 4.3.1, com a `TempFileTask` ativa, `Item.cacheDataInMemory()` deixava em cache o buffer zerado alocado antes da leitura. Só 1 erro de I/O foi contado: `WER744.tmp.mdmp`, de 9.684.274 bytes, acima do limite de 8 MiB do cache. Os outros 23 estão na lista de arquivos do baseline com o MD5 de um buffer de zeros do seu tamanho (ex.: `Trace3.fx`, 1.995.167 bytes, MD5 `B334F3A1D76886D89264974688B4FF58`).
+- Execuções 2 (sem `TempFileTask`) e 3 (com T087): os 24 sem hash e contados como erro de I/O (24); a execução 3 também registra 24 `WARN [engine.task.TempFileTask] … Error creating temp file`.
+
+**Achado 3 — cache do Chromium não determinístico** (defeito pré-existente, também na 4.3.1; fora do escopo; corrigido em `a5c724030`, T088):
+
+- A pasta `Default/Cache` do Chrome tem um `data_4` apagado (15.998.976 bytes) ao lado do vivo (6.561.792 bytes).
+- `WARN` por execução (1 / 2 / 3): `CacheIndexParser` 13 / 1.698 / 13; `CacheEntry` (Discord) 31 / 1.678 / 33. Na execução 2, 1.628 `Input Stream for entry not found` no `index` do Chrome e 1.632 `Failed to retrieve URL. Cache file:` sem o nome do arquivo (placeholder ausente, corrigido em T088).
+- A execução 3, com o mesmo jar de parsers da 2, não reproduziu o sintoma — coerente com a escolha não determinística. Os logs não mostram qual `data_4` foi lido.
+- Nesta imagem, as pastas `Cache` e `GPUCache` do Opera têm um `index` apagado e `data_0`…`data_3` apagados ao lado dos vivos (o caso do acompanhamento T095), mas o conteúdo apagado foi sobrescrito (nenhum item apagado do caso caiu na categoria de cache do Chrome), então esse caminho não foi exercitado.
+
+**UI (2026-10-24)**:
+
+- O caso 3 foi aberto pela própria cópia: `Graph plugin loaded … from <caso>\plugins\iped-graph-neo4j-4.4.0-SNAPSHOT.jar`, servidor do grafo pronto via Bolt, `Init graph database took 4s`, "10 nós mais conectados" e 10 expansões; 0 `ERROR` e 1 `WARN` (JPEG2000, ruído do baseline) no log da UI. Na mesma manhã, a UI da 4.3.1 sobre o caso 1: `Init graph database took 5s`.
+- O jar do plugin dessa cópia foi trocado à mão pelo corrigido; o roteiro de 10 operações não foi executado.
+
+**Instalação e caso com jars trocados à mão**: na instalação usada, o jar do engine foi trocado antes da execução 3 e os de parsers e do plugin depois dela; a cópia do plugin no caso 3 também foi trocada. Os originais foram guardados. Por isso a rodada não vale como teste limpo das correções: ver T090–T091.
+
+**Pendências para a próxima rodada (T090–T091)**:
+
+1. Rebuild completo (commit com `841f52128`) e instalação limpa de release e plugin, sem reaproveitar a instalação nem o caso desta rodada.
+2. Reprocessar com o plugin e o `LocalConfig.txt` do baseline. Esperado: importação concluída dentro do processamento (linhas `Padded …`, cujos números variam com a ordem de processamento); nenhum `Error generating database.` e 0 `ERROR`; `I/O read errors: 24`; avisos do cache do Chromium no nível da 4.3.1.
+3. Triar os +14 relacionamentos comparando os `relationships_email_iped.csv` da 4.3.1 e do candidato em cópias descompactadas e normalizadas ([quickstart](quickstart.md), método de paridade, item 6).
+4. Paridade item a item C1–C8 contra a 4.3.1, com uma execução de controle e com as diferenças esperadas dos achados 2 e 3 e de T093 documentadas como exclusões. Para T093: `WER744.tmp.mdmp` (9,7 MB) falha na leitura em todas as versões; se a falha veio depois do primeiro bloco, o item seguinte do mesmo worker tem hash errado na 4.3.1 e certo no release de T090.
+5. Confirmar que a diferença na detecção de zips carved (jar/ooxml × zip), observada entre execuções com e sem `TempFileTask`, desaparece com a mesma configuração.
+6. UI: aba "Vínculos" do caso grande aberta pela cópia; os roteiros pendentes seguem em T043, T056, T057 e T068.
+
+## T090 — Rebuild completo para a nova rodada (2026-10-24)
+
+- Primeiro build, no commit `841f52128` (código dos três commits da rodada, só com a documentação de T089): `BUILD SUCCESS` com 356 testes, 0 falhas — os 350 de T079 mais `CacheIndexParserTest` (2) e `Neo4jImportRunnerTest` (4).
+- **Build final, que vale para T091**: o mesmo código mais as correções de T093 (commit `3cce9520c`) e T092 (commit `0f0afd1d9`). `mvn -B clean package` (equivalente ao CI, com todos os testes) → `BUILD SUCCESS` em 1 min 51 s: parsers 185 (1 ignorado), engine 164 (2 ignorados, YARA nativo), plugin 28, app 4 = **381 testes, 0 falhas**. Enforcer `ban-neo4j` passou em `iped-engine` e `iped-app`; o `mockito-core` de teste não entra no `lib/` do release.
+- Antes do build final, o perfil `graph-it` rodou com o zip extraído: `Neo4jImportRunnerIT` e `Neo4jPluginPackageIT` passaram (2/2).
+- Inventário (contrato release-inventory) vazio: nenhum `*neo4j*` em `target/release`, nenhum netty/reactor/reactive-streams em `lib/`, nenhum `import org.neo4j` no núcleo; `antlr4-runtime-4.9.2` presente; `target/release/plugins/` só com `Readme.txt` e os plugins opcionais pré-existentes.
+- Zip do plugin: `iped-graph-neo4j/target/iped-graph-neo4j-4.4.0-SNAPSHOT.zip` (126 MB). O jar traz `padShortRows`/`countFields` e o manifesto `IPED-Graph-SPI-Version: 1`; a home traz `LICENSE.txt`, `ThirdParty.txt`, `README.md`, `plugin.properties` e `neo4j/` com 239 arquivos (238 jars + 1 `.pom`), os mesmos do zip do `iped-graph-server`.
+- Conferido nos artefatos: `CacheIndexParser.preferLiveFiles` no jar de parsers do release; em `Item.cacheDataInMemory` do jar do engine, a atribuição de `data` só ocorre depois da leitura completa; a `HashTask` do engine já com o `Semaphore` e o `resetDigests` de T093; o `Neo4jImportRunner` do jar do plugin com a passagem só de leitura e o filtro estrito de T092; o `ReleaseNotes.txt` do release traz o bloco `Fixes:` com T087, T088, T092 e T093.
+- Para T091: instalar `target/release/` numa pasta nova e extrair o zip na pasta `plugins/` irmã. Os jars têm MD5 novos em relação à instalação da rodada anterior, então um script que compare o MD5 do jar instalado com o do build exige a instalação nova.
+
+## T092–T093 — Correções antes da nova rodada (2026-10-24)
+
+**Como**: um workflow com um agente de implementação por tarefa, cada um numa worktree isolada no commit `841f52128`. Cada agente escreveu primeiro os testes que reproduzem o defeito (vermelhos no código original) e depois a correção. Em seguida, três revisores por tarefa, com focos diferentes, um deles executando testes numa worktree própria. Os patches foram aplicados na branch, e os achados dos revisores foram tratados na integração.
+
+**T093 — `HashTask`** (commit `3cce9520c`):
+
+- Vermelho: 8 dos 10 testes novos falham no código original. O item seguinte a uma falha recebe, por exemplo, o MD5 `A95F817B3317F0E210B38EE8373DAE90` — o MD5 de (primeiro bloco do item que falhou + item seguinte) — em vez de `9E107D9D372BB6826BD81D3542A419D6`. Além disso, a interrupção se perde e um job que falha no último bloco ainda gera hash.
+- Verde: `HashTaskTest` 10/10, e a suíte do engine com 164 testes (154 + 10), 0 falhas e 2 ignorados (YARA nativo). A classe também rodou de 150 a 300 vezes seguidas na mesma JVM, sem falha.
+- Revisões:
+  - Concorrência: todos os caminhos de saída verificados, inclusive `RejectedExecutionException` e `OutOfMemoryError` no `execute`. Um harness de 9.711 verificações, com interrupções em instantes aleatórios e falhas de leitura aleatórias, encontrou 0 jobs ativos no retorno, 0 interrupções perdidas e 0 hashes parciais.
+  - Comportamento forense: 112 comparações do caminho de sucesso com o código original, 0 divergências. O comportamento é igual para itens sem tamanho, hard links, hash já definido e falhas ao abrir ou fechar. O desempenho também é igual (100 mil itens de 512 B: 19,4 s × 18,9 s).
+  - Testes: 10 mutantes, 9 detectados. O que sobrevive (contar o job antes do `execute`) só seria pego com uma `RejectedExecutionException`, que exige desligar o pool estático compartilhado.
+- Ajustes na integração, a partir das revisões:
+  - o job guarda o `Throwable` sem alocar nada; antes, embrulhava um `Error` em `ExecutionException` na própria thread do pool, o que podia falhar sob `OutOfMemoryError`;
+  - o teste só remove o provedor Bouncy Castle se ele mesmo o registrou naquela execução.
+- Mudança de comportamento: uma interrupção não gera mais `WARN` nem hash; o `Worker` já registra a interrupção. Antes, um item interrompido antes do primeiro bloco recebia o hash de conteúdo vazio. Isso só ocorre ao abortar o processamento, cujos itens não são gravados.
+- Achado fora do escopo: T096 (eDonkey de itens acima de 2 GiB).
+
+**T092 — `Neo4jImportRunner`** (commit `0f0afd1d9`):
+
+- Vermelho: 4 testes novos falham no código original:
+  - um arquivo completo é copiado mesmo assim;
+  - o temporário sobra depois de uma falha (dois testes);
+  - um `.gzip` é aceito como arquivo de argumentos e provoca `MalformedInputException`.
+- Verde: `Neo4jImportRunnerTest` 19/19 (os 4 originais e 15 novos). Com o zip extraído (`graph-it`), `Neo4jImportRunnerIT` e `Neo4jPluginPackageIT` passaram (2/2). O `neo4j-admin` real importou "2 nodes, 0 relationships, 5 properties", e o campo completado ficou ausente (`IS NULL`), sem nenhuma propriedade com texto vazio. Um mutante sem `--ignore-empty-strings=true` faz esse teste falhar.
+- Equivalência byte a byte com o algoritmo do commit `841f52128`:
+  - um teste diferencial no próprio `Neo4jImportRunnerTest` cobre todas as entradas de até 6 bytes sobre `"`, `,`, `\r`, `\n`, `a` e NUL, 500 entradas aleatórias e vários tamanhos de buffer;
+  - na revisão, 7.940 pares de arquivos aleatórios e 14.616 comparações em nível de stream, com leituras curtas aleatórias, deram 0 divergências; uma mutação proposital foi detectada.
+- Desempenho num arquivo de 50 MB: sem linha curta, de 1,5 s para 62 ms, sem nenhuma escrita (confirmado com um `WatchService`); com uma linha curta no fim, de 1,5 s para 0,28 s, incluindo as duas passagens, o `fsync` e o `move`.
+- Revisões:
+  - Equivalência: aprovada.
+  - Robustez: dois achados, tratados na integração. O temporário não é mais apagado se o original sumiu num `move` não atômico que falhou, porque seria a única cópia; e o buffer de linha cresce sem estouro de `int`.
+  - Testes: foi sugerido um teste para a linha `Padded …` do log, acrescentado como `logsEachPaddedFileOnce`. Os testes unitários também passaram no Linux (WSL2 Ubuntu, JRE 21).
+- Verificado só lendo o código:
+  - o recurso ao `move` não atômico (`AtomicMoveNotSupportedException` não ocorre num `move` dentro da mesma pasta em NTFS ou ext4);
+  - uma falha no meio da cópia ou no `fsync`;
+  - a preservação do temporário quando o original sumiu.
+
 ## T084 — Matriz consolidada (quickstart §4)
 
 | # | Passo | Status | Evidência |
@@ -231,10 +344,10 @@ O WSL (Ubuntu 26.04) desta máquina não tem mais um JDK 21 instalado (o usado n
 | 5 | Modificação sem plugin recusada; `--yara-only` não bloqueado | ✅ (via `--continue`/`-remove`) | T069; `--append` impedido neste Windows por problema pré-existente de `checkIfAppendingToCompatibleCase` (afeta o baseline também) e coberto por `GraphPluginGuardTest`; `--yara-only` coberto por teste (DLL YARA-X ausente) |
 | 6 | Override `--ignore-missing-graph-plugin` | ✅ | T069 (`MSG` no console + `WARN` no log; CSVs limpos no `-remove`; banco intocado) |
 | 7 | Instalar o plugin (≤ 3 passos, < 5 min, 0 edições) | ✅ | T054 (extração em segundos; log `Graph plugin loaded: …`) |
-| 8 | Processar com plugin (padrão + proximidade) | ✅ | T055: 648/970 e 913/1415, idênticos ao baseline por label/tipo; CSVs idênticos salvo o UUID da evidência |
+| 8 | Processar com plugin (padrão + proximidade) | ✅ (evidência 28 MB) / ⚠️ imagem de referência | T055: 648/970 e 913/1415, idênticos ao baseline por label/tipo; CSVs idênticos salvo o UUID da evidência. Imagem de 68 GB: importação falhou até `841f52128` (R-15); depois, 12.545 nós (= 4.3.1) e 242.569 × 242.555 relacionamentos, a triar em T091 |
 | 9 | Roteiro de 10 operações na aba "Vínculos" | ⏳ manual | — |
 | 10 | `--append`/remoção com plugin | ✅ parcial | T056: `--continue` e `-remove` idênticos ao baseline; `--append` impedido pelo problema pré-existente citado no passo 5 |
-| 11 | Cópia em `<caso>/plugins/` e abertura pela cópia sem plugin instalado | ✅ cópia + resolução / ⏳ UI | T057 (registro resolve AVAILABLE a partir de `<caso>/plugins/` com o `lib/` do caso) |
+| 11 | Cópia em `<caso>/plugins/` e abertura pela cópia sem plugin instalado | ✅ cópia + resolução / ✅ parcial UI | T057 (registro resolve AVAILABLE a partir de `<caso>/plugins/` com o `lib/` do caso). Em 2026-10-24, o caso da imagem de referência foi aberto pela própria cópia: plugin carregado de `<caso>/plugins/` e aba "Vínculos" com o grafo (mesma máquina; jar do plugin da cópia trocado à mão) |
 | 12 | Multi-caso com plugin | ⏳ manual | — |
 | 13 | Remover o plugin e repetir 2 e 3 | ✅ passo 2 / ⏳ passo 3 (UI) | T057 |
 | 14 | Perfis/configs da versão anterior com e sem plugin | ✅ | T070 |
@@ -242,8 +355,9 @@ O WSL (Ubuntu 26.04) desta máquina não tem mais um JDK 21 instalado (o usado n
 | 16 | Plugin corrompido / duas cópias / SPI v2 | ✅ | T069 (motivo no log, IPED segue sem grafo) |
 | 17 | `--restart` sem plugin em caso com grafo | ✅ | T069 (`iped/neo4j/` removido, exit 0) |
 | 18 | Linux (WSL) | ⏳ | T082 (WSL sem JDK 21) |
+| 19 | Imagem de referência grande × 4.3.1, mesmo `LocalConfig.txt` | ⚠️ parcial / ⏳ nova rodada | Rodada de 2026-10-23: estatísticas a ±0,1% e tempo −0,6% da 4.3.1; corrigidos 1 regressão (importação do grafo, `841f52128`) e 2 defeitos pré-existentes (`a9df70e05`, `a5c724030`). Nova rodada limpa após o rebuild: T090–T091 |
 
-**Testes automatizados da feature**: `GraphPluginRegistryTest` (8), `GraphPluginGuardTest` (8), `GraphFileWriterTest` (2), `Neo4jGraphServiceProviderTest` (9), `GraphPluginNoticeTest` (4) e `Neo4jPluginPackageIT` (1, gated) — todos verdes.
+**Testes automatizados da feature**: `GraphPluginRegistryTest` (8), `GraphPluginGuardTest` (8), `GraphFileWriterTest` (2), `Neo4jGraphServiceProviderTest` (9), `GraphPluginNoticeTest` (4) e `Neo4jPluginPackageIT` (1, gated) — todos verdes. Adicionados depois da rodada de regressão: `Neo4jImportRunnerTest` (4 em `841f52128`, 19 depois de T092) e `Neo4jImportRunnerIT` (1, gated, T092); fora do escopo da feature, `CacheIndexParserTest` (2, `a5c724030`) e `HashTaskTest` (10, T093). A correção de `Item.cacheDataInMemory` (`a9df70e05`) não tem teste de unidade.
 
 **Achados fora do escopo, registrados para acompanhamento** (pré-existentes, reproduzidos também com o release-baseline):
 
@@ -251,3 +365,13 @@ O WSL (Ubuntu 26.04) desta máquina não tem mais um JDK 21 instalado (o usado n
 2. Processar uma pasta lógica com bancos SQLite em modo WAL (WhatsApp `msgstore.db`/`wa.db`, Telegram `cache4.db`) cria arquivos `-wal`/`-shm` **dentro da pasta da evidência**, alterando a fonte entre execuções.
 3. Os 9 itens virtuais do PST (`PSTAppointment`/`PSTContact`/`PSTTask`) têm conteúdo (hash) diferente a cada processamento.
 4. A Web API iniciada diretamente no Java 21 precisa de `-Djava.security.manager=allow`.
+
+**Achados da rodada de regressão de 2026-10-23 e da revisão dos três commits** (detalhes na seção da rodada e em `tasks.md` T092–T095):
+
+5. **(corrigido em `a9df70e05`, T087)** `Item.cacheDataInMemory()` alocava o buffer antes da leitura e o mantinha quando a leitura falhava. Com `TempFileTask` ativa, itens ilegíveis de até 8 MiB eram servidos como zeros e indexados com hashes de zeros: 23 itens na imagem de referência, também na 4.3.1.
+6. **(corrigido em `a5c724030`, T088)** `CacheIndexParser` (cache do Chromium) escolhia entre um `data_N`/`f_*` vivo e um homônimo apagado conforme a ordem não determinística da busca. Continua em aberto (T095): um `index` apagado passa a ser resolvido sempre contra os arquivos vivos, e com várias gerações apagadas a escolha segue não determinística.
+7. **(corrigido em T093)** `HashTask` não zerava os digests da instância do worker quando a leitura falhava depois do primeiro bloco: o item seguinte do mesmo worker recebia hashes errados, sem `ioError`. Pré-existente (mesmo código na 4.3.1); afeta itens > 8 MiB em qualquer configuração. Numa comparação A/B com a 4.3.1, pode aparecer como hash diferente num item legível processado logo após um erro de I/O — agora uma diferença esperada (quickstart, método de paridade, item 5).
+8. **(corrigido em T092)** `Neo4jImportRunner.ArgsFileFilter`, herdado do `GraphImportRunner` da 4.3.1, aceitava qualquer arquivo cujo nome começa com `import-tool-args`: um `.gzip` deixado ao lado do `import-tool-args-iped.txt` descompactado à mão quebrava a importação.
+9. **(comportamento da 4.3.1, mantido)** Uma falha da importação do grafo não interrompe o processamento e só aparece como 1 `ERROR Error generating database.`: o caso termina com exit 0 e um store parcial em `neo4j/data/databases/graph.db`, que o Neo4j declara provavelmente inutilizável.
+10. **(a confirmar em T091)** A detecção de zips carved difere com e sem `TempFileTask` (jar/ooxml × zip); observado no par com `LocalConfig.txt` diferentes.
+11. **(não corrigido, T096)** O contador `total` do eDonkey na `HashTask` é `int`: em itens acima de 2 GiB com tamanho múltiplo exato do bloco de 9.500 KiB, o eDonkey sai errado. Pré-existente; achado na revisão de T093.

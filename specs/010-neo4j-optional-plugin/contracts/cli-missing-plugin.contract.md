@@ -6,7 +6,7 @@
 
 | Condição | Comportamento |
 |---|---|
-| `enableGraphGeneration=true` e plugin `AVAILABLE` | Como hoje: CSVs em `iped/neo4j/csv`, banco em `iped/neo4j/data` no `finish()`. |
+| `enableGraphGeneration=true` e plugin `AVAILABLE` | Como hoje: CSVs em `iped/neo4j/csv`, banco em `iped/neo4j/data` no `finish()`. Antes da importação, o plugin completa as linhas de CSV mais curtas que o cabeçalho ([R-15](../research.md)). Falha da importação: 1 `ERROR Error generating database.` e o processamento segue (exit 0), como na 4.3.1. |
 | `enableGraphGeneration=true` e plugin não disponível | `GraphTask.enabled=false`; **um** `WARN`: `Graph generation is enabled but the graph plugin is not installed (<estado>): link analysis will be skipped for this case.`; nenhum arquivo em `iped/neo4j/`. Demais tasks inalteradas. |
 | `enableGraphGeneration=false` | Como hoje (nenhuma mensagem nova). |
 

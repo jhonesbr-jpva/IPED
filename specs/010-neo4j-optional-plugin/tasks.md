@@ -195,6 +195,59 @@ description: "Task list — Neo4j como plugin opcional do IPED"
 
 ---
 
+## Phase 8: Rodada de regressão com a imagem de referência (2026-10-23)
+
+**Purpose**: repetir as validações num caso grande e real — imagem E01 de 68 GB, ~2,32 M itens, perfil `forensic` — contra o IPED 4.3.1 (Java 11, Neo4j 4.4 embarcado). A rodada exercita também a migração Java 21/Neo4j 5 da feature 003, herdada por esta branch, e registra as correções que ela motivou. Resultados em [validation-results.md](validation-results.md), seção "Rodada de regressão com a imagem de referência (2026-10-23)".
+
+- [X] T085 Processar a imagem de referência com o IPED 4.3.1 (baseline), com o release 010 **sem** o plugin e com o release 010 **com** o plugin e o **mesmo** `LocalConfig.txt` do baseline; comparar estatísticas finais, logs e itens. A execução sem plugin usou o `LocalConfig.txt` padrão (`TempFileTask` e `HashDBLookupTask` desligadas, outro `locale`), então vale para o comportamento sem plugin, não para a paridade.
+- [X] T086 [US2] Completar, antes do `neo4j-admin database import full`, as linhas de CSV com menos campos que o cabeçalho: o importador do Neo4j 5 as rejeita (`Error in input data`) e o 4.4 as aceitava — regressão herdada da feature 003. `padShortRows`/`countFields` em `iped-graph-neo4j/src/main/java/iped/graph/neo4j/Neo4jImportRunner.java`, chamados em `run()`; testes em `iped-graph-neo4j/src/test/java/iped/graph/neo4j/Neo4jImportRunnerTest.java` (4). `GraphFileWriter`, arquivos golden e SPI v1 inalterados. Decisão em [research.md R-15](research.md). Commit `841f52128`.
+- [X] T087 **Fora do escopo da feature** (defeito pré-existente, mesmo código na 4.3.1): `Item.cacheDataInMemory()` em `iped-engine/src/main/java/iped/engine/data/Item.java` só publica o buffer depois de uma leitura completa; leitura curta ou `IOException` devolve `false`, sem cache. Antes, com a `TempFileTask` ativa (`indexTempOnSSD = true`), o buffer zerado ficava em cache e itens ilegíveis de até 8 MiB eram hasheados como zeros (23 itens na imagem de referência). Sem teste de unidade. Commit `a9df70e05`.
+- [X] T088 **Fora do escopo da feature** (defeito pré-existente, mesmo código na 4.3.1): `CacheIndexParser.preferLiveFiles` em `iped-parsers/iped-parsers-impl/src/main/java/iped/parsers/browsers/chrome/CacheIndexParser.java` põe os irmãos `data_N`/`f_*` não apagados na frente (ordenação estável), porque `CacheAddr` usa o primeiro irmão com o nome procurado e a ordem da busca não é determinística. Também acrescenta o `{}` que faltava no aviso `Failed to retrieve URL. Cache file: {}` de `iped-parsers/iped-parsers-impl/src/main/java/iped/parsers/discord/cache/CacheEntry.java`. Teste: `iped-parsers/iped-parsers-impl/src/test/java/iped/parsers/browsers/chrome/CacheIndexParserTest.java` (2). Commit `a5c724030`.
+- [X] T089 Revisar os três commits e documentar a rodada: `specs/010-neo4j-optional-plugin/{tasks,research,data-model,quickstart,plan,spec,validation-results}.md`, `contracts/{graph-spi,cli-missing-plugin}.contract.md`, `checklists/requirements.md`, `specs/003-java21-migration/implementation-report.md`, `specs/003-java21-migration/contracts/parity-validation.contract.md`, `ReleaseNotes.txt` e os `CLAUDE.md` da raiz, de `iped-engine`, `iped-parsers` e `iped-graph-neo4j`.
+- [X] T090 Rebuild completo para a próxima rodada: `mvn -B clean package` com todos os testes, inventário do contrato [release-inventory](contracts/release-inventory.contract.md) vazio e zip `iped-graph-neo4j/target/iped-graph-neo4j-4.4.0-SNAPSHOT.zip`; registrar em `validation-results.md`.
+- [ ] T091 Nova rodada com o release e o zip de T090 instalados numa pasta nova (sem os jars trocados à mão na rodada anterior), com o plugin e o `LocalConfig.txt` do baseline ([quickstart §4](quickstart.md) passo 19). Conferir:
+  - importação do grafo concluída dentro do processamento (linhas `Padded …`, nenhum `Error generating database.`);
+  - contagens do importador × 4.3.1 (12.545 nós / 242.555 relacionamentos), triando os +14 relacionamentos;
+  - `I/O read errors: 24` (4.3.1: 1, ver T087);
+  - avisos do cache do Chromium no nível da 4.3.1;
+  - paridade C1–C8 item a item, com uma execução de controle e com as diferenças esperadas de T087/T088/T093 documentadas como exclusões;
+  - caso aberto pela própria cópia, com a aba "Vínculos".
+
+### Acompanhamento — achados da revisão dos commits
+
+T092 e T093 foram feitas antes de T091, a pedido do usuário (2026-10-24); T094–T096 não bloqueiam T091. Detalhes e evidências em [validation-results.md](validation-results.md), seção "T092–T093".
+
+- [X] T092 [P] [US2] `Neo4jImportRunner` (plugin), em `iped-graph-neo4j/src/main/java/iped/graph/neo4j/Neo4jImportRunner.java`:
+  - uma primeira passagem só de leitura, em blocos de 64 KiB, procura a primeira linha curta; sem linha curta, nenhum arquivo é criado ou alterado. Antes, todo arquivo de dados, inclusive os de relacionamento (que não podem ter linha curta), era copiado byte a byte para `<arquivo>.padding.tmp` a cada importação;
+  - a reescrita, também em blocos, grava o `.padding.tmp`, faz `fsync` e o move sobre o original (`ATOMIC_MOVE`, com recurso ao `move` simples). Em qualquer falha o temporário é apagado em modo best-effort, sem mascarar a exceção original, e é mantido se o original tiver sumido num `move` não atômico que falhou, porque é a única cópia;
+  - o `ArgsFileFilter` aceita só `import-tool-args-<sufixo>.txt` (sufixo `[A-Za-z0-9_]+`): `.gzip` e cópias manuais deixam de quebrar ou duplicar a importação;
+  - Javadoc de `GraphDatabaseGenerator.generate` (`iped-engine`): o provedor pode normalizar os CSVs de `csvFolders` no lugar;
+  - testes: `Neo4jImportRunnerTest` (19: os 4 originais e 15 novos, entre eles um teste diferencial contra uma cópia literal do algoritmo anterior, o fluxo com o `GraphFileWriter` real, o multi-caso, o filtro de argumentos, a limpeza em caso de falha e a linha `Padded …` do log) e `Neo4jImportRunnerIT` (gated, perfil `graph-it`: importa com o `neo4j-admin` real e confirma que os campos completados viram propriedade ausente). Commit `0f0afd1d9`.
+- [X] T093 [P] **Fora do escopo** (pré-existente, gravidade média): `HashTask` (`iped-engine/src/main/java/iped/engine/task/HashTask.java`) não zerava os `MessageDigest` nem o estado ed2k da instância (uma por worker) e não esperava os blocos em andamento quando a leitura falhava depois do primeiro bloco, e o item seguinte do mesmo worker recebia hashes errados, sem `ioError`. Agora:
+  - um `Semaphore` conta só os jobs efetivamente submetidos;
+  - um `finally` espera esses jobs sem ceder à interrupção e zera os digests e o estado ed2k em todo caminho de saída;
+  - uma interrupção não gera hash e preserva o sinal de interrupção do worker;
+  - a falha de um job, inclusive `Error`, e a do último bloco passam a impedir o hash.
+
+  Testes: `iped-engine/src/test/java/iped/engine/task/HashTaskTest.java` (10, com eDonkey via Bouncy Castle); `mockito-core` 3.8.0 com escopo `test` no `iped-engine/pom.xml`, a mesma versão do `iped-parsers-impl`. Commit `3cce9520c`.
+- [ ] T094 [P] **Fora do escopo**, complementos de T087 (`Item.cacheDataInMemory`, `TempFileTask`):
+  - rejeitar `length < 0` e capturar `RuntimeException` (hoje abortam o processamento quando a `TempFileTask` está ativa);
+  - tratar retorno 0 de `read` como leitura curta (laço infinito com AD1 truncado);
+  - corrigir o comentário sobre leitura curta (nenhum leitor posterior a sinaliza) e registrar `WARN` com os bytes esperados × lidos;
+  - não chamar `getTempFile()` quando a leitura lançou exceção e apagar o temporário parcial em `getTempFile`;
+  - detectar stream mais longo que `getLength()`;
+  - testes de unidade.
+- [ ] T095 [P] **Fora do escopo**, complementos de T088 (cache do Chromium/Discord):
+  - pôr na frente os irmãos com o **mesmo** status de apagado do `index` analisado. Hoje um `index` apagado é resolvido contra os arquivos vivos; o `SQLite3DBParser` já usa essa regra para WAL/journal;
+  - filtrar resultados `null` da busca antes de ordenar (hoje um `null` aborta o parse do índice inteiro);
+  - com duas ou mais gerações apagadas do mesmo arquivo, só a validação por entrada (hash/`self_hash`) separa as gerações; um desempate por id só torna a escolha repetível;
+  - mesma escolha pelo primeiro resultado da busca em `DiscordParser` (onde `da.getSize() > greater` nunca escolhe o maior), `Win10MailParser` e `SkypeSqlite`;
+  - aviso de URL com o arquivo da chave longa e o caminho do índice, uma vez por entrada;
+  - testes no nível de `parse()`.
+- [ ] T096 [P] **Fora do escopo** (pré-existente, achado na revisão de T093): em `HashTask`, o contador `total` do eDonkey é `int`. Em itens acima de 2 GiB que tenham tamanho múltiplo exato do bloco de 9.500 KiB, o teste `total % CHUNK_SIZE` de `digestEd2k` erra, e o eDonkey sai diferente da convenção do próprio IPED. Exemplo medido: um item zerado de 221 × 9.728.000 bytes. Correção: usar `long` e acrescentar um teste.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -206,6 +259,7 @@ description: "Task list — Neo4j como plugin opcional do IPED"
 - **US3 (Phase 5)**: depende de T030; T065 toca o mesmo ponto de T036 (US1) e T061 o `Manager` já tocado por T050 (US2) — coordenar se feitas em paralelo.
 - **US4 (Phase 6)**: depende de T030; T079 pressupõe T041 e T044 (release + zip).
 - **Polish (Phase 7)**: depende das stories desejadas.
+- **Rodada de regressão (Phase 8)**: T085 usou o release de T041 e o zip de T054; T086–T088 são correções motivadas por T085 (T087 e T088 fora do escopo da feature); T090 (rebuild completo) precede T091 (nova rodada); T091 complementa, sem substituir, as validações de UI pendentes (T043, T056, T057, T068). T092 e T093 foram feitas antes de T091 e entram no release de T090; T094–T096 não bloqueiam T091.
 
 ### User Story Dependencies
 
@@ -274,6 +328,7 @@ Task: "T040 GraphFileWriterTest (golden)"
 2. US3 (T058–T070): compatibilidade/bloqueio/aviso → validar com o caso-baseline.
 3. US4 (T071–T079): docs, licenças, CI → validar build limpo + CI.
 4. Polish (T080–T084).
+5. Rodada de regressão com a imagem de referência (T085–T091) e acompanhamento (T092–T096).
 
 ### Riscos a vigiar
 

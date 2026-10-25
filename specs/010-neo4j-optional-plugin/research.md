@@ -145,7 +145,7 @@ Flag: `--ignore-missing-graph-plugin` (booleana) em `CmdLineArgsImpl`, exposta p
 
 **Decisão**:
 - **Unitários (`iped-engine`)**: `GraphPluginRegistryTest` — provedores de teste carregados por `URLClassLoader` temporário cobrindo ABSENT, AVAILABLE, MULTIPLE_COPIES, SPI_MISMATCH, INCOMPLETE, LOAD_ERROR; `GraphPluginGuardTest` — matriz (modo × dados de vínculos × plugin × flag) incluindo `--restart` apagando `neo4j/`; `GraphFileWriterTest` — CSV gerado com `GraphLabel`/`GraphRelationshipType` idêntico ao formato anterior (arquivo golden com cabeçalhos/nomes de arquivo).
-- **Unitários (`iped-graph-neo4j`)**: `Neo4jGraphServiceProviderTest` — `getSpiVersion()` igual a `CURRENT_SPI_VERSION`; `validate()` aceita/rejeita layouts montados em pasta temporária; manifesto lido corretamente.
+- **Unitários (`iped-graph-neo4j`)**: `Neo4jGraphServiceProviderTest` — `getSpiVersion()` igual a `CURRENT_SPI_VERSION`; `validate()` aceita/rejeita layouts montados em pasta temporária; manifesto lido corretamente. `Neo4jImportRunnerTest` (adicionado com R-15) — completamento byte a byte de linhas curtas (terminadores `\r\n`/`\n`, última linha sem terminador, NUL, vírgula entre aspas), arquivos completos e vazios intocados sem temporário remanescente, resolução cabeçalho/dados a partir dos argumentos com prefixo de subpasta, contagem de campos com aspas; desde T092 também equivalência byte a byte com o algoritmo anterior, fluxo com o `GraphFileWriter` real, multi-caso, filtro dos arquivos de argumentos e limpeza em caso de falha. `Neo4jImportRunnerIT` (gated, `graph-it`) importa CSVs completados com o `neo4j-admin` real e confirma que os campos completados viram propriedade ausente.
 - **Integração gated** (`assumeTrue` em `IPED_GRAPH_PLUGIN_HOME`): a partir do zip montado, iniciar o `GraphServer` pelo `Neo4jChildLauncher` do plugin, executar `RETURN 1` via driver relocado e encerrar — valida R-05.
 - **Manual (quickstart)**: matriz SC-001..SC-009 (inventário; processamento sem/com plugin e comparação forense/grafo; instalação ≤ 3 passos; smoke da UI; desinstalação; perfis antigos; tempo de inicialização).
 
@@ -165,8 +165,42 @@ Flag: `--ignore-missing-graph-plugin` (booleana) em `CmdLineArgsImpl`, exposta p
 
 ---
 
+## R-15. Linhas de CSV mais curtas que o cabeçalho na importação do Neo4j 5
+
+*Decisão tomada depois da implementação, na rodada de regressão de 2026-10-23 (tarefa T086, commit `841f52128`).*
+
+**Contexto**: o `GraphFileWriter` grava cada linha com as colunas conhecidas naquele momento e escreve o cabeçalho (`*_headers_iped.csv`) no fechamento, com todas as colunas que apareceram. Linhas gravadas antes de uma propriedade nova surgir ficam mais curtas, e quantas são depende da ordem de processamento (multi-thread). O importador do Neo4j 4.4 (até a 4.3.1) tratava as colunas finais ausentes como vazias. O `database import full` do Neo4j 5.26, adotado na feature 003, rejeita a linha (`Error in input data`) e aborta a importação inteira. Como o `Neo4jDatabaseGenerator` só registra `ERROR Error generating database.`, o processamento termina com exit 0 e o banco fica inutilizável. A evidência de 28 MB da validação (T004/T055) não tem linhas curtas. A imagem de referência de 68 GB tem: nos CSVs do baseline 4.3.1, `nodes_PERSON` com 157 de 190 linhas com 8 dos 9 campos e `nodes_GENERIC` com 2 de 1.057 linhas com 3 de 9. Linhas de relacionamento nunca ficam curtas: o escritor de relacionamentos começa com as 5 colunas e só grava `relId` e `dataSource`.
+
+**Decisão**: o plugin completa as linhas curtas imediatamente antes de lançar o `neo4j-admin`. `Neo4jImportRunner.padShortRows(csvDir, args)` percorre as opções `--nodes=<cabeçalho>,<dados>…` e `--relationships=…` lidas dos arquivos `import-tool-args-*`; os caminhos relativos são resolvidos contra a pasta de trabalho da importação, inclusive o prefixo `<n>/` do multi-caso. Em cada arquivo de dados, acrescenta `,""` por coluna faltante às linhas que têm menos campos que a primeira linha do cabeçalho:
+
+- a contagem de campos segue as aspas do RFC 4180 (vírgula e `""` dentro de campo entre aspas não separam campos);
+- o arquivo é processado byte a byte, preservando valores, bytes de controle (ex.: NUL) e terminadores (`\r\n`, `\n`, última linha sem terminador);
+- cabeçalhos nunca mudam; a troca usa `<arquivo>.padding.tmp` + `Files.move` e só acontece se alguma linha foi completada;
+- cada arquivo alterado gera `INFO Padded <n> row(s) of <arquivo> to <m> columns, as required by the Neo4j 5 importer.`
+
+Com `--ignore-empty-strings=true` (já usado na importação), o `""` acrescentado é lido como nulo, ou seja, propriedade **ausente** — o mesmo resultado do Neo4j 4.4. Conferido no caso de referência: 515.905 propriedades importadas contra 515.877 na 4.3.1, e a diferença (+28) é exatamente a das 14 relações a mais (2 propriedades cada).
+
+**Justificativa**:
+- A exigência é do **motor**, não do contrato do núcleo: tratá-la no plugin mantém o núcleo neutro (R-01/R-02) e a saída do `GraphFileWriter` byte a byte igual (teste golden T040, Princípio IV).
+- Um único ponto cobre todos os caminhos que chegam ao importador: processamento, `--append`/`--continue` (que reimportam tudo a partir dos CSVs do caso, inclusive linhas gravadas antes da correção) e multi-caso na UI, cuja preparação copia as linhas sem alterá-las — inclusive de casos da 4.3.1, que nunca são reprocessados.
+
+**Consequências**:
+- Os CSVs de nós de um caso processado com o plugin ficam **reescritos** com as linhas completadas e assim são compactados no caso (`*.gzip`). Diferem byte a byte dos CSVs da 4.3.1 só por esses campos vazios no fim da linha, e quantas linhas mudam varia com a ordem de processamento. Comparações de CSV entre versões devem normalizar as linhas para o número de colunas do cabeçalho ([quickstart.md](quickstart.md), método de paridade).
+- O provedor escreve nas pastas `csvFolders` que recebe; o contrato do SPI passa a dizer isso ([graph-spi](contracts/graph-spi.contract.md)).
+- Custo: desde T092, uma primeira passagem só de leitura, em blocos, procura a primeira linha curta, e só os arquivos que a têm são reescritos (temporário com `fsync`, `move` atômico, limpeza em caso de falha). Os arquivos de relacionamento, que são a maior parte dos bytes, só são lidos. Medido num arquivo de 50 MB sem linha curta: cerca de 60 ms, contra 1,5 s da versão do commit `841f52128`, que copiava todo arquivo de dados a cada importação.
+- `countFields` segue o dialeto que o `GraphFileWriter` grava: todo valor entre aspas, aspas internas trocadas por `'`, quebras de linha trocadas por espaço e linhas terminadas em CRLF. Se esse dialeto mudar, a contagem precisa acompanhar.
+
+**Alternativas**:
+- Completar as linhas no `GraphFileWriter`, no `normalize` do fechamento, que já reescreve todos os arquivos de dados. Não mudaria os arquivos golden (todas as linhas golden já têm a largura do cabeçalho) nem custaria uma passagem a mais. Mas não alcança CSVs já gravados, de casos antigos levados ao `--append` ou ao multi-caso, e mudaria a saída do núcleo por causa de um motor. Pode ser somado ao passe do plugin no futuro, que então só verificaria.
+- Uma opção do importador que restaure o comportamento do 4.4: não existe no `neo4j-admin database import full` 5.26, que só tem `--ignore-extra-columns` (colunas **a mais**).
+- `--bad-tolerance` maior que 0: o importador descartaria as linhas curtas, ou seja, perderia entidades e vínculos sem aviso ao perito.
+- Gerar cópias completadas numa pasta temporária: duplicaria o volume de CSV em casos grandes e exigiria reescrever os caminhos dos argumentos.
+
+---
+
 ## Pendências encaminhadas ao plano/tarefas (não bloqueiam)
 
 - Validar empiricamente a relocação do netty (R-05) — primeira tarefa do módulo do plugin; plano B pronto.
 - Decidir, nas tarefas de docs, se `plugins/Readme.txt` do release menciona o plugin de grafo (sim, uma linha).
 - Confirmar no `Manager` o ponto exato de inserção do guard (antes da linha que trata `isContinue()/isRestart()` — hoje `Manager.process()` ~l.251) durante a implementação.
+- Depois de R-15 (rodada de 2026-10-23): passe de completamento só leitura antes de reescrever, limpeza do temporário em caso de erro, `ArgsFileFilter` restrito a `import-tool-args-*.txt`, testes com CSVs do próprio `GraphFileWriter` e importação real no `graph-it` — feito em T092 (2026-10-24).

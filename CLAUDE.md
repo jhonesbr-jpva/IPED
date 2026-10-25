@@ -256,6 +256,13 @@ Tudo configurável por `conf/IPEDConfig.txt`, `conf/TaskInstaller.xml`, `conf/*.
 ## 13. Histórico recente (alta-frequência)
 
 Recentes (top `git log`):
+- **Rodada de regressão 2026-10-23** (imagem E01 de 68 GB, IPED 4.3.1 × fork Java 21, sem e com o plugin de grafo):
+  - `841f52128` (010): `Neo4jImportRunner.padShortRows` completa as linhas de CSV mais curtas que o cabeçalho antes do `neo4j-admin`. Desde a 003, o importador do Neo4j 5 as rejeitava e o grafo de casos grandes não era gerado.
+  - Fora do escopo da 010, defeitos presentes também na 4.3.1: `a9df70e05` — `Item.cacheDataInMemory` não deixa mais buffer zerado em cache quando a leitura falha (com `indexTempOnSSD = true`, itens ilegíveis eram indexados com hashes de zeros); `a5c724030` — `CacheIndexParser.preferLiveFiles` prioriza os `data_N`/`f_*` não apagados (antes, a escolha entre homônimos não era determinística).
+  - Antes da nova rodada (2026-10-24), achados da revisão desses commits:
+    - `3cce9520c` (T093, também presente na 4.3.1): a `HashTask` não deixa mais digests sujos para o próximo item do worker depois de uma leitura que falha no meio.
+    - `0f0afd1d9` (T092): o `padShortRows` só lê arquivos completos e reescreve com `fsync` + `move` atômico; o `ArgsFileFilter` aceita só `import-tool-args-<sufixo>.txt`.
+  - Comparações A/B entre versões exigem o **mesmo `LocalConfig.txt`** nos dois lados. Ver `specs/010-neo4j-optional-plugin/validation-results.md` (rodada, T092–T093 e pendências) e `research.md` R-15.
 - **`spec 010-neo4j-optional-plugin` (4.4.0)** — Neo4j vira **plugin opcional** (`iped-graph-neo4j`, zip separado): o release padrão não traz nenhum componente Neo4j (nem `lib/neo4j/`, driver, netty/reactor, `eclipse-collections`); núcleo usa o SPI `iped.engine.graph.GraphServiceProvider` (v1) + tipos neutros; sem o plugin a etapa de grafo é pulada com 1 `WARN`, a aba "Vínculos" some, caso com grafo mostra aviso modeless e `--append`/`--continue`/`-remove` são recusados salvo `--ignore-missing-graph-plugin`. Casos criados com o plugin recebem cópia dele em `<caso>/plugins/`. Ver `iped-engine/CLAUDE.md` (graph), `iped-graph-neo4j/CLAUDE.md` e `specs/010-neo4j-optional-plugin/`.
 - **`spec 001-yara-rules-engine` (4.4.0)** — adicionada engine de regras YARA-X via `libyara-x-capi` 1.16.0 (JNA, in-process). Nova `YaraScanTask` no pipeline (entre carving e indexação), faceta UI dedicada, integração no HTML report, modo `--yara-only` para reaplicar catálogo sobre caso já processado. Ver `iped-engine/CLAUDE.md` §22 + `specs/001-yara-rules-engine/`.
 - `#2873` — fix python warnings (escapes).

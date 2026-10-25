@@ -6,6 +6,13 @@ Define **o que** comparar e **como**, materializando FR-003 e SC-002 conforme a 
 
 - **Caso-baseline**: gerado pelo release **Java 11** sobre o conjunto de dados de referência, com um **profile fixo** (recomendado: `forensic`), congelado.
 - **Caso-candidato**: gerado pelo release **Java 21** sobre o **mesmo** conjunto, **mesmo** profile, **mesmo** timezone (`-tz`) e mesmas flags.
+- **Mesmo `LocalConfig.txt`** nos dois releases: copiar o do baseline para o candidato, ajustando só `pluginFolder` se necessário, e conferir a linha `LocalConfig: {…}` no início dos dois logs.
+  - `indexTempOnSSD` (com `indexTemp`) liga a `TempFileTask`.
+  - `hashesDB` é exigido pela `HashDBLookupTask` dos perfis `forensic`/`pedo`/`blind`.
+  - `locale` altera nomes e bytes de subitens gerados.
+  - `indexTemp`, `outputOnSSD` e `numThreads` alteram o tempo (SC-005).
+
+  Lição da rodada de 2026-10-23 com a imagem de referência; ver `specs/010-neo4j-optional-plugin/validation-results.md`.
 
 ## Campos comparados (devem ser IGUAIS — zero divergência)
 

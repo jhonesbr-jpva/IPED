@@ -58,7 +58,12 @@ public interface GraphDatabaseGenerator {
 }
 ```
 
-Semântica igual à de `GraphGenerator.generate` atual: importação em lote dos CSVs + operações pós-importação (statements configurados + agrupamento de contatos). Executa fora do processo principal (FR-009).
+Semântica igual à de `GraphGenerator.generate` da 4.3.1: importação em lote dos CSVs + operações pós-importação (statements configurados + agrupamento de contatos). Executa fora do processo principal (FR-009).
+
+- **Entrada**: cada pasta de `csvFolders` está no formato do `GraphFileWriter` ([data-model.md §5](../data-model.md)), com seus arquivos `import-tool-args-*` e pares cabeçalho/dados. O provedor **MUST** aceitar linhas de dados com menos campos que o cabeçalho e tratar os campos finais ausentes como propriedade ausente: é assim que o núcleo grava quando uma propriedade surge no meio do processamento, e era o comportamento do Neo4j 4.4 até a 4.3.1. Exigências de formato do motor são resolvidas no provedor, sem mudança no núcleo.
+- **Escrita nas pastas**: o provedor pode normalizar os CSVs **no lugar**, sem mudar o conteúdo lógico (regra também escrita no Javadoc de `GraphDatabaseGenerator.generate`). O provedor Neo4j 5 completa as linhas curtas antes do `neo4j-admin` ([research.md R-15](../research.md)), e o `neo4j-admin` grava `import.report` na pasta de trabalho (`<dbHome>/csv`). O núcleo só passa pastas graváveis: `<caso>/iped/neo4j/csv` no processamento, ou cópias preparadas em `iped-multicases/multicase-<hash>/` no multi-caso, de modo que os casos de origem não são alterados.
+- **Retorno**: `true` se a importação concluiu (a pós-importação roda em seguida); `false` se falhou. Na falha, o provedor registra `ERROR` (`Error generating database.` no provedor Neo4j) e o chamador segue: a `GraphTask` não aborta o processamento (exit 0, como na 4.3.1), mas `dbHome` pode ficar com um banco inutilizável.
+- Esclarecimento sem mudança de assinatura: `CURRENT_SPI_VERSION` continua **1**.
 
 ## Tipos de modelo
 
@@ -89,3 +94,5 @@ Fachada preservada: `GraphServiceFactoryImpl.getInstance().getGraphService()` de
 
 - `GraphPluginRegistryTest` (iped-engine): cada linha da tabela de estados, com provedores de teste em `URLClassLoader` temporário.
 - `Neo4jGraphServiceProviderTest` (iped-graph-neo4j): `getSpiVersion() == CURRENT_SPI_VERSION`; `validate()` sobre layouts válidos/incompletos em pasta temporária.
+- `Neo4jImportRunnerTest` (iped-graph-neo4j): regra de entrada do `GraphDatabaseGenerator` — linhas curtas completadas byte a byte (terminadores, NUL, vírgula entre aspas), arquivos completos e vazios intocados, cabeçalho/dados resolvidos a partir dos argumentos com prefixo de subpasta (multi-caso), contagem de campos com aspas.
+- `Neo4jImportRunnerIT` (iped-graph-neo4j, gated, perfil `graph-it`): a mesma regra contra o importador real — os campos completados são importados como propriedade ausente, nunca como texto vazio.

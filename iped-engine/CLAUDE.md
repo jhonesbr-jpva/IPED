@@ -113,10 +113,10 @@ public abstract class AbstractTask {
 | 1 | `SignatureTask` | Detecta MIME via Tika `Detector`, define `MediaType`. |
 | 2 | `SetTypeTask` | Normaliza extensão a partir do MIME. |
 | 3 | `IgnoreHardLinkTask` | Filtra hardlinks duplicados. |
-| 4 | `TempFileTask` | Filtra arquivos temporários/system. |
+| 4 | `TempFileTask` | Só com `indexTempOnSSD = true` (`LocalConfig.txt`), fora dos perfis `fastmode`/`triage` e de relatórios. Guarda em memória o conteúdo de itens de até 8 MiB (`Item.cacheDataInMemory`) ou cria arquivo temporário (até `maxFileSize` de `conf/TempFileTaskConfig.txt`, 1 GiB), para as tasks seguintes não relerem a evidência. Leitura com falha não é cacheada (desde `a9df70e05`): o item segue para o erro de I/O normal (`WARN … Error creating temp file`). Ligar ou desligar essa task muda resultados, então comparações A/B entre versões precisam do mesmo `LocalConfig.txt`. |
 | 5 | `SkipCommitedTask` | Pula itens já processados (modo `--continue`). |
 | 6 | `HashTask` | MD5, SHA-1/256/512, Edonkey (paralelo). |
-| 7 | `HashDBLookupTask` | Consulta NSRL/ProjectVic (marca "known"). |
+| 7 | `HashDBLookupTask` | Consulta a base de hashes (NSRL/ProjectVic/…; marca "known"). Ligada por `enableHashDBLookup` (perfis `forensic`, `pedo`, `blind`) e exige `hashesDB` em `LocalConfig.txt`; sem ele, desliga-se com 1 `ERROR`. |
 | 8 | `PhotoDNATask` / `PhotoDNALookup` | PhotoDNA + consulta NCMEC. |
 | 9 | `ParsingTask` | Extração de texto/metadata via Tika; expande containers. |
 | 10 | `CarverTask` / `KnownMetCarveTask` / `LedCarveTask` | Recupera arquivos por assinatura. |
@@ -176,7 +176,7 @@ Arquivos físicos vivem em `iped-app/resources/config/conf/` e `profiles/{forens
 
 | Classe | Responsabilidade |
 |---|---|
-| [`Item`](src/main/java/iped/engine/data/Item.java) | Implementa `IItem`. Metadados, hashes, categorias, bookmarks, atributos extras. Lazy I/O via `ISeekableInputStreamFactory`. |
+| [`Item`](src/main/java/iped/engine/data/Item.java) | Implementa `IItem`. Metadados, hashes, categorias, bookmarks, atributos extras. Lazy I/O via `ISeekableInputStreamFactory`. `cacheDataInMemory()`, chamado só pela `TempFileTask`, guarda o conteúdo de itens de até 8 MiB (`BUF_LEN`), que passa a ser servido a todos os leitores. O buffer só é publicado após leitura completa: leitura curta ou `IOException` devolve `false`, sem cache. Antes de `a9df70e05`, o buffer zerado ficava em `data` e itens ilegíveis eram hasheados como zeros. |
 | [`IPEDSource`](src/main/java/iped/engine/data/IPEDSource.java) | Implementa `IIPEDSource`. `IndexReader`, `IndexSearcher`, mapeia id ↔ lucene-doc, bookmarks, categoria. Diretório: `{caseDir}/iped/{index,data,lib}`. |
 | `IPEDMultiSource` | Agregação multi-caso. |
 | `CaseData` | Estado global mutável compartilhado entre tasks (`objectMap`), flags (`containsReport`, `ipedReport`), contadores (`discoveredVolume`, `discoveredEvidences`). Serializa para GZIP. |
@@ -306,6 +306,7 @@ Veja exemplos: `ExampleScriptTask.js`, `PythonScriptTask.py`, `AgeEstimationTask
 | `br.dpf:photodna-api` | 1.0 | PhotoDNA (restrito) |
 | `iped:iped-ahocorasick` | 1.1 | Aho-Corasick |
 | `iped:iped-parsers-impl`, `iped-carvers-{api,impl}`, `iped-viewers-{api,impl}`, `iped-utils`, `iped-api` | `${project.version}` | Internas |
+| `org.mockito:mockito-core` | 3.8.0 (test) | Mocks nos testes (ex.: `HashTaskTest`); mesma versão do `iped-parsers-impl` |
 
 ## 15. Padrões de design
 
@@ -391,6 +392,8 @@ Registro:
 | Strings literais em `BasicProps`/`IndexItem` | São nomes de campo Lucene; renomear invalida casos existentes. |
 | `AppAnalyzer` configs | Mudar fold/ASCII/lowercase invalida queries antigas. |
 | `commitIntervalMillis` | Muito baixo derruba performance; muito alto aumenta perda em crash. |
+| `Item.cacheDataInMemory` / `TempFileTask` | O conteúdo cacheado é servido a **todas** as tasks seguintes (hash, assinatura, parsing, carving, YARA): só publicar dados lidos por inteiro. Um buffer parcial vira conteúdo forense errado sem `ioError` (corrigido em `a9df70e05`; pendências em `specs/010-neo4j-optional-plugin/tasks.md` T094). |
+| `HashTask` (estado por worker) | Os `MessageDigest` e o estado ed2k são da instância da task, reutilizada em todos os itens do worker. `process()` só retorna depois que os jobs submetidos ao pool terminam e sempre zera os digests no `finally`; uma interrupção não gera hash e preserva o sinal de interrupção (T093, coberto por `HashTaskTest`). Até a 4.3.1, uma leitura que falhava depois do primeiro bloco deixava os digests sujos, e o item seguinte recebia hashes errados. Preservar essas garantias em qualquer mudança. |
 
 ## 19. Debugging
 
@@ -516,7 +519,7 @@ O engine **não depende de Neo4j** (nem `import org.neo4j`, nem dependência Mav
 - `GraphPluginGuard` (chamado no início de `Manager.process()`, antes de qualquer escrita): `--append`/`--continue`/`-remove` num caso com `neo4j/data` ou `neo4j/csv` → `IPEDException` localizada (`GraphPlugin.MissingForCaseModification`), salvo `--ignore-missing-graph-plugin` (`CmdLineArgs#isIgnoreMissingGraphPlugin`, `WARN` + mensagem `MSG` no console); `--yara-only` (que faz `isContinue()==true`) é testado antes e não é afetado; `--restart` sem plugin apaga `neo4j/`. Em `removeEvidence` sem plugin o banco não é tocado, mas os CSVs são limpos.
 - `Manager.copyGraphPluginIfMissing`: com o plugin disponível, caso novo (ou `--append` em caso sem cópia) recebe o jar + a pasta do plugin em `<caso>/plugins/` (o app root do caso é `<caso>/iped`, então `pluginFolder = ../plugins/` resolve para lá).
 
-**Determinismo**: `GraphFileWriter` grava CSVs byte a byte iguais aos de antes da feature (`GraphFileWriterTest` + golden em `src/test/resources/iped/engine/graph/golden/`, com `.gitattributes` `-text`). O nome do arquivo de argumentos da importação (`GraphFileWriter.ARGS_FILE_NAME`) mora aqui; o plugin o reutiliza.
+**Determinismo**: `GraphFileWriter` grava CSVs byte a byte iguais aos de antes da feature (`GraphFileWriterTest` + golden em `src/test/resources/iped/engine/graph/golden/`, com `.gitattributes` `-text`). O nome do arquivo de argumentos da importação (`GraphFileWriter.ARGS_FILE_NAME`) mora aqui; o plugin o reutiliza. Linhas de dados com **menos campos que o cabeçalho** são válidas: o cabeçalho cresce quando surge uma propriedade nova, e quantas linhas ficam curtas depende da ordem de processamento. Quem exige linhas completas é o motor, e por isso o plugin Neo4j 5 as completa no lugar antes do `neo4j-admin` (`Neo4jImportRunner.padShortRows`, R-15 em `specs/010-neo4j-optional-plugin/research.md`); os CSVs guardados num caso processado com o plugin trazem essas linhas completadas. Se o completamento for feito também aqui (alternativa registrada em R-15), manter o passe do plugin para CSVs de casos antigos.
 
 **Testes**: `GraphPluginRegistryTest` (todos os estados, provedores de teste em `src/test/java/iped/engine/graph/testproviders/` + descritores em `src/test/resources/iped/engine/graph/providers/`), `GraphPluginGuardTest` (matriz da tabela B do contrato), `GraphFileWriterTest` (golden).
 

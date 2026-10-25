@@ -20,7 +20,7 @@ Tornar a análise de vínculos (grafo Neo4j) um **plugin opcional**: a distribui
 
 **Storage**: formato do caso inalterado — `iped/neo4j/csv/` (CSVs) e `iped/neo4j/data/` (banco Neo4j 5) continuam nos mesmos caminhos (`GraphTask.CSVS_PATH`/`DB_DATA_PATH`); índice Lucene intocado. **Novo**: cópia do plugin em `<caso>/plugins/` (irmã de `<caso>/iped/`, FR-010). Grafo multi-caso em `iped-multicases/multicase-<hash>/graph` inalterado.
 
-**Testing**: JUnit 4.13.2 + Hamcrest + Mockito via `maven-surefire-plugin` (padrão do repositório). Novos: `GraphPluginRegistryTest`, `GraphPluginGuardTest`, `GraphFileWriterTest` (golden CSV) em `iped-engine`; `Neo4jGraphServiceProviderTest` em `iped-graph-neo4j`; teste de integração **gated** (`assumeTrue(IPED_GRAPH_PLUGIN_HOME)`) que sobe o `GraphServer` a partir do pacote montado — valida a relocação do driver (R-05). Matriz manual no [quickstart.md](quickstart.md) mapeada a SC-001..SC-009.
+**Testing**: JUnit 4.13.2 + Hamcrest + Mockito via `maven-surefire-plugin` (padrão do repositório). Novos: `GraphPluginRegistryTest`, `GraphPluginGuardTest`, `GraphFileWriterTest` (golden CSV) em `iped-engine`; `Neo4jGraphServiceProviderTest` e `Neo4jImportRunnerTest` (linhas de CSV curtas completadas antes da importação, R-15 — adicionado após a rodada de regressão de 2026-10-23) em `iped-graph-neo4j`; teste de integração **gated** (`assumeTrue(IPED_GRAPH_PLUGIN_HOME)`) que sobe o `GraphServer` a partir do pacote montado — valida a relocação do driver (R-05) —, e outro (`Neo4jImportRunnerIT`, T092) que importa CSVs com linhas completadas pelo `neo4j-admin` real. Matriz manual no [quickstart.md](quickstart.md) mapeada a SC-001..SC-009, mais a rodada com imagem grande × 4.3.1 (passo 19).
 
 **Target Platform**: Windows x64 e Linux x64 (mesmo pacote de plugin — só Java; FR-017).
 
@@ -47,7 +47,7 @@ Tornar a análise de vínculos (grafo Neo4j) um **plugin opcional**: a distribui
 | **I. Estabilidade da API Pública** | Nenhuma interface de `iped-api` é tocada; o SPI nasce em `iped-engine` (R-02). Chaves Lucene (`BasicProps`/`IndexItem`), `AppAnalyzer` e o formato do caso (`iped/neo4j/*`) permanecem inalterados. `iped.engine.CmdLineArgs` (engine, não API) ganha `isIgnoreMissingGraphPlugin()`. | ✅ PASS |
 | **II. Extensão Modular em vez de Modificação** | A feature é majoritariamente **extensão**: novo módulo, novo SPI, novo registro/guard/aviso. Modificações inevitáveis em componentes núcleo: `Manager` (guard antes de escrever, cópia do plugin para o caso, remoção de evidência sem plugin) e `App`/`MenuClass`/`UICaseDataLoader` (montagem condicional da UI), além da troca de tipos em `GraphTask`/`GraphFileWriter`/listeners. Sem mudança de lógica em `Worker`/`ProcessingQueues`/`IndexWriter`. Justificado em Complexity Tracking. | ⚠️ PASS c/ justificativa |
 | **III. Configuração antes de Código** | Nenhum caminho/limite hardcoded: pasta de plugins vem de `PluginConfig` (`LocalConfig.txt`); a chave `enableGraphGeneration` mantém arquivo e default, com semântica "gerar quando disponível"; override exposto como flag de CLI; mensagens de UI/console em bundles PT-BR + EN. Perfis não precisam de edição (FR-005). | ✅ PASS |
-| **IV. Integridade Forense e Determinismo** | Charset explícito (UTF-8) ao ler manifesto/`plugin.properties`; logging SLF4J; CSVs do grafo byte-a-byte iguais aos atuais (teste golden); processamento sem o plugin produz os mesmos campos forenses (SC-002). Bloqueio de modificação sem o plugin evita grafo silenciosamente desatualizado; override é explícito e logado. `SleuthkitClient` intocado. | ✅ PASS |
+| **IV. Integridade Forense e Determinismo** | Charset explícito (UTF-8) ao ler manifesto/`plugin.properties`; logging SLF4J; CSVs gravados pelo `GraphFileWriter` byte-a-byte iguais aos atuais (teste golden) — o plugin só completa com campos vazios, antes da importação, as linhas mais curtas que o cabeçalho, sem alterar valores (R-15, pós-implementação); processamento sem o plugin produz os mesmos campos forenses (SC-002). Bloqueio de modificação sem o plugin evita grafo silenciosamente desatualizado; override é explícito e logado. `SleuthkitClient` intocado. | ✅ PASS |
 | **V. Concorrência e Isolamento de Processo** | `GraphTask` continua uma instância por worker (writer estático compartilhado como hoje); o motor Neo4j segue **fora do processo** (JVM filha com classpath isolado), agora lançado pelo plugin; aviso da UI na EDT (`invokeLater`); registro resolvido uma vez (sem contenção). | ✅ PASS |
 
 **Restrições de Build/Distribuição**: as dependências do módulo do plugin continuam registradas no `ThirdParty.txt` raiz (seção "Optional plugin … NOT bundled", exigência da constituição para toda dependência do repositório) **e** no `ThirdParty.txt` + `LICENSE.txt` **do plugin**; `licenses/GPL 3.txt` já existe e `licenses/MIT-0.txt` (reactive-streams) é adicionado; `.github/workflows/maven.yml` atualizado no mesmo PR (verificação do release + publicação do zip do plugin); novo módulo no reactor do POM pai (construído por padrão; `iped-app` não depende dele — FR-014).
@@ -62,7 +62,7 @@ Tornar a análise de vínculos (grafo Neo4j) um **plugin opcional**: a distribui
 specs/010-neo4j-optional-plugin/
 ├── plan.md                                   # Este arquivo (/speckit-plan)
 ├── research.md                               # Fase 0: R-01..R-14 (divisão núcleo×plugin, SPI, registro, pacote, shade,
-│                                             #   pasta de plugins/cópia no caso, degradação, guard/flag, UI, enforcer, docs, testes)
+│                                             #   pasta de plugins/cópia no caso, degradação, guard/flag, UI, enforcer, docs, testes; R-15: linhas CSV curtas no import do Neo4j 5)
 ├── data-model.md                             # Fase 1: GraphPlugin (estados), SPI, pacote, pasta de plugins, dados do caso,
 │                                             #   tipos de modelo, config/CLI, mensagens
 ├── quickstart.md                             # Fase 1: build, instalação, matriz de validação SC-001..SC-009
@@ -113,10 +113,10 @@ iped-graph-neo4j/                                         # NOVO MÓDULO (plugin
 │   ├── Neo4jGraphService.java                            # ex-GraphServiceImpl (Bolt), exceções → GraphQueryException
 │   ├── BoltEntity/BoltNode/BoltRelationship/BoltPath.java  # implementam GraphEntity/GraphNode/GraphRelationship/GraphPath
 │   ├── Neo4jDatabaseGenerator.java                       # ex-GraphGenerator (importação + pós-importação)
-│   ├── Neo4jImportRunner.java, Neo4jChildLauncher.java   # -cp <home>/neo4j/* ; add-opens preservados
+│   ├── Neo4jImportRunner.java, Neo4jChildLauncher.java   # -cp <home>/neo4j/* ; add-opens preservados; padShortRows antes do neo4j-admin (R-15)
 ├── src/main/resources/META-INF/services/iped.engine.graph.GraphServiceProvider
 ├── src/plugin-home/{plugin.properties,LICENSE.txt,ThirdParty.txt,README.md}   # fora do jar; copiado para o zip
-├── src/test/java/iped/graph/neo4j/                        # Neo4jGraphServiceProviderTest; Neo4jPluginPackageIT (gated)
+├── src/test/java/iped/graph/neo4j/                        # Neo4jGraphServiceProviderTest; Neo4jImportRunnerTest; Neo4jPluginPackageIT e Neo4jImportRunnerIT (gated)
 └── CLAUDE.md                                             # docs do módulo
 
 iped-graph-server/                                        # inalterado (zip consumido pelo plugin)
@@ -155,7 +155,7 @@ CLAUDE.md (raiz: §2 §3 §6 §8 §10 §13 + pasta de plugins irmã), iped-engin
 
 ## Phase 0 — Research (concluída)
 
-[research.md](research.md): R-01 divisão híbrida; R-02 SPI em `iped-engine` + tipos neutros; R-03 registro/estados/log; R-04 módulo e layout do pacote; R-05 shade/relocação do driver (com plano B); R-06 pasta de plugins irmã do app root e cópia para `<caso>/plugins/`; R-07 degradação da task e `--restart`; R-08 guard e `--ignore-missing-graph-plugin`; R-09 UI condicional e aviso modeless; R-10 enforcer + CI; R-11 licenciamento/docs; R-12 testes; R-13 Cypher opaco no núcleo; R-14 exceções/propriedades ausentes. Nenhum `NEEDS CLARIFICATION` remanescente.
+[research.md](research.md): R-01 divisão híbrida; R-02 SPI em `iped-engine` + tipos neutros; R-03 registro/estados/log; R-04 módulo e layout do pacote; R-05 shade/relocação do driver (com plano B); R-06 pasta de plugins irmã do app root e cópia para `<caso>/plugins/`; R-07 degradação da task e `--restart`; R-08 guard e `--ignore-missing-graph-plugin`; R-09 UI condicional e aviso modeless; R-10 enforcer + CI; R-11 licenciamento/docs; R-12 testes; R-13 Cypher opaco no núcleo; R-14 exceções/propriedades ausentes; R-15 (pós-implementação, rodada de regressão de 2026-10-23) completamento, no plugin, das linhas de CSV mais curtas que o cabeçalho antes da importação do Neo4j 5. Nenhum `NEEDS CLARIFICATION` remanescente.
 
 ## Phase 1 — Design & Contracts (concluída)
 

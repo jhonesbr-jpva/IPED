@@ -89,6 +89,18 @@ Localizações **inalteradas** (constantes de `GraphTask`): `iped/neo4j/csv/` (C
 
 **Detecção para o guard (FR-008)**: `hasLinkData(output) = exists(output/neo4j/data) || exists(output/neo4j/csv)`.
 
+**Conteúdo de `csv/`** (gravado pelo `GraphFileWriter`, no núcleo, no mesmo formato da 4.3.1):
+
+- Por label, `nodes_<LABEL>_iped.csv` (dados) + `nodes_<LABEL>_headers_iped.csv` (cabeçalho numa linha, `<campo>:<tipo>`); por tipo de relacionamento, `relationships_<tipo>_iped.csv` + `relationships_<tipo>_headers_iped.csv`.
+- `replace.csv` (fusões de nós), `import-tool-args-iped.txt` (uma opção `--nodes=<cabeçalho>,<dados>` ou `--relationships=…` por linha, lida pelo provedor), `*_fieldData` (colunas conhecidas, serializadas para `--append`) e o `import.report` que o importador do Neo4j grava na pasta.
+- Valores sempre entre aspas (aspas internas viram `'`, quebras de linha viram espaço), separador `,`, terminador `\r\n`, UTF-8: uma linha física é um registro.
+
+Regras:
+
+- **Linha mais curta que o cabeçalho é válida no contrato do núcleo.** Cada linha é gravada com as colunas conhecidas no momento, e o cabeçalho, escrito no fechamento, cresce quando surge uma propriedade nova. Linhas gravadas antes ficam com menos campos, e quantas são depende da ordem de processamento. Campos finais ausentes valem como propriedade ausente (semântica do importador do Neo4j 4.4).
+- **Completamento no provedor ([R-15](research.md)).** Antes do `neo4j-admin`, o plugin completa essas linhas no lugar com `,""` por coluna faltante, porque o importador do Neo4j 5 as rejeita. Cabeçalhos, linhas completas, valores e terminadores ficam intactos.
+- **Compactação.** No fim do processamento, todos os arquivos de `csv/` viram `*.gzip` (`GraphFileWriter.compressGeneratedCSVFiles`) e são descompactados de novo em `--append`/`--continue`/`-remove`. Num caso processado com o plugin, os `*.gzip` guardam as linhas **já completadas**; num caso da 4.3.1, as linhas curtas originais. Para comparar CSVs entre versões, normalizar as linhas para o número de colunas do cabeçalho.
+
 **Multi-caso (UI)**: o grafo combinado continua em `<pasta dos casos>/iped-multicases/multicase-<hash>/graph` e só é construído quando o plugin está disponível.
 
 ---
@@ -106,7 +118,7 @@ Localizações **inalteradas** (constantes de `GraphTask`): `iped/neo4j/csv/` (C
 | `GraphQueryException` (unchecked, `message`) | `QueryExecutionException` | Wrapper de `org.neo4j.driver.exceptions.Neo4jException`. |
 | `GraphPluginException` (checked) | — | Lançada por `validate()`. |
 
-**Invariante de determinismo (Princípio IV)**: os CSVs produzidos por `GraphFileWriter` com `GraphLabel`/`GraphRelationshipType` são byte-a-byte iguais aos produzidos com `DynLabel`/`DynRelationshipType` para a mesma entrada (`join(labels)` e nomes de arquivo preservados) — coberto por teste golden (R-12).
+**Invariante de determinismo (Princípio IV)**: os CSVs produzidos por `GraphFileWriter` com `GraphLabel`/`GraphRelationshipType` são byte-a-byte iguais aos produzidos com `DynLabel`/`DynRelationshipType` para a mesma entrada (`join(labels)` e nomes de arquivo preservados) — coberto por teste golden (R-12). O invariante vale para a **saída do `GraphFileWriter`**. Depois dela, o provedor Neo4j 5 completa no lugar, antes da importação, as linhas de dados mais curtas que o cabeçalho (R-15): só acrescenta `,""`, sem alterar valores, ordem nem terminadores. Por isso os CSVs guardados num caso processado com o plugin podem diferir dos da 4.3.1 apenas por esses campos vazios.
 
 ---
 

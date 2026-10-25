@@ -120,6 +120,7 @@ O mantenedor gera o release: o pacote padrão não contém o Neo4j e seus avisos
 - **Caso criado sem o plugin e depois estendido (`--append`) com o plugin instalado**: os dados de vínculos passam a existir e a cópia embutida recebe o plugin nesse momento (FR-010), para que o caso continue abrindo com a aba a partir da própria cópia.
 - **Interface multi-caso**: se algum dos casos abertos contém dados de vínculos e o plugin está ausente, o aviso informativo é exibido uma única vez na sessão.
 - **Processamento sem interface (`-nogui`) e Linux**: aplicam-se as mesmas regras de detecção, aviso e degradação; o procedimento de instalação do plugin é o mesmo em Windows e Linux.
+- **Caso grande cujos registros de vínculos ganham propriedades novas durante o processamento** (os registros gravados antes ficam com menos campos que o formato final): com o plugin, a geração dos dados de vínculos MUST concluir, tratando os campos ausentes como vazios, como na versão 4.3.1. A troca do motor de grafos na feature 003 fazia essa geração falhar; o problema foi achado na rodada de regressão de 2026-10-23 (research.md, R-15).
 
 ## Requirements *(mandatory)*
 
@@ -178,3 +179,5 @@ O mantenedor gera o release: o pacote padrão não contém o Neo4j e seus avisos
 - **Mecanismo de plugins reutilizado, não quebrado**: outros componentes opcionais já colocados na pasta de plugins (por exemplo, modelos de NER, decodificador de Telegram) não são afetados em seu funcionamento; se eles também passam a viajar na cópia do caso junto com o plugin de análise de vínculos é decisão de planejamento (hoje não viajam).
 - **Pacote único para Windows e Linux** (o motor de grafos é independente de plataforma, como hoje).
 - **As funcionalidades e a UX da análise de vínculos não mudam**; esta feature altera apenas disponibilidade, empacotamento, avisos e documentação.
+- **Baseline do grafo em casos grandes**: o build anterior a esta feature (Neo4j 5 embarcado desde a feature 003) não gerava o grafo de casos com registros mais curtos que o formato final (ver Edge Cases). Para esses casos, a "versão anterior" de FR-009 e SC-004 é o IPED 4.3.1. A evidência pequena usada na validação da feature não tem esses registros.
+- **Correções feitas durante a validação, fora do escopo** (rodada de 2026-10-23: cache de leitura de itens e seleção de arquivos do cache do Chromium): podem mudar resultados forenses em relação à versão anterior. Cada uma é registrada em `validation-results.md` como diferença esperada e não conta como divergência em FR-004/SC-002.

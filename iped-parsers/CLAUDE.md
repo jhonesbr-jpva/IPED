@@ -115,6 +115,7 @@ extractor.parseEmbedded(new ByteArrayInputStream(content), handler, subMeta, fal
 ### Browsers (`iped.parsers.browsers`)
 Todos herdam de `AbstractSqliteBrowserParser` (extends `SQLite3DBParser`). Geram subitens `Visit`, `Download`, `Search`.
 - `ChromeSqliteParser` → `x-chrome-history`, `x-chrome-downloads`, `x-chrome-searches`, cache via `CacheIndexParser`.
+- `CacheIndexParser` — cache de disco do Chromium (Chrome, Edge antigo, apps Electron como o Discord): arquivo `index` mais os irmãos `data_0`…`data_5` (blocos) e `f_*` (externos), decodificados com as classes de `iped.parsers.discord.cache`. Os irmãos são localizados pelo `IItemSearcher` (mesma evidência e mesmo pai, não carved, sem slack, tamanho > 0, fora de `gpucache`). `CacheAddr` usa o **primeiro** irmão com o nome procurado e a ordem da busca não é determinística, por isso `preferLiveFiles` põe os não apagados na frente (ordenação estável; `a5c724030`, coberto por `CacheIndexParserTest`). Sem isso, um `data_N` apagado ao lado do vivo gerava, conforme a execução, URLs lixo, entradas vazias e conteúdo faltando. Em aberto (`specs/010-neo4j-optional-plugin/tasks.md` T095): um `index` apagado também é resolvido contra os arquivos vivos, e a mesma escolha pelo primeiro resultado existe em `DiscordParser`, `Win10MailParser` e `SkypeSqlite`.
 - `FirefoxSqliteParser` → `places.sqlite`.
 - `EdgeWebCacheParser` → ESENT (`WebCacheV01.dat`) via libesedb nativa.
 - `SafariSqliteParser` + `SafariPlistParser`.

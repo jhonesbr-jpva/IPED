@@ -16,11 +16,11 @@ Descobriu-se que a migração de **código** é pequena (o reator compilou com a
 | Build (17 módulos) no JDK 21 | ✅ BUILD SUCCESS (`mvn clean package`) |
 | Testes engine no JDK 21 | ✅ 136 testes, 0 falhas, 2 skips (YARA integration-gated) |
 | Processamento real E01 (forensic) | ✅ rodou de ponta a ponta (Sleuthkit + pipeline + índice + UI) |
-| Neo4j 4.4 → 5.26 | ✅ migrado **out-of-process via Bolt** e **validado end-to-end** (build verde, isolamento de classpath, import Neo4j 5, post-import Cypher 5 e **aba de grafo na UI renderizando** após reprocessamento) — ver §2.5 |
+| Neo4j 4.4 → 5.26 | ✅ migrado **out-of-process via Bolt** e **validado end-to-end** (build verde, isolamento de classpath, import Neo4j 5, post-import Cypher 5 e **aba de grafo na UI renderizando** após reprocessamento) — ver §2.5. ⚠️ Lacuna achada em 2026-10-23: o importador do Neo4j 5 rejeita linhas de CSV mais curtas que o cabeçalho (o 4.4 aceitava), e o grafo de casos grandes não era gerado — corrigido no plugin da feature 010 (`841f52128`); ver §2.5 e §4.5 |
 | JRE embarcada | ✅ artefato **`java:jre:21.0.11` publicado no `iped-maven`** e descompactado via `unpack-jre` (workaround `copy-jre`/pasta local removido em 2026-06-12) — ver §2.6 e §4.1 |
 | Distribuição (Windows) | ✅ launchers `.exe` refeitos via launch4j (apontam p/ o `jre/` embarcado); `iped.bat` mantido como fallback |
 | CI Java 21 (FR-013) | ✅ job único `build-java21` no workflow; ⏳ confirmação verde pendente de um push |
-| Validação de paridade forense (SC-002) | ⏳ formal não executada (requer baseline Java 11); informal já excelente (6 itens de diff em 781k — §4.5) |
+| Validação de paridade forense (SC-002) | ⏳ formal (C1–C8) não executada. Informais: RockPi4 (6 itens de diff em 781k) e imagem de referência de 68 GB × 4.3.1 (2026-10-23: estatísticas a ±0,1%, tempo −0,6%, 1 regressão e 2 defeitos pré-existentes corrigidos) — §4.5 |
 
 ## 2. Implementado e verificado
 
@@ -58,7 +58,7 @@ Descobriu-se que a migração de **código** é pequena (o reator compilou com a
 
 O bump 4.4 → 5.26 compila, mas **quebra em runtime** por dois motivos distintos:
 
-1. **CLI de import mudou** — `GraphImportRunner` montava o comando no estilo Neo4j 4.x (`neo4j-admin import --database=…`). No Neo4j 5 virou `database import full <db>` com flags `--opt=value`, `--high-io`→`--high-parallel-io=on`, e o nome do banco como argumento **posicional** (com separador `--` para não ser engolido pelas opções variádicas `--nodes/--relationships`). **Validado** rodando contra os CSVs reais do caso (10 nós importados).
+1. **CLI de import mudou** — `GraphImportRunner` montava o comando no estilo Neo4j 4.x (`neo4j-admin import --database=…`). No Neo4j 5 virou `database import full <db>` com flags `--opt=value`, `--high-io`→`--high-parallel-io=on`, e o nome do banco como argumento **posicional** (com separador `--` para não ser engolido pelas opções variádicas `--nodes/--relationships`). **Validado** rodando contra os CSVs reais do caso (10 nós importados). **Lacuna (achada em 2026-10-23)**: os CSVs dessa validação não tinham linhas mais curtas que o cabeçalho, que o `GraphFileWriter` grava quando uma propriedade surge no meio do processamento. O importador do Neo4j 5 as rejeita (`Error in input data`); o 4.4 as aceitava como valores vazios. Na imagem de referência de 68 GB, o grafo não foi gerado. A correção foi feita no plugin `iped-graph-neo4j` da feature 010, para onde o `GraphImportRunner` foi movido como `Neo4jImportRunner`: `padShortRows`, commit `841f52128`, decisão R-15 em `specs/010-neo4j-optional-plugin/research.md`.
 
 2. **Conflito de antlr (bloqueador estrutural)** — o parser Cypher do Neo4j 5.26 exige `antlr4-runtime` **4.13.x**; o `io.github.fmpfeifer:libfqlite` (undelete de SQLite) fixa antlr **4.9.2**. A serialização do ATN é incompatível entre 4.9 e 4.10+ **nos dois sentidos**, e não há versão de libfqlite que resolva. Não dá para ter as duas no mesmo classpath plano.
 
@@ -142,10 +142,19 @@ Validado em **WSL2 Ubuntu-26.04** com **Liberica Full 21.0.11+11** do sistema (i
 - **Implementado, build-verde e validado end-to-end**: import Neo4j 5, grafo out-of-process via Bolt (server isolado + driver + adapters), post-import isolado, fixes Cypher 5, isolamento de classpath. Import validado contra dados reais; **aba de grafo na UI renderizando** após reprocessamento (commit `3153a89`).
 - Dois fixes no caminho de validação: (1) `GraphConfig.json` post-gen usava sintaxe de índice Cypher 4 → `CREATE INDEX IF NOT EXISTS FOR ...` + `GraphPostImport` endurecido (tx por statement, catch/continue); (2) `BoltNode.getDegree()` (stub que lançava, quebrando o sizing em `GraphModel.convert`) → carrega o degree como snapshot do `COUNT { (n)--() }`, nunca lança.
 - ~~**Guarda de store antigo (FR-007/T043)**~~: **descartada (2026-06-01)** — casos são autocontidos (JRE + libs empacotadas com o caso); o release novo não abre graph store de outra versão, então não há cenário de store 4.x a guardar.
+- **Ressalva (2026-10-23)**: a validação acima usou casos pequenos. Num caso grande (imagem de referência de 68 GB), a importação do Neo4j 5 falhou por linhas de CSV mais curtas que o cabeçalho (§2.5). O processamento terminou com exit 0 e 1 `ERROR Error generating database.`, e o banco ficou inutilizável. Corrigido em `841f52128` (branch `010-neo4j-optional-plugin`).
 
 ### 4.5 Validação de paridade (SC-002)
 - **Formal (pendente)**: gerar caso-baseline no build Java 11 e comparar os campos C1–C8 ([contracts/parity-validation.contract.md](contracts/parity-validation.contract.md)). Ainda não executado (requer baseline + dataset de referência).
 - **Informal (FEITA, 2026-06-01) — excelente**: o usuário processou o mesmo caso (RockPi4.E01, forensic) nos releases 4.3.1/Java 11 e 4.4.0/Java 21. Diferença total **6 itens em 781.246 (0,0008%)**. IDÊNTICOS: Total Carved 4387, Active Items 267.186, Parsing Exceptions 2219, I/O errors 0, volume processado, ERRORs `SleuthkitReader` 331. Diff: Subitems/processed −6 (1 OLE carveado expandido no J11 e não no J21 + micro-variação na classificação de fragmentos carveados — dominada por não-determinismo `Processing Queue Random Order`+carving). NENHUM erro de classe novo no J21 (só 1 `LoadGraphDatabaseWorker` benigno). Não substitui a paridade formal C1–C8, mas é forte indício de equivalência.
+- **Rodada com imagem de referência grande (2026-10-23, branch `010-neo4j-optional-plugin`)**: imagem E01 de 68 GB (~2,32 M itens, perfil `forensic`), processada pelo IPED 4.3.1 (Java 11.0.13, Neo4j 4.4 embarcado) e pelo fork (Java 21.0.11). Tabela completa em [`specs/010-neo4j-optional-plugin/validation-results.md`](../010-neo4j-optional-plugin/validation-results.md), seção "Rodada de regressão com a imagem de referência".
+  - **Só compara com o mesmo `LocalConfig.txt`.** Um primeiro candidato rodou com o `LocalConfig.txt` padrão: sem `indexTempOnSSD` (sem `TempFileTask`), sem `hashesDB` (sem `HashDBLookupTask`, 1 `ERROR`) e com `locale = en`. Cerca de 1% dos itens e o tempo (6.669 s × 4.619 s) ficaram sem comparação possível. O contrato de paridade passa a exigir o mesmo `LocalConfig.txt` (Insumos).
+  - **Mesma configuração, com o plugin de grafo**: Total Indexed 2.320.332 × 2.318.160 (+0,09%); Subitems 679.248 × 677.043; Carved 515.942 × 515.975; Parsing Exceptions 48.358 × 48.360; Timeouts e Text Splits iguais; Active Items e volume processado idênticos; `I/O read errors` 24 × 1 (achado b); **tempo 4.589 s × 4.619 s (−0,6%)**, dado informal de desempenho.
+  - **Achados**:
+    - (a) **Regressão desta migração**: o importador do Neo4j 5 rejeita linhas de CSV mais curtas que o cabeçalho (§2.5), e o grafo da imagem não foi gerado. Corrigido no plugin da feature 010 (`841f52128`). Depois da correção: 12.545 nós (= 4.3.1) e 242.569 relacionamentos (4.3.1: 242.555; diferença de 14 a triar).
+    - (b) **Defeito pré-existente, também na 4.3.1**: `Item.cacheDataInMemory` mantinha o buffer zerado quando a leitura falhava. Com a `TempFileTask` ativa, a 4.3.1 indexou com hashes de zeros 23 arquivos que o Sleuthkit não lê; o candidato corrigido os registra como erro de I/O. Corrigido em `a9df70e05`.
+    - (c) **Defeito pré-existente, também na 4.3.1**: o `CacheIndexParser` (cache do Chromium) escolhia entre um `data_N` vivo e um homônimo apagado conforme a ordem não determinística da busca. Numa das execuções Java 21: 1.632 avisos `Failed to retrieve URL` × 31 avisos de `CacheEntry` na 4.3.1. Corrigido em `a5c724030`.
+  - **Próximo passo**: repetir a execução com a mesma configuração a partir de um rebuild completo (≥ `841f52128`), sem jars trocados à mão, e fazer a comparação C1–C8 item a item (T038/T039) com uma execução de controle, tratando (b) e (c) como diferenças esperadas.
 
 ### 4.6 Documentação
 - ✅ Baselines "Java 11 → 21" atualizados nos `CLAUDE.md` (raiz §3/§5, `iped-engine` §14, `iped-app` §1/§6/§12) + Jersey/JNA/zstd/FST — T049/T056 (commits `b13126ef6`/`934893ee4`/`30c542af9`/`7c6fdb56b`).
@@ -183,13 +192,19 @@ Validado em **WSL2 Ubuntu-26.04** com **Liberica Full 21.0.11+11** do sistema (i
 | `30c542a` | Remove a dependência FST pendurada (T015) |
 | `7c6fdb5` | Refaz launchers `.exe` Windows p/ Java 21 via launch4j (T050) |
 
+Commits posteriores, na branch `010-neo4j-optional-plugin`, decorrentes da rodada de paridade de 2026-10-23 (§4.5):
+
+- `841f52128` — linhas de CSV curtas no import do Neo4j 5 (regressão do §2.5, corrigida no plugin);
+- `a9df70e05` — `Item.cacheDataInMemory` (pré-existente na 4.3.1);
+- `a5c724030` — `CacheIndexParser` (pré-existente na 4.3.1).
+
 ## 7. Cobertura de requisitos (resumo)
 
 | Requisito | Estado |
 |---|---|
 | FR-001 build/run no 21 | ✅ |
 | FR-002 testes passam | ✅ (engine 136/136) |
-| FR-003/SC-002 paridade forense | ⏳ pendente (baseline) |
+| FR-003/SC-002 paridade forense | ⏳ formal pendente (T038/T039); rodadas informais RockPi4 (2026-06-01) e imagem de referência × 4.3.1 (2026-10-23) — §4.5 |
 | ~~FR-004~~ casos antigos abrem | ❌ **retirado (2026-06-01)** — casos autocontidos; release novo não abre casos antigos |
 | ~~FR-005~~ portáteis antigos | ❌ **retirado (2026-06-01)** — casos autocontidos |
 | ~~FR-006~~ grafo (caso novo) | ❌ **retirado (2026-06-01)** — garantia de render do grafo absorvida por FR-011; grafo ✅ validado na aba Vínculos (§2.5, commit `3153a89`) |
