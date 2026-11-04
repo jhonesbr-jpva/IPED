@@ -160,6 +160,44 @@ mesmo script produz o artefato do pacote e o do servidor remoto de referência.
 volume de um caso); `jina-clip-v2` (licença não comercial); modelos só em inglês (reprovariam
 FR-003 e FR-036 por construção).
 
+**Candidato alternativo elegível, registrado em 2026-10-15 (estudo de 2026-10-08):
+`google/embeddinggemma-2`, só a parte de texto.** Lançado em 2026-10-06 sob **Apache 2.0** — foi a
+licença que o tornou elegível: o EmbeddingGemma 1 (2025) saiu sob os "Gemma Terms of Use", que não
+cumprem a redistribuição no pacote que FR-041 exige, e por isso nunca entrou nesta tabela. Não
+substitui o principal nem o alternativo acima; entra como candidato a medir. O que se sabe:
+
+- *Modelo*: 270 M de parâmetros (130 M no transformer, 24 camadas × 512, FFN 2048; 140 M na tabela
+  de 262 144 tokens), 768 dimensões com Matryoshka em 512/256/128, 8 192 tokens de contexto,
+  prefixos `task: search result | query: ` e `title: … | text: `. Os codificadores de imagem (170 M)
+  e áudio (300 M) são opcionais, num espaço único com o texto. Export ONNX publicado
+  (`onnx-community/embeddinggemma-2-ONNX`: q8 de 314 MB a cosseno 0,9997 do fp32; pooling e L2 no
+  grafo; tokenizador fora dele), com aviso de estouro de ativações em fp16.
+- *Qualidade*: MTEB Multilingual v2 61,36 (autodeclarado pelo Google; o PR no leaderboard ainda
+  não tinha medição independente) contra 55,8 do `e5-small`, 57,0 do `e5-base`, 58,2 do
+  `gte-multilingual-base` e 59,6 do `bge-m3` (tabela 6 do paper do EmbeddingGemma 1). Em texto
+  multilíngue é plano em relação ao v1 (61,15); o salto é em código. Relato de quem testou nos
+  primeiros dias: "não é melhor nem mais rápido" para texto puro.
+- *Custo*: transformer ~6× o do `e5-small` (130 M contra ~21 M fora da tabela de vocabulário; no
+  v1, medido em GPU, a razão foi 11×). Projetado sobre as medições do `validation-log.md`, SC-010
+  sairia de 1,60× para 4–5× no caso de avaliação, e a bancada do Telegram de 46 min para 4–5 h:
+  **reprova o ≤ 3× na CPU**, e as janelas de foco (D23) ficariam inviáveis. É a melhor relação
+  qualidade/custo acima do `e5-small` (melhor que o `bge-m3` pela metade do cálculo), mas o lugar
+  natural é o **modelo remoto** (D9) ou um pacote opcional para instalação com GPU, como o visual.
+- *Encaixe*: 768 dimensões dobram os vetores (ou MRL-256 com perda sem número para texto
+  multilíngue); modelo copiado no caso (D17) de 118 MB para ~320 MB; identidade nova, logo caso
+  preparado com o `e5-small` fica `MODEL_INCOMPATIBLE` numa instalação que troque (D10). Portões
+  não verificados antes de qualquer número no pacote: o conversor das extensões 0.13.0 **não tem
+  entrada para o tokenizador do Gemma** (caminho provável: `LlamaTokenizer → SpmTokenizer`, provado
+  pelo teste de paridade do export); carga do grafo no ORT 1.20.0 no JRE do release (portão de D2);
+  quantização dinâmica U8U8 com o critério de cosseno ≥ 0,99 do export.
+
+Decisão: **nada muda agora**. Em 4–8 semanas, com medição independente no MTEB e suporte estável
+em `transformers`/`sentence-transformers`: spike do tokenizador e da carga, export pelo
+`export-models`, harness (SC-001/002/003/018, cenário 2 da História 1, sonda de viés de idioma)
+contra o `e5-small`, e custo no caso de avaliação e na bancada do Telegram. Vira padrão só com ganho
+material de qualidade **e** SC-010 ≤ 3×; sem o segundo, pacote opcional pela fonte remota. A
+medição de qualidade pode correr antes dos portões Java, pelo servidor de referência numa GPU.
+
 ---
 
 ## D4 — Armazenamento no caso
