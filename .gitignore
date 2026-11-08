@@ -5,3 +5,5 @@ nbactions.xml
 /.project
 .pydevproject
 /.idea/
+# Claude Code: permissoes locais por maquina, nunca versionar
+.claude/settings.local.json
