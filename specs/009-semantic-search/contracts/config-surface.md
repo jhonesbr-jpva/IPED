@@ -1,0 +1,100 @@
+# Contract — superfície de configuração
+
+**Feature**: [009-semantic-search](../spec.md) | **Princípio IV** da constituição
+
+Duas fontes de configuração, no padrão das demais tasks: as chaves de habilitação ficam em
+`IPEDConfig.txt` (e nos perfis), e o resto fica em `conf/SemanticSearchConfig.txt`, lido por
+`SemanticSearchConfig implements Configurable<UTF8Properties>`. O arquivo distribuído é a
+autoridade. Os valores no código são fallback de último recurso, iguais aos do arquivo, como no
+`McpServerConfig`.
+
+---
+
+## `IPEDConfig.txt` — habilitação (FR-018, FR-032)
+
+| Chave | Padrão | Efeito |
+|---|---|---|
+| `enableSemanticText` | `false` | Liga a `SemanticTextTask` |
+| `enableSemanticImages` | `false` | Liga a `SemanticVisualTask` para imagens |
+| `enableSemanticVideos` | `false` | Liga a `SemanticVisualTask` para vídeos |
+
+Nenhum perfil distribuído liga qualquer uma delas nesta entrega (research D19).
+
+---
+
+## `conf/SemanticSearchConfig.txt`
+
+### Fonte de modelo (FR-024, FR-041 a FR-045)
+
+| Chave | Padrão | Notas |
+|---|---|---|
+| `textModelSource` | `local` | `local` ou `remote` |
+| `textLocalModel` | `models/semantic/text/multilingual-e5-small-int8` | Relativo à instalação |
+| `textRemoteProtocol` | *(vazio)* | `openai-embeddings` ou `iped-embed/1` |
+| `textRemoteEndpoint` | *(vazio)* | URL base. **Sem padrão**: não existe destino de fábrica |
+| `textRemoteModel` | *(vazio)* | Nome do modelo pedido ao serviço |
+| `textRemoteCredentialEnv` | `IPED_SEMANTIC_TEXT_CREDENTIAL` | Nome da variável de ambiente |
+| `textRemoteCredentialFile` | *(vazio)* | Caminho de arquivo com a credencial. Nunca a credencial em si. Quando preenchido, prevalece sobre a variável (que sempre tem nome padrão) |
+| `textRemoteQueryPrefix` / `textRemotePassagePrefix` | *(vazio)* | Só `openai-embeddings`: prefixos que o modelo exige, enviados dentro do texto (o e5 pede `"query: "` e `"passage: "`). Entre aspas para manter o espaço final. Acrescentadas na implementação (2026-09-27): o contrato do protocolo dizia que o prefixo "vem da configuração" sem nomear a chave |
+| `visualModelSource` / `visualLocalModel` / `visualRemote*` | análogos | O modelo local visual vem em pacote separado |
+| `remoteAllowPlainHttp` | `false` | HTTP sem TLS só com esta chave explícita, ou em loopback |
+| `remoteTimeoutSeconds` | `60` | Por requisição |
+| `remoteMaxRetries` | `5` | Com espera crescente; esgotadas, o item fica `REMOTE_UNAVAILABLE` |
+
+**Validação ao iniciar** (FR-042, SC-017): se uma chave de habilitação está ligada e a modalidade
+não tem fonte utilizável, o processamento não começa. Fonte `remote` sem `…RemoteEndpoint` e fonte
+`local` sem o modelo no caminho são erros de configuração, e não permissão para escolher outra
+fonte.
+
+### O que entra (FR-019)
+
+| Chave | Padrão | Notas |
+|---|---|---|
+| `textCategories` | *(vazio = todas com texto)* | Lista separada por `;` |
+| `visualCategories` | *(vazio = todas as imagens e vídeos)* | idem |
+| `messageMediaTypes` | tipos de mensagem de WhatsApp, Telegram, Skype, Discord e Threema | Tipos preparados como sequência de conversa (D7) |
+| `messageContainerMediaTypes` | bancos de chat de WhatsApp (Android e iOS), Threema, Telegram e SMS do iOS que o IPED decodifica | O texto próprio desses bancos é a listagem das conversas que eles guardam; não viram trechos, e ficam `COVERED_BY_MESSAGES` (as mensagens já estão nas sequências). Acrescentada na implementação (T050): no caso de avaliação, o `msgstore.db` como trecho era vizinho de toda pergunta sobre conversa e ocupava as primeiras posições |
+| `maxTextCharsPerItem` | `200000` | Excedente declarado (`COVERED_TRUNCATED`) |
+| `prepareBinaryText` | `false` | Se o texto extraído de binários (cadeia de parsers com o `RawStringParser`; espaço não alocado; slack) é preparado. Desligado, esses itens ficam `BINARY_TEXT`, e também o texto ilegível (um caractere ilegível em cada dez ou mais: binário que um parser de texto decodificou). Acrescentada na revisão de 2026-09-27 (FR-002, FR-019) |
+| `chatMediaTypes` | conversas renderizadas de WhatsApp, Telegram, Threema e UFED | Tipos do item de chat escrito ao lado das mensagens. O texto dele só é preparado no fim, e só se o chat não tem itens de mensagem ou a sequência falhou; chat com mensagens e nenhuma com texto deixa a conversa `NO_TEXT` (research D6). Acrescentada em 2026-09-28, depois da bancada de chats do Telegram |
+| `passageChars` / `passageOverlapChars` | `1000` / `200` | |
+| `focusChars` / `focusOverlapChars` | `400` / `100` | Janelas de foco dos itens com mais de um trecho: escolhem o trecho exibido, não ordenam (research D23, data-model E3b). `0` desliga. Acrescentadas na implementação, depois de medir o cenário 2 da História 1 |
+| `chatWindowMessages` / `chatWindowStride` | `8` / `4` | |
+| `chatWindowMaxChars` / `chatMaxGapMinutes` | `1500` / `720` | |
+| `chatShortMessageChars` | `20` | Mensagem mais curta que isto nunca forma sequência sozinha: quando um intervalo a isola, ela entra na janela vizinha do mesmo chat (caso de borda "mensagem curta isolada"). Acrescentada na implementação (T019/T025) |
+| `minImageSize` | `48` | Pixels no maior lado da imagem original |
+
+### Busca (FR-007, D5, D10, D11)
+
+| Chave | Padrão | Notas |
+|---|---|---|
+| `defaultDepth` | `100` | |
+| `maxDepth` | `1000` | Teto |
+| `oversampling` | `4` | Sobreamostragem de trechos por entrada, antes da consolidação |
+| `exactSearchMaxItems` | `50000` | Recorte até este tamanho → varredura exata |
+| `maxQueryChars` | `2000` | Excedente truncado e declarado |
+| `fingerprintTolerance` | `0.9995` | A calibrar na bancada (D10) |
+| `defaultTextMode` | `hybrid` | `hybrid` ou `semantic` (FR-046). O de fábrica é confirmado ou trocado pela medição de SC-018 (D20) |
+| `rrfK` | `60` | Constante da fusão por posição |
+| `rrfLexicalWeight` | `0.3` | Peso da lista por palavra na fusão (a semântica pesa 1). Acrescentada na implementação (T063), calibrada no caso de avaliação: com peso 1 o modo híbrido perdia 36,6 pontos no SC-001; com 0,3, nenhum, e acerta todas as perguntas mistas (D20) |
+| `lexicalCandidates` | `0` (= teto × sobreamostragem) | Tamanho da lista por palavra antes da fusão |
+| `contextMaxChars` | `8000` | Teto de `iped_semantic_context` (FR-048) |
+| `hnswMaxConn` / `hnswBeamWidth` | `16` / `100` | Parâmetros do HNSW no codec dos índices semânticos, registrados em `params.hnsw` (D5). Acrescentadas na implementação: T014 fixa o codec a partir delas e T095 as ajusta |
+
+### Custo (D15)
+
+| Chave | Padrão | Notas |
+|---|---|---|
+| `inferenceThreads` | `0` (= metade dos núcleos) | |
+| `batchSize` | `32` | |
+| `queueCapacity` | `1024` | Fila cheia → worker espera |
+| `commitIntervalMinutes` | `10` | |
+
+---
+
+## O que **não** é configurável, de propósito
+
+- **Piso de proximidade**: não existe, por decisão da clarificação (FR-007).
+- **Misturar modalidades numa ordenação**: proibido por FR-034.
+- **Recorrer a outro modelo** quando a fonte registrada falha: proibido por FR-044.
+- **Credencial em arquivo distribuído**: a configuração diz onde, nunca qual (FR-045).
