@@ -6,6 +6,8 @@ As specs continuam **vivendo nas branches de código** (`specs/NNN-nome/` dentro
 
 Checkout único: `H:\java\workspaces\workspace-iped\specs-archive`. Nunca aparece nos worktrees de feature.
 
+Veja também [`OPERACOES.md`](OPERACOES.md) (mapa do workspace, regras e receitas) e [`tools/New-IpedFeature.ps1`](tools/New-IpedFeature.ps1) (cria o worktree de uma feature nova com o número global e pasta = branch).
+
 ## Regras
 
 1. **Numeração é por repositório, não por worktree.** O número é o identificador global da feature; o Spec Kit calcula o próximo olhando branches locais, remotas e `specs/`. Próximo número livre: **011**, para qualquer linha (master ou 4.3.x).
